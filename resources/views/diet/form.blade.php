@@ -62,11 +62,36 @@
         #ingredient-modal-list .list-group-item {
             cursor: pointer;
         }
+
+        #ingredient-modal-selected {
+            min-height: 48px;
+        }
+
+        .selected-ingredient-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            background-color: var(--bs-primary-bg-subtle, rgba(13, 110, 253, 0.1));
+            color: var(--bs-primary, #0d6efd);
+            font-weight: 600;
+        }
+
+        .meal-ingredients-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .meal-ingredients-list .meal-info {
+            align-items: flex-start;
+        }
     </style>
 @endpush
 
 @push('scripts')
-    <script>
+        <script>
         (function ($) {
             'use strict';
 
@@ -93,7 +118,10 @@
                     calories: "{{ __('message.calories') }}",
                     grams: "{{ __('message.grams') }}",
                     mealPlanHelper: "{{ __('message.meal_plan_helper') }}",
-                    noResults: "{{ __('message.no_results_found') }}"
+                    noResults: "{{ __('message.no_results_found') }}",
+                    selectedIngredients: "{{ __('message.selected_ingredients') }}",
+                    noIngredientsSelected: "{{ __('message.no_ingredients_selected') }}",
+                    mealTotals: "{{ __('message.meal_totals') }}"
                 };
 
                 const planInput = $('#meal-plan-input');
@@ -116,13 +144,56 @@
                 const ingredientSearch = $('#ingredient-search');
                 const ingredientList = $('#ingredient-modal-list');
                 const removeSelectionButton = $('#clear-meal-selection');
+                const saveSelectionButton = $('#save-meal-selection');
+                const selectionSummary = $('#ingredient-modal-selected');
 
                 let mealPlan = [];
                 let currentSelection = { day: null, meal: null };
+                let modalSelection = [];
 
                 function sanitizeCount(value) {
                     const number = parseInt(value, 10);
                     return Number.isFinite(number) && number > 0 ? number : 0;
+                }
+
+                function normalizeMealValue(value) {
+                    const normalized = [];
+                    const seen = new Set();
+
+                    if (Array.isArray(value)) {
+                        value.forEach(function (item) {
+                            const id = parseInt(item, 10);
+                            if (!Number.isInteger(id) || id <= 0 || seen.has(id)) {
+                                return;
+                            }
+                            seen.add(id);
+                            normalized.push(id);
+                        });
+                        return normalized;
+                    }
+
+                    const id = parseInt(value, 10);
+                    if (Number.isInteger(id) && id > 0 && !seen.has(id)) {
+                        normalized.push(id);
+                    }
+
+                    return normalized;
+                }
+
+                function normalizePlanStructure(plan) {
+                    if (!Array.isArray(plan)) {
+                        return [];
+                    }
+
+                    return plan.map(function (dayMeals) {
+                        if (!Array.isArray(dayMeals)) {
+                            return [];
+                        }
+
+                        return dayMeals.map(function (meal) {
+                            return normalizeMealValue(meal);
+                        });
+                    });
                 }
 
                 function parseInitialPlan() {
@@ -136,16 +207,12 @@
                         const parsed = JSON.parse(raw);
 
                         if (Array.isArray(parsed)) {
-                            mealPlan = parsed.map(function (day) {
-                                return Array.isArray(day) ? day : [];
-                            });
+                            mealPlan = normalizePlanStructure(parsed);
                             return;
                         }
 
                         if (parsed && Array.isArray(parsed.plan)) {
-                            mealPlan = parsed.plan.map(function (day) {
-                                return Array.isArray(day) ? day : [];
-                            });
+                            mealPlan = normalizePlanStructure(parsed.plan);
                             return;
                         }
 
@@ -170,9 +237,7 @@
                         }
 
                         for (let meal = 0; meal < meals; meal++) {
-                            if (typeof mealPlan[day][meal] === 'undefined') {
-                                mealPlan[day][meal] = null;
-                            }
+                            mealPlan[day][meal] = normalizeMealValue(mealPlan[day][meal]);
                         }
                     }
                 }
@@ -188,6 +253,43 @@
                     }
 
                     return Number.isInteger(number) ? number.toString() : number.toFixed(2);
+                }
+
+                function computeMealTotals(ingredientIds) {
+                    const totals = { protein: 0, carbs: 0, fat: 0, calories: 0 };
+                    const normalized = normalizeMealValue(ingredientIds);
+
+                    normalized.forEach(function (ingredientId) {
+                        const ingredient = ingredientMap[ingredientId];
+                        if (!ingredient) {
+                            return;
+                        }
+
+                        totals.protein += Number(ingredient.protein) || 0;
+                        totals.carbs += Number(ingredient.carbs) || 0;
+                        totals.fat += Number(ingredient.fat) || 0;
+                        totals.calories += Number(ingredient.calories) || 0;
+                    });
+
+                    return totals;
+                }
+
+                function computeDayTotals(dayMeals) {
+                    const totals = { protein: 0, carbs: 0, fat: 0, calories: 0 };
+
+                    if (!Array.isArray(dayMeals)) {
+                        return totals;
+                    }
+
+                    dayMeals.forEach(function (meal) {
+                        const mealTotals = computeMealTotals(meal);
+                        totals.protein += mealTotals.protein;
+                        totals.carbs += mealTotals.carbs;
+                        totals.fat += mealTotals.fat;
+                        totals.calories += mealTotals.calories;
+                    });
+
+                    return totals;
                 }
 
                 function updateMacroFields() {
@@ -240,135 +342,29 @@
                     });
                 }
 
-                function computeDayTotals(dayMeals) {
-                    const totals = { protein: 0, carbs: 0, fat: 0, calories: 0 };
-
-                    if (!Array.isArray(dayMeals)) {
-                        return totals;
-                    }
-
-                    dayMeals.forEach(function (mealId) {
-                        if (!mealId) {
-                            return;
-                        }
-
-                        const ingredient = ingredientMap[mealId];
-                        if (!ingredient) {
-                            return;
-                        }
-
-                        totals.protein += Number(ingredient.protein) || 0;
-                        totals.carbs += Number(ingredient.carbs) || 0;
-                        totals.fat += Number(ingredient.fat) || 0;
-                        totals.calories += Number(ingredient.calories) || 0;
-                    });
-
-                    return totals;
-                }
-
-                function clearMeal(dayIndex, mealIndex) {
+                function getMealSelection(dayIndex, mealIndex) {
                     if (!Array.isArray(mealPlan[dayIndex])) {
-                        return;
+                        return [];
                     }
 
-                    mealPlan[dayIndex][mealIndex] = null;
-                    updatePlanInput();
-                    renderTable();
+                    return normalizeMealValue(mealPlan[dayIndex][mealIndex]);
                 }
 
-                function closeModal() {
-                    if (ingredientModal) {
-                        ingredientModal.hide();
-                    } else {
-                        ingredientModalEl.modal('hide');
-                    }
-                }
-
-                function openIngredientModal(dayIndex, mealIndex) {
-                    currentSelection = { day: dayIndex, meal: mealIndex };
-                    ingredientSearch.val('');
-                    renderIngredientList('');
-                    updateRemoveButtonState();
-
-                    if (ingredientModal) {
-                        ingredientModal.show();
-                    } else {
-                        ingredientModalEl.modal('show');
-                    }
-                }
-
-                function updateRemoveButtonState() {
-                    const hasValue = currentSelection.day !== null && currentSelection.meal !== null &&
-                        Array.isArray(mealPlan[currentSelection.day]) &&
-                        mealPlan[currentSelection.day][currentSelection.meal];
-
-                    removeSelectionButton.prop('disabled', !hasValue);
-                }
-
-                function selectIngredient(ingredientId) {
-                    if (currentSelection.day === null || currentSelection.meal === null) {
-                        return;
-                    }
-
+                function setMealSelection(dayIndex, mealIndex, ingredientIds) {
                     const days = sanitizeCount(daysField.val());
                     const meals = sanitizeCount(servingsField.val());
                     ensurePlanSize(days, meals);
 
-                    mealPlan[currentSelection.day][currentSelection.meal] = ingredientId;
-                    updatePlanInput();
-                    renderTable();
-                    closeModal();
-                }
-
-                function renderIngredientList(filterValue) {
-                    const filter = (filterValue || '').toString().toLowerCase();
-                    ingredientList.empty();
-
-                    const filtered = ingredientsData.filter(function (ingredient) {
-                        return ingredient.title && ingredient.title.toLowerCase().includes(filter);
-                    });
-
-                    if (!filtered.length) {
-                        ingredientList.append(
-                            $('<div />')
-                                .addClass('text-center text-muted py-3')
-                                .text(translations.noResults)
-                        );
-                        return;
+                    if (!Array.isArray(mealPlan[dayIndex])) {
+                        mealPlan[dayIndex] = [];
                     }
 
-                    filtered.forEach(function (ingredient) {
-                        const item = $('<button />')
-                            .attr('type', 'button')
-                            .addClass('list-group-item list-group-item-action d-flex align-items-center gap-3');
+                    mealPlan[dayIndex][mealIndex] = normalizeMealValue(ingredientIds);
+                }
 
-                        if (ingredient.image) {
-                            item.append(
-                                $('<img />')
-                                    .attr('src', ingredient.image)
-                                    .attr('alt', ingredient.title)
-                            );
-                        }
-
-                        const info = $('<div />').addClass('flex-grow-1 text-start');
-                        info.append($('<div />').addClass('fw-semibold').text(ingredient.title));
-
-                        const macrosText = [
-                            translations.protein + ': ' + formatNumber(ingredient.protein) + ' ' + translations.grams,
-                            translations.carbs + ': ' + formatNumber(ingredient.carbs) + ' ' + translations.grams,
-                            translations.fat + ': ' + formatNumber(ingredient.fat) + ' ' + translations.grams,
-                            translations.calories + ': ' + formatNumber(ingredient.calories)
-                        ].join(' | ');
-
-                        info.append($('<div />').addClass('meal-macros').text(macrosText));
-                        item.append(info);
-
-                        item.on('click', function () {
-                            selectIngredient(ingredient.id);
-                        });
-
-                        ingredientList.append(item);
-                    });
+                function removeMeal(dayIndex, mealIndex) {
+                    setMealSelection(dayIndex, mealIndex, []);
+                    renderTable();
                 }
 
                 function renderMealCell(dayIndex, mealIndex) {
@@ -385,36 +381,60 @@
 
                     container.append(selectButton, content);
 
-                    const mealId = Array.isArray(mealPlan[dayIndex]) ? mealPlan[dayIndex][mealIndex] : null;
-                    const ingredient = mealId ? ingredientMap[mealId] : null;
+                    const ingredientIds = getMealSelection(dayIndex, mealIndex);
+                    mealPlan[dayIndex][mealIndex] = ingredientIds;
 
-                    if (ingredient) {
+                    if (ingredientIds.length) {
                         selectButton.addClass('d-none');
                         content.removeClass('d-none');
 
-                        const info = $('<div />').addClass('meal-info');
+                        const list = $('<div />').addClass('meal-ingredients-list');
 
-                        if (ingredient.image) {
-                            info.append(
-                                $('<img />')
-                                    .attr('src', ingredient.image)
-                                    .attr('alt', ingredient.title)
-                            );
-                        }
+                        ingredientIds.forEach(function (ingredientId) {
+                            const ingredient = ingredientMap[ingredientId];
+                            if (!ingredient) {
+                                return;
+                            }
 
-                        const textWrapper = $('<div />').addClass('flex-grow-1');
-                        textWrapper.append($('<div />').addClass('fw-semibold').text(ingredient.title));
+                            const info = $('<div />').addClass('meal-info');
 
-                        const macros = [
-                            translations.protein + ': ' + formatNumber(ingredient.protein) + ' ' + translations.grams,
-                            translations.carbs + ': ' + formatNumber(ingredient.carbs) + ' ' + translations.grams,
-                            translations.fat + ': ' + formatNumber(ingredient.fat) + ' ' + translations.grams,
-                            translations.calories + ': ' + formatNumber(ingredient.calories)
-                        ].join(' | ');
+                            if (ingredient.image) {
+                                info.append(
+                                    $('<img />')
+                                        .attr('src', ingredient.image)
+                                        .attr('alt', ingredient.title)
+                                );
+                            }
 
-                        textWrapper.append($('<div />').addClass('meal-macros').text(macros));
-                        info.append(textWrapper);
-                        content.append(info);
+                            const textWrapper = $('<div />').addClass('flex-grow-1');
+                            textWrapper.append($('<div />').addClass('fw-semibold').text(ingredient.title));
+
+                            const macros = [
+                                translations.protein + ': ' + formatNumber(ingredient.protein) + ' ' + translations.grams,
+                                translations.carbs + ': ' + formatNumber(ingredient.carbs) + ' ' + translations.grams,
+                                translations.fat + ': ' + formatNumber(ingredient.fat) + ' ' + translations.grams,
+                                translations.calories + ': ' + formatNumber(ingredient.calories)
+                            ].join(' | ');
+
+                            textWrapper.append($('<div />').addClass('meal-macros').text(macros));
+                            info.append(textWrapper);
+                            list.append(info);
+                        });
+
+                        content.append(list);
+
+                        const mealTotals = computeMealTotals(ingredientIds);
+                        content.append(
+                            $('<div />')
+                                .addClass('meal-macros mt-2 fw-semibold')
+                                .text(
+                                    translations.mealTotals + ': '
+                                    + translations.protein + ' ' + formatNumber(mealTotals.protein) + ' ' + translations.grams + ' | '
+                                    + translations.carbs + ' ' + formatNumber(mealTotals.carbs) + ' ' + translations.grams + ' | '
+                                    + translations.fat + ' ' + formatNumber(mealTotals.fat) + ' ' + translations.grams + ' | '
+                                    + translations.calories + ' ' + formatNumber(mealTotals.calories)
+                                )
+                        );
 
                         const actions = $('<div />').addClass('d-flex flex-wrap gap-2 mt-2');
 
@@ -434,7 +454,7 @@
                                 .addClass('btn btn-sm btn-outline-danger')
                                 .text(translations.removeMeal)
                                 .on('click', function () {
-                                    clearMeal(dayIndex, mealIndex);
+                                    removeMeal(dayIndex, mealIndex);
                                 })
                         );
 
@@ -504,12 +524,149 @@
                     updateMacroFields();
                 }
 
+                function updateModalSelection(ingredientId, shouldSelect) {
+                    const index = modalSelection.indexOf(ingredientId);
+
+                    if (shouldSelect) {
+                        if (index === -1) {
+                            modalSelection.push(ingredientId);
+                        }
+                    } else if (index !== -1) {
+                        modalSelection.splice(index, 1);
+                    }
+                }
+
+                function updateSelectionSummary() {
+                    if (!selectionSummary.length) {
+                        return;
+                    }
+
+                    selectionSummary.empty();
+
+                    if (!modalSelection.length) {
+                        selectionSummary.append(
+                            $('<span />')
+                                .addClass('text-muted')
+                                .text(translations.noIngredientsSelected)
+                        );
+
+                        return;
+                    }
+
+                    modalSelection.forEach(function (ingredientId) {
+                        const ingredient = ingredientMap[ingredientId];
+                        const badge = $('<span />').addClass('selected-ingredient-badge');
+                        badge.text(ingredient ? ingredient.title : '#' + ingredientId);
+                        selectionSummary.append(badge);
+                    });
+                }
+
+                function updateRemoveButtonState() {
+                    removeSelectionButton.prop('disabled', modalSelection.length === 0);
+                }
+
+                function renderIngredientList(filterValue) {
+                    const filter = (filterValue || '').toString().toLowerCase();
+                    ingredientList.empty();
+
+                    const filtered = ingredientsData.filter(function (ingredient) {
+                        return ingredient.title && ingredient.title.toLowerCase().includes(filter);
+                    });
+
+                    if (!filtered.length) {
+                        ingredientList.append(
+                            $('<div />')
+                                .addClass('text-center text-muted py-3')
+                                .text(translations.noResults)
+                        );
+                        return;
+                    }
+
+                    filtered.forEach(function (ingredient) {
+                        const ingredientId = parseInt(ingredient.id, 10);
+                        const isSelected = modalSelection.includes(ingredientId);
+
+                        const item = $('<label />')
+                            .addClass('list-group-item list-group-item-action d-flex align-items-center gap-3');
+
+                        const checkbox = $('<input />')
+                            .attr('type', 'checkbox')
+                            .addClass('form-check-input me-2')
+                            .prop('checked', isSelected)
+                            .on('change', function () {
+                                updateModalSelection(ingredientId, this.checked);
+                                updateSelectionSummary();
+                                updateRemoveButtonState();
+                            });
+
+                        item.append(checkbox);
+
+                        if (ingredient.image) {
+                            item.append(
+                                $('<img />')
+                                    .attr('src', ingredient.image)
+                                    .attr('alt', ingredient.title)
+                            );
+                        }
+
+                        const info = $('<div />').addClass('flex-grow-1 text-start');
+                        info.append($('<div />').addClass('fw-semibold').text(ingredient.title));
+
+                        const macrosText = [
+                            translations.protein + ': ' + formatNumber(ingredient.protein) + ' ' + translations.grams,
+                            translations.carbs + ': ' + formatNumber(ingredient.carbs) + ' ' + translations.grams,
+                            translations.fat + ': ' + formatNumber(ingredient.fat) + ' ' + translations.grams,
+                            translations.calories + ': ' + formatNumber(ingredient.calories)
+                        ].join(' | ');
+
+                        info.append($('<div />').addClass('meal-macros').text(macrosText));
+                        item.append(info);
+
+                        ingredientList.append(item);
+                    });
+                }
+
+                function closeModal() {
+                    if (ingredientModal) {
+                        ingredientModal.hide();
+                    } else {
+                        ingredientModalEl.modal('hide');
+                    }
+                }
+
+                function openIngredientModal(dayIndex, mealIndex) {
+                    currentSelection = { day: dayIndex, meal: mealIndex };
+                    modalSelection = getMealSelection(dayIndex, mealIndex).slice();
+                    ingredientSearch.val('');
+                    renderIngredientList('');
+                    updateSelectionSummary();
+                    updateRemoveButtonState();
+
+                    if (ingredientModal) {
+                        ingredientModal.show();
+                    } else {
+                        ingredientModalEl.modal('show');
+                    }
+                }
+
                 removeSelectionButton.on('click', function () {
                     if (currentSelection.day === null || currentSelection.meal === null) {
                         return;
                     }
 
-                    clearMeal(currentSelection.day, currentSelection.meal);
+                    modalSelection = [];
+                    setMealSelection(currentSelection.day, currentSelection.meal, []);
+                    renderTable();
+                    closeModal();
+                });
+
+                saveSelectionButton.on('click', function () {
+                    if (currentSelection.day === null || currentSelection.meal === null) {
+                        return;
+                    }
+
+                    setMealSelection(currentSelection.day, currentSelection.meal, modalSelection);
+                    renderTable();
                     closeModal();
                 });
 
@@ -521,6 +678,10 @@
                     ingredientModalEl.on('hidden.bs.modal', function () {
                         currentSelection = { day: null, meal: null };
                         ingredientSearch.val('');
+                        modalSelection = [];
+                        if (selectionSummary.length) {
+                            selectionSummary.empty();
+                        }
                     });
                 }
 
@@ -699,6 +860,10 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
+                        <label class="form-label">{{ __('message.selected_ingredients') }}</label>
+                        <div id="ingredient-modal-selected" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                    <div class="mb-3">
                         <label for="ingredient-search" class="form-label">{{ __('message.search') }}</label>
                         <input type="text" class="form-control" id="ingredient-search" placeholder="{{ __('message.search') }}">
                     </div>
@@ -707,6 +872,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('message.close') }}</button>
                     <button type="button" class="btn btn-outline-danger" id="clear-meal-selection">{{ __('message.remove_meal') }}</button>
+                    <button type="button" class="btn btn-primary" id="save-meal-selection">{{ __('message.save_selection') }}</button>
                 </div>
             </div>
         </div>

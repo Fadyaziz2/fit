@@ -15,7 +15,7 @@ class DietResource extends JsonResource
     public function toArray($request)
     {
         $user_id = auth()->id() ?? null;
-        $plan = $this->ingredients ?? [];
+        $plan = $this->normalizePlan($this->ingredients ?? []);
         $customPlan = [];
 
         if ($user_id) {
@@ -30,7 +30,7 @@ class DietResource extends JsonResource
             }
 
             if ($assignment && is_array($assignment->custom_plan)) {
-                $customPlan = $assignment->custom_plan;
+                $customPlan = $this->normalizePlan($assignment->custom_plan, true);
                 $plan = $this->mergeCustomPlan($plan, $customPlan);
             }
         }
@@ -60,32 +60,83 @@ class DietResource extends JsonResource
         ];
     }
 
-    protected function mergeCustomPlan($plan, array $customPlan): array
+    protected function mergeCustomPlan(array $plan, array $customPlan): array
     {
-        if (!is_array($plan)) {
-            $plan = [];
-        }
-
         foreach ($customPlan as $dayIndex => $dayMeals) {
-            if (!is_array($dayMeals)) {
-                continue;
-            }
-
-            if (!isset($plan[$dayIndex]) || !is_array($plan[$dayIndex])) {
+            if (!isset($plan[$dayIndex])) {
                 $plan[$dayIndex] = [];
             }
 
-            foreach ($dayMeals as $mealIndex => $ingredientId) {
-                if ($ingredientId === null) {
-                    continue;
-                }
-
-                $plan[$dayIndex][$mealIndex] = $ingredientId;
+            foreach ($dayMeals as $mealIndex => $ingredients) {
+                $plan[$dayIndex][$mealIndex] = $ingredients;
             }
         }
 
         return array_values(array_map(function ($dayMeals) {
             return array_values(is_array($dayMeals) ? $dayMeals : []);
         }, $plan));
+    }
+
+    protected function normalizePlan($plan, bool $preserveKeys = false): array
+    {
+        if (!is_array($plan)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($plan as $dayIndex => $dayMeals) {
+            if (!is_array($dayMeals)) {
+                $normalized[(int) $dayIndex] = [];
+                continue;
+            }
+
+            $normalized[(int) $dayIndex] = array_values(array_map(function ($meal) {
+                return $this->normalizeMealSelection($meal);
+            }, $dayMeals));
+        }
+
+        ksort($normalized);
+
+        if ($preserveKeys) {
+            foreach ($normalized as $dayIndex => $dayMeals) {
+                $normalized[$dayIndex] = array_values($dayMeals);
+            }
+
+            return $normalized;
+        }
+
+        return array_values($normalized);
+    }
+
+    protected function normalizeMealSelection($value): array
+    {
+        if (is_array($value)) {
+            $normalized = [];
+
+            foreach ($value as $item) {
+                if (!is_numeric($item)) {
+                    continue;
+                }
+
+                $id = (int) $item;
+
+                if ($id <= 0 || in_array($id, $normalized, true)) {
+                    continue;
+                }
+
+                $normalized[] = $id;
+            }
+
+            return $normalized;
+        }
+
+        if (is_numeric($value)) {
+            $id = (int) $value;
+
+            return $id > 0 ? [$id] : [];
+        }
+
+        return [];
     }
 }
