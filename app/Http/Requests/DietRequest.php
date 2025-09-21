@@ -32,11 +32,17 @@ class DietRequest extends FormRequest
             case 'post':
                 $rules = [
                     'title' => 'required',
+                    'servings' => 'required|integer|min:1',
+                    'days' => 'required|integer|min:1',
+                    'ingredients' => 'required|json',
                 ];
                 break;
             case 'patch':
                 $rules = [
                     'title' => 'required',
+                    'servings' => 'required|integer|min:1',
+                    'days' => 'required|integer|min:1',
+                    'ingredients' => 'required|json',
                 ];
                 break;
         }
