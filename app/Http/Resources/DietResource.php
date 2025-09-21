@@ -23,6 +23,7 @@ class DietResource extends JsonResource
             'protein'          => $this->protein,
             'fat'              => $this->fat,
             'servings'         => $this->servings,
+            'days'             => $this->days,
             'total_time'       => $this->total_time,
             'is_featured'      => $this->is_featured,
             'status'           => $this->status,

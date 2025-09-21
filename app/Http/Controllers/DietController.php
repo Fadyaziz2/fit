@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\DataTables\DietDataTable;
 use App\Helpers\AuthHelper;
 use App\Models\Diet;
+use App\Models\Ingredient;
 
 use App\Http\Requests\DietRequest;
 
@@ -45,8 +46,9 @@ class DietController extends Controller
         }
 
         $pageTitle = __('message.add_form_title',[ 'form' => __('message.diet')]);
+        $ingredients = $this->getMealIngredients();
 
-        return view('diet.form', compact('pageTitle'));
+        return view('diet.form', compact('pageTitle', 'ingredients'));
     }
     /**
      * Store a newly created resource in storage.
@@ -61,7 +63,10 @@ class DietController extends Controller
             return redirect()->back()->withErrors($message);
         }
 
-        $diet = Diet::create($request->all());
+        $data = $request->except('diet_image');
+        $data['ingredients'] = $this->formatMealPlan($request->input('ingredients'));
+
+        $diet = Diet::create($data);
 
         storeMediaFile($diet,$request->diet_image, 'diet_image'); 
 
@@ -94,8 +99,9 @@ class DietController extends Controller
 
         $data = Diet::findOrFail($id);
         $pageTitle = __('message.update_form_title',[ 'form' => __('message.diet') ]);
+        $ingredients = $this->getMealIngredients();
 
-        return view('diet.form', compact('data','id','pageTitle'));
+        return view('diet.form', compact('data','id','pageTitle', 'ingredients'));
     }
 
     /**
@@ -114,8 +120,10 @@ class DietController extends Controller
 
         $diet = Diet::findOrFail($id);
 
-        // diet data...
-        $diet->fill($request->all())->update();
+        $data = $request->except('diet_image');
+        $data['ingredients'] = $this->formatMealPlan($request->input('ingredients'));
+
+        $diet->update($data);
 
         // Save diet image...
         if (isset($request->diet_image) && $request->diet_image != null) {
@@ -158,5 +166,52 @@ class DietController extends Controller
         }
 
         return redirect()->back()->with($status,$message);
+    }
+
+    protected function getMealIngredients(): array
+    {
+        return Ingredient::orderBy('title')->get()->map(function ($ingredient) {
+            $protein = (float) $ingredient->protein;
+            $carbs = (float) $ingredient->carbs;
+            $fat = (float) $ingredient->fat;
+            $calories = round(($protein * 4) + ($carbs * 4) + ($fat * 9), 2);
+
+            return [
+                'id' => $ingredient->id,
+                'title' => $ingredient->title,
+                'protein' => $protein,
+                'carbs' => $carbs,
+                'fat' => $fat,
+                'calories' => $calories,
+                'image' => getSingleMedia($ingredient, 'ingredient_image', null),
+            ];
+        })->toArray();
+    }
+
+    protected function formatMealPlan(?string $value): array
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        return array_values(array_map(function ($dayMeals) {
+            if (!is_array($dayMeals)) {
+                return [];
+            }
+
+            return array_values(array_map(function ($meal) {
+                if (is_numeric($meal) && (int) $meal > 0) {
+                    return (int) $meal;
+                }
+
+                return null;
+            }, $dayMeals));
+        }, $decoded));
     }
 }
