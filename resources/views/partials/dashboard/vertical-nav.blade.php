@@ -236,6 +236,11 @@
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
                 ->link->attr(['class' => activeRoute(route('product.index')) ? 'nav-link active' : 'nav-link']);
 
+            $menu->product->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.product_order')]).'</span>', ['route' => 'product-orders.index'])
+                ->data('permission', 'product-list')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('product-orders.index')) || request()->is('product-orders/*') ? 'nav-link active' : 'nav-link']);
+
             $menu->product->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.product')]).'</span>', ['route' => 'product.create'])
                 ->data('permission', [ 'product-add', 'product-edit'])
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
