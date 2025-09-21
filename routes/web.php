@@ -31,6 +31,7 @@ use App\Http\Controllers\PackageController;
 
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductOrderController;
 
 use App\Http\Controllers\PushNotificationController;
 
@@ -155,6 +156,7 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     
     //product
     Route::resource('product',ProductController::class);
+    Route::resource('product-orders', ProductOrderController::class)->only(['index', 'show', 'update']);
     Route::resource('productcategory',ProductCategoryController::class);
 
     Route::resource('package',PackageController::class);
