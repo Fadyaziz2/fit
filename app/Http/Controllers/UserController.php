@@ -468,6 +468,18 @@ class UserController extends Controller
         $ingredients = Ingredient::orderBy('title')->get();
         $ingredientsMap = $ingredients->keyBy('id');
 
+        $user = User::with('dislikedIngredients')->find($userId);
+
+        $dislikedIngredientIds = $user
+            ? $user->dislikedIngredients
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->filter()
+                ->unique()
+                ->values()
+                ->all()
+            : [];
+
         $customPlan = $assignment->custom_plan ?? [];
 
         $view = view('users.edit_assign_diet', [
@@ -478,6 +490,7 @@ class UserController extends Controller
             'customPlan' => $customPlan,
             'ingredients' => $ingredients,
             'ingredientsMap' => $ingredientsMap,
+            'dislikedIngredientIds' => $dislikedIngredientIds,
         ])->render();
 
         return response()->json(['data' => $view, 'status' => true]);
