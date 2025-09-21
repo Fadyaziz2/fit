@@ -53,7 +53,14 @@ class IngredientController extends Controller
             return redirect()->back()->withErrors($message);
         }
 
-        Ingredient::create($request->validated());
+        $data = $request->validated();
+        unset($data['ingredient_image']);
+
+        $ingredient = Ingredient::create($data);
+
+        if ($request->hasFile('ingredient_image')) {
+            storeMediaFile($ingredient, $request->ingredient_image, 'ingredient_image');
+        }
 
         return redirect()->route('ingredient.index')->withSuccess(__('message.save_form', ['form' => __('message.ingredient')]));
     }
@@ -85,7 +92,14 @@ class IngredientController extends Controller
         }
 
         $ingredient = Ingredient::findOrFail($id);
-        $ingredient->fill($request->validated())->update();
+        $data = $request->validated();
+        unset($data['ingredient_image']);
+
+        $ingredient->fill($data)->update();
+
+        if ($request->hasFile('ingredient_image')) {
+            storeMediaFile($ingredient, $request->ingredient_image, 'ingredient_image');
+        }
 
         return redirect()->route('ingredient.index')->withSuccess(__('message.update_form', ['form' => __('message.ingredient')]));
     }
