@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class RoleTableSeeder extends Seeder
 {
@@ -39,6 +40,13 @@ class RoleTableSeeder extends Seeder
             unset($value['permissions']);
 
             $value['guard_name'] = $value['guard_name'] ?? config('auth.defaults.guard');
+
+            foreach ($permissions as $permission) {
+                Permission::firstOrCreate(
+                    ['name' => $permission, 'guard_name' => $value['guard_name']],
+                    ['name' => $permission, 'guard_name' => $value['guard_name']]
+                );
+            }
 
             $role = Role::updateOrCreate(
                 ['name' => $value['name'], 'guard_name' => $value['guard_name']],
