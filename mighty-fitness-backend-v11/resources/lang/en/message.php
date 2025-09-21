@@ -64,6 +64,7 @@ return [
     'categorydiet' => 'Category Diet',
     'workouttype' => 'Workout Type',
     'diet' => 'Diet',
+    'ingredient' => 'Ingredient',
     'calories' => 'Calories',
     'carbs' => 'Carbs',
     'protein' => 'Protein',
