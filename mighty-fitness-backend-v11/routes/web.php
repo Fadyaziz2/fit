@@ -17,6 +17,7 @@ use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\CategoryDietController;
 use App\Http\Controllers\WorkoutTypeController;
 use App\Http\Controllers\DietController;
+use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TagsController;
 use App\Http\Controllers\LevelController;
@@ -125,6 +126,7 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     Route::resource('workouttype', WorkoutTypeController::class);
 
     Route::resource('diet', DietController::class);
+    Route::resource('ingredient', IngredientController::class);
     Route::resource('category', CategoryController::class);
     
     //FitnessTags

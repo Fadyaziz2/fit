@@ -64,6 +64,7 @@ return [
     'categorydiet' => 'فئة النظام الغذائي',
     'workouttype' => 'نوع التمرين',
     'diet' => 'نظام عذائي',
+    'ingredient' => 'مكون',
     'calories' => 'سعرات حرارية',
     'carbs' => 'الكربوهيدرات',
     'protein' => 'بروتين',

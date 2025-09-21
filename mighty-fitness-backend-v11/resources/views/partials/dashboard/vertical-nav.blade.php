@@ -158,7 +158,17 @@
                 ->data('permission', [ 'diet-add', 'diet-edit'])
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
                 ->link->attr(['class' => activeRoute(route('diet.create')) || request()->is('diet/*/edit') ? 'nav-link active' : 'nav-link']);
-            
+
+            $menu->diet->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.ingredient')]).'</span>', ['route' => 'ingredient.index'])
+                ->data('permission', 'ingredient-list')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('ingredient.index')) ? 'nav-link active' : 'nav-link']);
+
+            $menu->diet->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.ingredient')]).'</span>', ['route' => 'ingredient.create'])
+                ->data('permission', [ 'ingredient-add', 'ingredient-edit'])
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('ingredient.create')) || request()->is('ingredient/*/edit') ? 'nav-link active' : 'nav-link']);
+
             $menu->diet->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.categorydiet')]).'</span>', ['route' => 'categorydiet.index'])
                 ->data('permission', 'categorydiet-list')
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')

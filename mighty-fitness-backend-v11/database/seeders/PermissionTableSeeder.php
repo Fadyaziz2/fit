@@ -645,5 +645,34 @@ class PermissionTableSeeder extends Seeder
         foreach ($permissions as $value) {
             Permission::create($value);
         }
+
+        $ingredientPermission = Permission::create([
+            'name' => 'ingredient',
+            'title' => 'Ingredient',
+        ]);
+
+        Permission::create([
+            'name' => 'ingredient-list',
+            'title' => 'Ingredient List',
+            'parent_id' => $ingredientPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'ingredient-add',
+            'title' => 'Ingredient Add',
+            'parent_id' => $ingredientPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'ingredient-edit',
+            'title' => 'Ingredient Edit',
+            'parent_id' => $ingredientPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'ingredient-delete',
+            'title' => 'Ingredient Delete',
+            'parent_id' => $ingredientPermission->id,
+        ]);
     }
 }
