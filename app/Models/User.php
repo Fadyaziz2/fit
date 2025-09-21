@@ -6,10 +6,13 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
+
+use App\Models\Ingredient;
+use App\Models\UserDisease;
 
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
@@ -66,6 +69,16 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->hasMany(UserFavouriteWorkout::class, 'user_id', 'id');
     }
 
+    public function dislikedIngredients()
+    {
+        return $this->belongsToMany(Ingredient::class, 'user_disliked_ingredients')->withTimestamps();
+    }
+
+    public function userDiseases()
+    {
+        return $this->hasMany(UserDisease::class);
+    }
+
     public function userNotification(){
         return $this->hasMany(Notification::class, 'notifiable_id', 'id');
     }
@@ -87,6 +100,8 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
                     $row->userAssignWorkout()->delete();
                     $row->userFavouriteDiet()->delete();
                     $row->userFavouriteWorkout()->delete();
+                    $row->dislikedIngredients()->detach();
+                    $row->userDiseases()->delete();
                     $row->userNotification()->delete();
                     $row->chatgptFitBot()->delete();
                 break;

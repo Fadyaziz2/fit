@@ -17,6 +17,8 @@ use App\DataTables\SubscriptionDataTable;
 use App\Models\UserGraph;
 use Carbon\Carbon;
 use App\Models\Ingredient;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
 
 class UserController extends Controller
@@ -100,7 +102,7 @@ class UserController extends Controller
             return redirect()->back()->withErrors($message);
         }
 
-        $data = User::with('userProfile','roles')->findOrFail($id);
+        $data = User::with(['userProfile', 'roles', 'dislikedIngredients', 'userDiseases'])->findOrFail($id);
 
         $subscriptions = Subscription::where('user_id', $id)->get();
     
@@ -230,6 +232,43 @@ class UserController extends Controller
         ]);
 
         $diet = Diet::find($validated['diet_id']);
+        $user = User::with('dislikedIngredients')->find($validated['user_id']);
+
+        if ($diet && $user) {
+            $dislikedIngredientIds = $user->dislikedIngredients
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->filter()
+                ->unique();
+
+            if ($dislikedIngredientIds->isNotEmpty()) {
+                $structure = $this->buildDietPlanStructure($diet);
+
+                $dietIngredientIds = collect($structure['plan'])
+                    ->flatten(2)
+                    ->filter(fn ($value) => is_numeric($value))
+                    ->map(fn ($value) => (int) $value)
+                    ->unique();
+
+                $conflicts = $dietIngredientIds->intersect($dislikedIngredientIds);
+
+                if ($conflicts->isNotEmpty() && ! $request->boolean('force_confirm')) {
+                    $conflictNames = Ingredient::whereIn('id', $conflicts->all())
+                        ->pluck('title')
+                        ->filter()
+                        ->implode(', ');
+
+                    return response()->json([
+                        'status' => false,
+                        'event' => 'confirm',
+                        'message' => __('message.diet_contains_disliked', ['ingredients' => $conflictNames]),
+                        'confirm_label' => __('message.continue_anyway'),
+                        'cancel_label' => __('message.change_meal'),
+                    ]);
+                }
+            }
+        }
+
         $servings = (int) ($diet->servings ?? 0);
 
         $serveTimes = [];
@@ -251,6 +290,97 @@ class UserController extends Controller
         $message = __('message.assigndiet');
 
         return response()->json(['status' => true, 'type' => 'diet', 'event' => 'norefresh', 'message' => $message]);
+    }
+
+    public function updateHealthProfile(Request $request, $userId)
+    {
+        if (! auth()->user()->can('user-edit')) {
+            $message = __('message.permission_denied_for_account');
+
+            return response()->json([
+                'status' => false,
+                'event' => 'validation',
+                'message' => $message,
+            ]);
+        }
+
+        $user = User::with(['userProfile', 'dislikedIngredients', 'userDiseases'])->findOrFail($userId);
+
+        $validator = Validator::make($request->all(), [
+            'disliked_ingredients' => ['nullable', 'array'],
+            'disliked_ingredients.*' => ['integer', 'exists:ingredients,id'],
+            'diseases' => ['nullable', 'array'],
+            'diseases.*.name' => ['nullable', 'string', 'max:255'],
+            'diseases.*.started_at' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string'],
+        ], [], [
+            'disliked_ingredients.*' => __('message.ingredient'),
+            'diseases.*.name' => __('message.disease_name'),
+            'diseases.*.started_at' => __('message.disease_start_date'),
+        ]);
+
+        $validator->after(function ($validator) use ($request) {
+            $diseases = $request->input('diseases', []);
+
+            foreach ($diseases as $index => $disease) {
+                $name = isset($disease['name']) ? trim((string) $disease['name']) : '';
+                $date = $disease['started_at'] ?? null;
+
+                if ($name === '' && ($date === null || $date === '')) {
+                    continue;
+                }
+
+                if ($name === '' || $date === null || $date === '') {
+                    $validator->errors()->add("diseases.$index", __('message.disease_name_and_date_required'));
+                }
+            }
+        });
+
+        $validated = $validator->validate();
+
+        DB::transaction(function () use ($user, $validated) {
+            $dislikedIds = collect($validated['disliked_ingredients'] ?? [])
+                ->filter(fn ($value) => $value !== null && $value !== '')
+                ->map(fn ($value) => (int) $value)
+                ->unique()
+                ->values()
+                ->all();
+
+            $user->dislikedIngredients()->sync($dislikedIds);
+
+            $user->userDiseases()->delete();
+
+            $diseasePayload = [];
+            foreach ($validated['diseases'] ?? [] as $disease) {
+                $name = isset($disease['name']) ? trim((string) $disease['name']) : '';
+                $date = $disease['started_at'] ?? null;
+
+                if ($name === '' || $date === null || $date === '') {
+                    continue;
+                }
+
+                $diseasePayload[] = [
+                    'name' => $name,
+                    'started_at' => $date,
+                ];
+            }
+
+            if (! empty($diseasePayload)) {
+                $user->userDiseases()->createMany($diseasePayload);
+            }
+
+            $notes = $validated['notes'] ?? null;
+
+            $profile = $user->userProfile ?: $user->userProfile()->create([]);
+            $profile->notes = $notes;
+            $profile->save();
+        });
+
+        return response()->json([
+            'status' => true,
+            'event' => 'callback',
+            'message' => __('message.health_profile_updated'),
+        ]);
     }
 
     protected function buildDietPlanStructure(Diet $diet): array
