@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Role;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 
 class RoleTableSeeder extends Seeder
@@ -42,9 +43,13 @@ class RoleTableSeeder extends Seeder
             $value['guard_name'] = $value['guard_name'] ?? config('auth.defaults.guard');
 
             foreach ($permissions as $permission) {
-                Permission::firstOrCreate(
+                Permission::updateOrCreate(
                     ['name' => $permission, 'guard_name' => $value['guard_name']],
-                    ['name' => $permission, 'guard_name' => $value['guard_name']]
+                    [
+                        'name' => $permission,
+                        'guard_name' => $value['guard_name'],
+                        'title' => $this->formatPermissionTitle($permission),
+                    ]
                 );
             }
 
@@ -55,5 +60,12 @@ class RoleTableSeeder extends Seeder
 
             $role->syncPermissions($permissions);
         }
+    }
+
+    protected function formatPermissionTitle(string $permission): string
+    {
+        return Str::of($permission)
+            ->replace(['-', '_'], ' ')
+            ->title();
     }
 }
