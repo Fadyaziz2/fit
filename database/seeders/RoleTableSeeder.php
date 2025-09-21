@@ -32,11 +32,20 @@ class RoleTableSeeder extends Seeder
             ]
         ];
 
-        foreach ($roles as $key => $value) {
-            $permission = $value['permissions'];
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+        foreach ($roles as $value) {
+            $permissions = $value['permissions'] ?? [];
             unset($value['permissions']);
-            $role = Role::create($value);
-            $role->givePermissionTo($permission);
+
+            $value['guard_name'] = $value['guard_name'] ?? config('auth.defaults.guard');
+
+            $role = Role::updateOrCreate(
+                ['name' => $value['name'], 'guard_name' => $value['guard_name']],
+                $value
+            );
+
+            $role->syncPermissions($permissions);
         }
     }
 }
