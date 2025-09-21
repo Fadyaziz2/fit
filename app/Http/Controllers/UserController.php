@@ -16,6 +16,7 @@ use App\Http\Requests\UserRequest;
 use App\DataTables\SubscriptionDataTable;
 use App\Models\UserGraph;
 use Carbon\Carbon;
+use App\Models\Ingredient;
 
 class UserController extends Controller
 {
@@ -249,6 +250,211 @@ class UserController extends Controller
         $message = __('message.assigndiet');
 
         return response()->json(['status' => true, 'type' => 'diet', 'event' => 'norefresh', 'message' => $message]);
+    }
+
+    protected function buildDietPlanStructure(Diet $diet): array
+    {
+        $planData = $diet->ingredients ?? [];
+
+        $planArray = [];
+
+        if (is_array($planData)) {
+            foreach ($planData as $dayIndex => $meals) {
+                $planArray[(int) $dayIndex] = array_values(is_array($meals) ? $meals : []);
+            }
+        }
+
+        ksort($planArray);
+
+        $existingDays = count($planArray);
+        $daysCount = (int) ($diet->days ?? 0);
+        if ($daysCount < $existingDays) {
+            $daysCount = $existingDays;
+        }
+
+        $maxMeals = 0;
+        foreach ($planArray as $meals) {
+            $maxMeals = max($maxMeals, count($meals));
+        }
+
+        $servingsCount = (int) ($diet->servings ?? 0);
+        if ($servingsCount > $maxMeals) {
+            $maxMeals = $servingsCount;
+        }
+
+        if ($daysCount === 0) {
+            $daysCount = $existingDays;
+        }
+
+        $normalizedPlan = [];
+
+        for ($day = 0; $day < $daysCount; $day++) {
+            $dayMeals = $planArray[$day] ?? [];
+            if ($maxMeals > 0) {
+                $dayMeals = array_pad($dayMeals, $maxMeals, null);
+            }
+
+            $normalizedPlan[$day] = $dayMeals;
+        }
+
+        if ($daysCount === 0 && empty($normalizedPlan)) {
+            $normalizedPlan = [];
+        }
+
+        return [
+            'plan' => $normalizedPlan,
+            'maxMeals' => $maxMeals,
+            'days' => $daysCount,
+        ];
+    }
+
+    public function editAssignDietMeals($userId, $dietId)
+    {
+        $assignment = AssignDiet::where('user_id', $userId)
+            ->where('diet_id', $dietId)
+            ->first();
+
+        if (!$assignment) {
+            abort(404);
+        }
+
+        $diet = Diet::findOrFail($dietId);
+
+        $structure = $this->buildDietPlanStructure($diet);
+
+        $ingredients = Ingredient::orderBy('title')->get();
+        $ingredientsMap = $ingredients->keyBy('id');
+
+        $customPlan = $assignment->custom_plan ?? [];
+
+        $view = view('users.edit_assign_diet', [
+            'assignment' => $assignment,
+            'diet' => $diet,
+            'plan' => $structure['plan'],
+            'maxMeals' => $structure['maxMeals'],
+            'customPlan' => $customPlan,
+            'ingredients' => $ingredients,
+            'ingredientsMap' => $ingredientsMap,
+        ])->render();
+
+        return response()->json(['data' => $view, 'status' => true]);
+    }
+
+    public function updateAssignDietMeals(Request $request)
+    {
+        $planInput = $request->input('plan', []);
+
+        if (!is_array($planInput)) {
+            $planInput = [];
+        }
+
+        foreach ($planInput as $dayIndex => $dayMeals) {
+            if (!is_array($dayMeals)) {
+                unset($planInput[$dayIndex]);
+                continue;
+            }
+
+            foreach ($dayMeals as $mealIndex => $value) {
+                if ($value === '' || $value === null) {
+                    $planInput[$dayIndex][$mealIndex] = null;
+                    continue;
+                }
+
+                if (!is_numeric($value)) {
+                    return response()->json([
+                        'status' => false,
+                        'event' => 'validation',
+                        'message' => __('message.invalid_meal_selection'),
+                    ]);
+                }
+
+                $planInput[$dayIndex][$mealIndex] = (int) $value;
+            }
+        }
+
+        $request->merge(['plan' => $planInput]);
+
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'diet_id' => ['required', 'exists:diets,id'],
+            'plan' => ['nullable', 'array'],
+            'plan.*' => ['nullable', 'array'],
+            'plan.*.*' => ['nullable', 'integer'],
+        ]);
+
+        $assignment = AssignDiet::where('user_id', $validated['user_id'])
+            ->where('diet_id', $validated['diet_id'])
+            ->first();
+
+        if (!$assignment) {
+            abort(404);
+        }
+
+        $diet = Diet::findOrFail($validated['diet_id']);
+
+        $structure = $this->buildDietPlanStructure($diet);
+        $normalizedDietPlan = $structure['plan'];
+
+        $selectedPlan = $validated['plan'] ?? [];
+
+        $selectedIds = collect($selectedPlan)
+            ->flatten()
+            ->filter(fn ($value) => is_numeric($value))
+            ->map(fn ($value) => (int) $value);
+
+        if ($selectedIds->isNotEmpty()) {
+            $validIngredientIds = Ingredient::pluck('id')->map(fn ($id) => (int) $id);
+
+            if ($selectedIds->diff($validIngredientIds)->isNotEmpty()) {
+                return response()->json([
+                    'status' => false,
+                    'event' => 'validation',
+                    'message' => __('message.invalid_meal_selection'),
+                ]);
+            }
+        }
+
+        $customPlan = [];
+
+        foreach ($normalizedDietPlan as $dayIndex => $dayMeals) {
+            $selectedDayMeals = $selectedPlan[$dayIndex] ?? [];
+
+            foreach ($dayMeals as $mealIndex => $defaultIngredientId) {
+                $selectedValue = $selectedDayMeals[$mealIndex] ?? null;
+
+                if ($selectedValue === null) {
+                    continue;
+                }
+
+                if (!is_numeric($selectedValue)) {
+                    continue;
+                }
+
+                $selectedIngredientId = (int) $selectedValue;
+
+                if ((int) $defaultIngredientId === $selectedIngredientId) {
+                    continue;
+                }
+
+                $customPlan[$dayIndex][$mealIndex] = $selectedIngredientId;
+            }
+
+            if (isset($customPlan[$dayIndex]) && empty($customPlan[$dayIndex])) {
+                unset($customPlan[$dayIndex]);
+            }
+        }
+
+        $assignment->custom_plan = !empty($customPlan) ? $customPlan : null;
+        $assignment->save();
+
+        $message = __('message.custom_diet_meal_updated');
+
+        return response()->json([
+            'status' => true,
+            'type' => 'diet',
+            'event' => 'norefresh',
+            'message' => $message,
+        ]);
     }
 
     public function getAssignWorkoutList(Request $request)
