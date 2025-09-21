@@ -191,43 +191,43 @@
                 }
 
                 function updateMacroFields() {
-                    const totals = { protein: 0, carbs: 0, fat: 0 };
-                    let count = 0;
+                    const totals = { protein: 0, carbs: 0, fat: 0, calories: 0 };
+                    const days = sanitizeCount(daysField.val());
+                    const dayLimit = days > 0 ? days : mealPlan.length;
+                    let countedDays = 0;
 
-                    mealPlan.forEach(function (dayMeals) {
-                        if (!Array.isArray(dayMeals)) {
-                            return;
-                        }
+                    for (let dayIndex = 0; dayIndex < dayLimit; dayIndex++) {
+                        const dayTotals = computeDayTotals(mealPlan[dayIndex]);
+                        totals.protein += dayTotals.protein;
+                        totals.carbs += dayTotals.carbs;
+                        totals.fat += dayTotals.fat;
+                        totals.calories += dayTotals.calories;
+                        countedDays++;
+                    }
 
-                        dayMeals.forEach(function (mealId) {
-                            if (!mealId) {
-                                return;
-                            }
-
-                            const ingredient = ingredientMap[mealId];
-                            if (!ingredient) {
-                                return;
-                            }
-
-                            totals.protein += Number(ingredient.protein) || 0;
-                            totals.carbs += Number(ingredient.carbs) || 0;
-                            totals.fat += Number(ingredient.fat) || 0;
-                            count++;
+                    if (countedDays === 0 && mealPlan.length > 0) {
+                        mealPlan.forEach(function (dayMeals) {
+                            const dayTotals = computeDayTotals(dayMeals);
+                            totals.protein += dayTotals.protein;
+                            totals.carbs += dayTotals.carbs;
+                            totals.fat += dayTotals.fat;
+                            totals.calories += dayTotals.calories;
+                            countedDays++;
                         });
-                    });
+                    }
 
-                    let averages = {
+                    const averages = {
                         protein: 0,
                         carbs: 0,
                         fat: 0,
                         calories: 0,
                     };
 
-                    if (count > 0) {
-                        averages.protein = totals.protein / count;
-                        averages.carbs = totals.carbs / count;
-                        averages.fat = totals.fat / count;
-                        averages.calories = (averages.protein * 4) + (averages.carbs * 4) + (averages.fat * 9);
+                    if (countedDays > 0) {
+                        averages.protein = totals.protein / countedDays;
+                        averages.carbs = totals.carbs / countedDays;
+                        averages.fat = totals.fat / countedDays;
+                        averages.calories = totals.calories / countedDays;
                     }
 
                     Object.keys(macroFields).forEach(function (key) {

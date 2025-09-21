@@ -101,7 +101,6 @@ class DietDataTable extends DataTable
             ['data' => 'protein', 'name' => 'protein', 'title' => __('message.protein')],
             ['data' => 'fat', 'name' => 'fat', 'title' => __('message.fat')],
             ['data' => 'servings', 'name' => 'servings', 'title' => __('message.servings')],
-            ['data' => 'total_time', 'name' => 'total_time', 'title' => __('message.total_time')],
             ['data' => 'is_featured', 'name' => 'is_featured', 'title' => __('message.featured')],
             ['data' => 'status', 'name' => 'status', 'title' => __('message.status')],
             ['data' => 'created_at', 'name' => 'created_at', 'title' => __('message.created_at')],
