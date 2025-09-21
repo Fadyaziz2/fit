@@ -66,6 +66,8 @@ class DietController extends Controller
 
         $data = $request->except('diet_image');
         $data['ingredients'] = $this->formatMealPlan($request->input('ingredients'));
+        $macros = $this->calculateAverageMacros($data['ingredients']);
+        $data = array_merge($data, $macros);
 
         $diet = Diet::create($data);
 
@@ -146,6 +148,8 @@ class DietController extends Controller
 
         $data = $request->except('diet_image');
         $data['ingredients'] = $this->formatMealPlan($request->input('ingredients'));
+        $macros = $this->calculateAverageMacros($data['ingredients']);
+        $data = array_merge($data, $macros);
 
         $diet->update($data);
 
@@ -237,5 +241,68 @@ class DietController extends Controller
                 return null;
             }, $dayMeals));
         }, $decoded));
+    }
+
+    protected function calculateAverageMacros(array $plan): array
+    {
+        $ingredientIds = collect($plan)
+            ->flatten()
+            ->filter(function ($value) {
+                return is_numeric($value) && (int) $value > 0;
+            })
+            ->map(function ($value) {
+                return (int) $value;
+            });
+
+        if ($ingredientIds->isEmpty()) {
+            return [
+                'protein' => 0,
+                'carbs' => 0,
+                'fat' => 0,
+                'calories' => 0,
+            ];
+        }
+
+        $ingredients = Ingredient::whereIn('id', $ingredientIds->unique())->get(['id', 'protein', 'carbs', 'fat'])->keyBy('id');
+
+        $totals = [
+            'protein' => 0.0,
+            'carbs' => 0.0,
+            'fat' => 0.0,
+        ];
+
+        $count = 0;
+
+        foreach ($ingredientIds as $ingredientId) {
+            $ingredient = $ingredients->get($ingredientId);
+
+            if (!$ingredient) {
+                continue;
+            }
+
+            $count++;
+            $totals['protein'] += (float) $ingredient->protein;
+            $totals['carbs'] += (float) $ingredient->carbs;
+            $totals['fat'] += (float) $ingredient->fat;
+        }
+
+        if ($count === 0) {
+            return [
+                'protein' => 0,
+                'carbs' => 0,
+                'fat' => 0,
+                'calories' => 0,
+            ];
+        }
+
+        $averages = [
+            'protein' => round($totals['protein'] / $count, 2),
+            'carbs' => round($totals['carbs'] / $count, 2),
+            'fat' => round($totals['fat'] / $count, 2),
+        ];
+
+        $averages['calories'] = round(($averages['protein'] * 4) + ($averages['carbs'] * 4) + ($averages['fat'] * 9), 2);
+
+        return $averages;
     }
 }

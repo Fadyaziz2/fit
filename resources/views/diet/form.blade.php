@@ -99,6 +99,12 @@
                 const planInput = $('#meal-plan-input');
                 const daysField = $('#days');
                 const servingsField = $('#servings');
+                const macroFields = {
+                    protein: $('#protein'),
+                    carbs: $('#carbs'),
+                    fat: $('#fat'),
+                    calories: $('#calories'),
+                };
                 const tableHead = $('#meal-plan-table thead');
                 const tableBody = $('#meal-plan-table tbody');
                 const placeholder = $('#meal-plan-empty');
@@ -182,6 +188,56 @@
                     }
 
                     return Number.isInteger(number) ? number.toString() : number.toFixed(2);
+                }
+
+                function updateMacroFields() {
+                    const totals = { protein: 0, carbs: 0, fat: 0 };
+                    let count = 0;
+
+                    mealPlan.forEach(function (dayMeals) {
+                        if (!Array.isArray(dayMeals)) {
+                            return;
+                        }
+
+                        dayMeals.forEach(function (mealId) {
+                            if (!mealId) {
+                                return;
+                            }
+
+                            const ingredient = ingredientMap[mealId];
+                            if (!ingredient) {
+                                return;
+                            }
+
+                            totals.protein += Number(ingredient.protein) || 0;
+                            totals.carbs += Number(ingredient.carbs) || 0;
+                            totals.fat += Number(ingredient.fat) || 0;
+                            count++;
+                        });
+                    });
+
+                    let averages = {
+                        protein: 0,
+                        carbs: 0,
+                        fat: 0,
+                        calories: 0,
+                    };
+
+                    if (count > 0) {
+                        averages.protein = totals.protein / count;
+                        averages.carbs = totals.carbs / count;
+                        averages.fat = totals.fat / count;
+                        averages.calories = (averages.protein * 4) + (averages.carbs * 4) + (averages.fat * 9);
+                    }
+
+                    Object.keys(macroFields).forEach(function (key) {
+                        const field = macroFields[key];
+                        if (!field || !field.length) {
+                            return;
+                        }
+
+                        field.val(formatNumber(averages[key]));
+                    });
                 }
 
                 function computeDayTotals(dayMeals) {
@@ -399,6 +455,7 @@
                         placeholder.removeClass('d-none').text(translations.mealPlanHelper);
                         mealPlan = [];
                         updatePlanInput();
+                        updateMacroFields();
                         return;
                     }
 
@@ -443,6 +500,8 @@
 
                         tableBody.append(row);
                     }
+
+                    updateMacroFields();
                 }
 
                 removeSelectionButton.on('click', function () {
@@ -475,6 +534,7 @@
 
                 parseInitialPlan();
                 renderTable();
+                updateMacroFields();
             });
         })(jQuery);
     </script>
@@ -515,19 +575,19 @@
                             </div>
                             <div class="form-group col-md-4">
                                 {{ html()->label(__('message.calories') . ' <span class="text-danger">*</span>', 'calories')->class('form-control-label') }}
-                                {{ html()->text('calories')->placeholder(__('message.calories'))->class('form-control')->attribute('required','required') }}
+                                {{ html()->text('calories')->placeholder(__('message.calories'))->class('form-control')->attribute('required','required')->attribute('readonly', 'readonly')->id('calories') }}
                             </div>
                              <div class="form-group col-md-4">
                                 {{ html()->label(__('message.carbs').' <span class="text-danger">*</span>')->class('form-control-label') }}
-                                {{ html()->text('carbs', old('carbs'))->placeholder(__('message.carbs')." (". __('message.grams') .")")->class('form-control')->attribute('required', 'required') }}
+                                {{ html()->text('carbs', old('carbs'))->placeholder(__('message.carbs')." (". __('message.grams') .")")->class('form-control')->attribute('required', 'required')->attribute('readonly', 'readonly')->id('carbs') }}
                             </div>
                             <div class="form-group col-md-4">
                                 {{ html()->label(__('message.protein').' <span class="text-danger">*</span>')->class('form-control-label') }}
-                                {{ html()->text('protein', old('protein'))->placeholder(__('message.protein')." (". __('message.grams') .")")->class('form-control')->attribute('required', 'required') }}
+                                {{ html()->text('protein', old('protein'))->placeholder(__('message.protein')." (". __('message.grams') .")")->class('form-control')->attribute('required', 'required')->attribute('readonly', 'readonly')->id('protein') }}
                             </div>
                             <div class="form-group col-md-4">
                                 {{ html()->label(__('message.fat').' <span class="text-danger">*</span>')->class('form-control-label') }}
-                                {{ html()->text('fat', old('fat'))->placeholder(__('message.fat')." (". __('message.grams') .")")->class('form-control')->attribute('required', 'required') }}
+                                {{ html()->text('fat', old('fat'))->placeholder(__('message.fat')." (". __('message.grams') .")")->class('form-control')->attribute('required', 'required')->attribute('readonly', 'readonly')->id('fat') }}
                             </div>
                             <div class="form-group col-md-4">
                                 {{ html()->label(__('message.servings') . ' <span class="text-danger">*</span>', 'servings')->class('form-control-label') }}
@@ -536,10 +596,6 @@
                             <div class="form-group col-md-4">
                                 {{ html()->label(__('message.days') . ' <span class="text-danger">*</span>', 'days')->class('form-control-label') }}
                                 {{ html()->text('days')->placeholder(__('message.days'))->class('form-control')->attribute('required','required')->attribute('type','number')->attribute('min','1')->id('days') }}
-                            </div>
-                            <div class="form-group col-md-4">
-                                {{ html()->label(__('message.total_time').' <span class="text-danger">*</span>')->class('form-control-label') }}
-                                {{ html()->text('total_time', old('total_time'))->placeholder(__('message.total_time')." (". __('message.minutes') .")")->class('form-control')->attribute('required', 'required') }}
                             </div>
                             <div class="form-group col-md-4">
                                 {{ html()->label(__('message.status') . ' <span class="text-danger">*</span>', 'status')->class('form-control-label') }}
