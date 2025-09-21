@@ -429,7 +429,13 @@
                                                 <input type="date" class="form-control" id="disease-date-{{ $index }}" name="diseases[{{ $index }}][started_at]" value="{{ optional($disease->started_at)->format('Y-m-d') }}">
                                             </div>
                                             <div class="col-md-2">
-                                                <button type="button" class="btn btn-outline-danger w-100 remove-disease">{{ __('message.remove_condition') }}</button>
+                                                <button type="button" class="btn btn-outline-danger w-100 remove-disease d-flex align-items-center justify-content-center"
+                                                    aria-label="{{ __('message.remove_condition') }}">
+                                                    <span class="visually-hidden">{{ __('message.remove_condition') }}</span>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </div>
                                     @endforeach
@@ -466,7 +472,13 @@
                             <input type="date" class="form-control" id="disease-date-__INDEX__" name="diseases[__INDEX__][started_at]">
                         </div>
                         <div class="col-md-2">
-                            <button type="button" class="btn btn-outline-danger w-100 remove-disease">{{ __('message.remove_condition') }}</button>
+                            <button type="button" class="btn btn-outline-danger w-100 remove-disease d-flex align-items-center justify-content-center"
+                                aria-label="{{ __('message.remove_condition') }}">
+                                <span class="visually-hidden">{{ __('message.remove_condition') }}</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </template>

@@ -1,3 +1,11 @@
+@php
+    $dislikedIngredientIds = collect($dislikedIngredientIds ?? [])
+        ->filter(fn ($id) => is_numeric($id) && (int) $id > 0)
+        ->map(fn ($id) => (int) $id)
+        ->unique()
+        ->values()
+        ->all();
+@endphp
 <!-- Modal -->
 {{ html()->form('POST', route('update.assigndiet.meals'))->attribute('data-toggle', 'validator')->open() }}
     {{ html()->hidden('user_id', $assignment->user_id) }}
@@ -44,11 +52,6 @@
 
                                             $selectedIngredientIds = $hasCustomOverride ? $customIngredientIds : $defaultIngredientIds;
 
-                                            $defaultIngredientTitles = collect($defaultIngredientIds)
-                                                ->map(fn ($id) => optional($ingredientsMap->get($id))->title)
-                                                ->filter()
-                                                ->values();
-
                                             $selectedIngredientIds = collect($selectedIngredientIds)
                                                 ->filter(fn ($id) => is_numeric($id) && (int) $id > 0)
                                                 ->map(fn ($id) => (int) $id)
@@ -62,25 +65,57 @@
                                                 ->unique()
                                                 ->values()
                                                 ->all();
+
+                                            $defaultIngredientDetails = collect($defaultIngredientIds)
+                                                ->filter(fn ($id) => is_numeric($id) && (int) $id > 0)
+                                                ->map(function ($id) use ($ingredientsMap, $dislikedIngredientIds) {
+                                                    $ingredient = $ingredientsMap->get($id);
+
+                                                    if (!$ingredient) {
+                                                        return null;
+                                                    }
+
+                                                    $ingredientId = (int) $id;
+
+                                                    return [
+                                                        'id' => $ingredientId,
+                                                        'title' => $ingredient->title,
+                                                        'disliked' => in_array($ingredientId, $dislikedIngredientIds, true),
+                                                    ];
+                                                })
+                                                ->filter()
+                                                ->values();
                                         @endphp
                                         <td>
                                             <div class="d-flex flex-column gap-2">
                                                 <div>
                                                     <small class="text-muted d-block">{{ __('message.default_meal_label') }}</small>
-                                                    <span class="fw-semibold">
-                                                        @if($defaultIngredientTitles->isNotEmpty())
-                                                            {{ $defaultIngredientTitles->implode(', ') }}
-                                                        @else
-                                                            {{ __('message.no_ingredients_selected') }}
-                                                        @endif
-                                                    </span>
+                                                    @if($defaultIngredientDetails->isNotEmpty())
+                                                        <div class="d-flex flex-wrap gap-1">
+                                                            @foreach($defaultIngredientDetails as $detail)
+                                                                <span class="fw-semibold {{ $detail['disliked'] ? 'text-danger' : '' }}">
+                                                                    {{ $detail['title'] }}
+                                                                </span>@if(!$loop->last)<span class="text-muted">, </span>@endif
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <span class="fw-semibold">{{ __('message.no_ingredients_selected') }}</span>
+                                                    @endif
                                                     @if($hasCustomOverride)
                                                         <span class="badge bg-primary ms-1">{{ __('message.custom_meal_plan_badge') }}</span>
                                                     @endif
                                                 </div>
                                                 <select name="plan[{{ $dayIndex }}][{{ $mealIndex }}][]" class="form-select" multiple>
                                                     @foreach($ingredients as $ingredient)
-                                                        <option value="{{ $ingredient->id }}" {{ in_array($ingredient->id, $selectedIngredientIds, true) ? 'selected' : '' }}>
+                                                        @php
+                                                            $isDisliked = in_array($ingredient->id, $dislikedIngredientIds, true);
+                                                            $optionStyle = $isDisliked ? 'color: var(--bs-danger, #dc3545); font-weight: 600;' : null;
+                                                        @endphp
+                                                        <option value="{{ $ingredient->id }}"
+                                                            @class(['text-danger fw-semibold' => $isDisliked])
+                                                            {{ $isDisliked ? 'data-disliked="1"' : '' }}
+                                                            {{ $optionStyle ? 'style="' . $optionStyle . '"' : '' }}
+                                                            {{ in_array($ingredient->id, $selectedIngredientIds, true) ? 'selected' : '' }}>
                                                             {{ $ingredient->title }}
                                                         </option>
                                                     @endforeach
