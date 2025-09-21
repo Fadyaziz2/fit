@@ -241,6 +241,13 @@ class HomeController extends Controller
                 }
                 $items = $items->get();
                 break;
+        case 'ingredient':
+            $items = Ingredient::select('id','title as text');
+                if($value != ''){
+                    $items->where('title', 'LIKE', '%'.$value.'%');
+                }
+                $items = $items->get();
+                break;
         case 'tags':
                 $items = Tags::select('id','title as text');
                 if($value != ''){

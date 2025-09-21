@@ -59,6 +59,37 @@
                 ajaxForChart(pushUpsChart, pushup_value, 'push-up-min', 'Reps');
             });
 
+            const diseaseList = $('#disease-list');
+
+            if (diseaseList.length) {
+                const diseaseTemplate = $('#disease-row-template').html() || '';
+                let diseaseIndex = diseaseList.find('.disease-item').length;
+
+                const toggleDiseaseEmptyState = () => {
+                    const hasItems = diseaseList.find('.disease-item').length > 0;
+                    $('#disease-empty').toggleClass('d-none', hasItems);
+                };
+
+                toggleDiseaseEmptyState();
+
+                $('#add-disease').on('click', function () {
+                    if (!diseaseTemplate) {
+                        return;
+                    }
+
+                    const templateHtml = diseaseTemplate.replace(/__INDEX__/g, diseaseIndex);
+                    diseaseIndex += 1;
+                    const newItem = $(templateHtml);
+                    diseaseList.append(newItem);
+                    toggleDiseaseEmptyState();
+                });
+
+                $(document).on('click', '.remove-disease', function () {
+                    $(this).closest('.disease-item').remove();
+                    toggleDiseaseEmptyState();
+                });
+            }
+
         });
 
         function ajaxForChart(chart, dateValue = 'week', type, unit)
@@ -313,6 +344,96 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            {{ html()->form('POST', route('users.health.update', $data->id))->attribute('data-toggle', 'validator')->open() }}
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="header-title">
+                                    <h4 class="card-title mb-0">{{ __('message.disliked_ingredients_title') }}</h4>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label" for="disliked-ingredients">{{ __('message.ingredient') }}</label>
+                                    <select name="disliked_ingredients[]" id="disliked-ingredients" class="form-control select2js" multiple data-placeholder="{{ __('message.select_name', ['select' => __('message.ingredient')]) }}" data-ajax--url="{{ route('ajax-list', ['type' => 'ingredient']) }}">
+                                        @foreach($data->dislikedIngredients as $ingredient)
+                                            <option value="{{ $ingredient->id }}" selected>{{ $ingredient->title }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <p class="text-muted small mb-0">{{ __('message.disliked_ingredients_hint') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="header-title">
+                                    <h4 class="card-title mb-0">{{ __('message.health_conditions_title') }}</h4>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="add-disease">{{ __('message.add_condition') }}</button>
+                            </div>
+                            <div class="card-body">
+                                <div id="disease-list" class="d-grid gap-3">
+                                    <p class="text-muted mb-0 {{ $data->userDiseases->isNotEmpty() ? 'd-none' : '' }}" id="disease-empty">{{ __('message.no_diseases_added') }}</p>
+                                    @foreach($data->userDiseases as $index => $disease)
+                                        <div class="row g-3 align-items-end disease-item" data-index="{{ $index }}">
+                                            <div class="col-md-6">
+                                                <label class="form-label" for="disease-name-{{ $index }}">{{ __('message.disease_name') }}</label>
+                                                <input type="text" class="form-control" id="disease-name-{{ $index }}" name="diseases[{{ $index }}][name]" value="{{ $disease->name }}" placeholder="{{ __('message.disease_name') }}">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label" for="disease-date-{{ $index }}">{{ __('message.disease_start_date') }}</label>
+                                                <input type="date" class="form-control" id="disease-date-{{ $index }}" name="diseases[{{ $index }}][started_at]" value="{{ optional($disease->started_at)->format('Y-m-d') }}">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-outline-danger w-100 remove-disease">{{ __('message.remove_condition') }}</button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-12">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="header-title">
+                                    <h4 class="card-title mb-0">{{ __('message.notes') }}</h4>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <label class="form-label" for="user-notes">{{ __('message.notes') }}</label>
+                                <textarea name="notes" id="user-notes" class="form-control" rows="4" placeholder="{{ __('message.health_notes_hint') }}">{{ old('notes', optional($data->userProfile)->notes) }}</textarea>
+                                <p class="text-muted small mb-0 mt-2">{{ __('message.health_notes_hint') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mb-4">
+                    <button type="submit" class="btn btn-md btn-primary" data-form="ajax">{{ __('message.save') }}</button>
+                </div>
+                <template id="disease-row-template">
+                    <div class="row g-3 align-items-end disease-item" data-index="__INDEX__">
+                        <div class="col-md-6">
+                            <label class="form-label" for="disease-name-__INDEX__">{{ __('message.disease_name') }}</label>
+                            <input type="text" class="form-control" id="disease-name-__INDEX__" name="diseases[__INDEX__][name]" placeholder="{{ __('message.disease_name') }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="disease-date-__INDEX__">{{ __('message.disease_start_date') }}</label>
+                            <input type="date" class="form-control" id="disease-date-__INDEX__" name="diseases[__INDEX__][started_at]">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-outline-danger w-100 remove-disease">{{ __('message.remove_condition') }}</button>
+                        </div>
+                    </div>
+                </template>
+            {{ html()->form()->close() }}
         </div>
     </div>
     <div class="row">

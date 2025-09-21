@@ -63,20 +63,47 @@
             });
         }
 
-        $(document).on('click', '[data-form="ajax"]', function(f) {
+        function submitAjaxForm(form, trigger, extraData = {}) {
             $('form').validator('update');
-            f.preventDefault();
-            var current = $(this);
-            current.addClass('disabled');
-            var form = $(this).closest('form');
-            var url = form.attr('action');
-            var fd = new FormData(form[0]);
+
+            const method = form.attr('method') || 'POST';
+            const url = form.attr('action');
+            const formData = new FormData(form[0]);
+
+            Object.keys(extraData).forEach(function (key) {
+                formData.append(key, extraData[key]);
+            });
+
+            trigger.addClass('disabled');
 
             $.ajax({
-                type: "POST",
+                type: method,
                 url: url,
-                data: fd, // serializes form's elements.
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
                 success: function(e) {
+                    trigger.removeClass('disabled');
+
+                    if (e.event === 'confirm') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: "{{ __('message.please_confirm') }}",
+                            text: e.message,
+                            showCancelButton: true,
+                            confirmButtonColor: "var(--bs-primary)",
+                            cancelButtonColor: "#6c757d",
+                            confirmButtonText: e.confirm_label || "{{ __('message.ok') }}",
+                            cancelButtonText: e.cancel_label || "{{ __('message.cancel') }}"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                submitAjaxForm(form, trigger, Object.assign({}, extraData, { force_confirm: 1 }));
+                            }
+                        });
+                        return;
+                    }
+
                     if (e.status == true) {
                         if (e.event == "submited") {
                             showMessage(e.message);
@@ -97,21 +124,27 @@
                             getAssignList(e.type);
                         }
                     }
-                    if (e.status == false) {
-                        if (e.event == 'validation') {
-                            errorMessage(e.message);
-                        }
+
+                    if (e.status == false && e.event == 'validation') {
+                        errorMessage(e.message);
                     }
                 },
-                error: function(error) {
-
-                },
-                cache: false,
-                contentType: false,
-                processData: false,
+                error: function() {
+                    trigger.removeClass('disabled');
+                }
             });
-            f.preventDefault(); // avoid to execute the actual submit of the form.
+        }
 
+        $(document).on('click', '[data-form="ajax"]', function(event) {
+            event.preventDefault();
+            const trigger = $(this);
+            const form = trigger.closest('form');
+
+            if (! form.length) {
+                return;
+            }
+
+            submitAjaxForm(form, trigger);
         });
 
         $(document).on('change','.change_status', function() {
