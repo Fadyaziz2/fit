@@ -113,7 +113,9 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     
     //assign deit
     Route::get('assigndiet/{user_id}',[ UserController::class, 'assignDietForm' ])->name('add.assigndiet');
+    Route::get('assigndiet/{user_id}/diet/{diet_id}',[ UserController::class, 'editAssignDietMeals' ])->name('edit.assigndiet');
     Route::post('assigndiet',[ UserController::class, 'assignDietSave' ])->name('save.assigndiet');
+    Route::post('assigndiet/meals',[ UserController::class, 'updateAssignDietMeals' ])->name('update.assigndiet.meals');
     Route::post('assigndiet-delete',[ UserController::class, 'assignDietDestroy' ])->name('delete.assigndiet');
 
     Route::get('assigndiet-list',[ UserController::class, 'getAssignDietList'])->name('get.assigndietlist');

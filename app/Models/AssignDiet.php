@@ -11,12 +11,13 @@ class AssignDiet extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia;
 
-    protected $fillable = ['user_id','diet_id','serve_times'];
+    protected $fillable = ['user_id','diet_id','serve_times','custom_plan'];
 
     protected $casts = [
         'user_id'     => 'integer',
         'diet_id'     => 'integer',
         'serve_times' => 'array',
+        'custom_plan' => 'array',
     ];
 
     public function user()
