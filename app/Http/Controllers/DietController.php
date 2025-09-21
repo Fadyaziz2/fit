@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\DataTables\DietDataTable;
 use App\Helpers\AuthHelper;
 use App\Models\Diet;
+use App\Models\AssignDiet;
 use App\Models\Ingredient;
 
 use App\Http\Requests\DietRequest;
@@ -82,6 +83,29 @@ class DietController extends Controller
     public function show($id)
     {
         $data = Diet::findOrFail($id);
+    }
+
+    public function servings(Request $request, Diet $diet)
+    {
+        $userId = $request->input('user_id');
+
+        $serveTimes = [];
+
+        if ($userId) {
+            $assignment = AssignDiet::where('diet_id', $diet->id)
+                ->where('user_id', $userId)
+                ->first();
+
+            if ($assignment && is_array($assignment->serve_times)) {
+                $serveTimes = array_values($assignment->serve_times);
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'servings' => (int) ($diet->servings ?? 0),
+            'serve_times' => $serveTimes,
+        ]);
     }
 
     /**

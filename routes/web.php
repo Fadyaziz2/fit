@@ -131,6 +131,7 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     Route::resource('workouttype', WorkoutTypeController::class);
 
     Route::resource('diet', DietController::class);
+    Route::get('diet/{diet}/servings', [DietController::class, 'servings'])->name('diet.servings');
     Route::resource('ingredient', IngredientController::class);
     Route::resource('category', CategoryController::class);
     

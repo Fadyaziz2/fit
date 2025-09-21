@@ -273,6 +273,7 @@
                                 <tr>
                                     <th>{{ __('message.image') }}</th>
                                     <th>{{ __('message.title') }}</th>
+                                    <th>{{ __('message.meal_times') }}</th>
                                     <th></th>
                                 </tr>
                             </thead>

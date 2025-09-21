@@ -210,17 +210,42 @@ class UserController extends Controller
     public function getAssignDietList(Request $request)
     {
         $user_id = request('user_id');
-        $data = Diet::myDiet($user_id)->orderBy('id', 'desc')->get();
+        $data = Diet::myDiet($user_id)
+            ->with(['userAssignDiet' => function ($query) use ($user_id) {
+                $query->where('user_id', $user_id);
+            }])
+            ->orderBy('id', 'desc')
+            ->get();
         $view = view('users.assign-diet-list',compact('user_id', 'data'))->render();
         return response()->json([ 'data' => $view, 'status' => true ]);
     }
  
     public function assignDietSave(Request $request)
     {
-        $data = $request->all();
-        unset($data['_token']);
-        AssignDiet::updateOrCreate([ 'user_id' => request('user_id'), 'diet_id' => request('diet_id') ]);
-        
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'diet_id' => ['required', 'exists:diets,id'],
+        ]);
+
+        $diet = Diet::find($validated['diet_id']);
+        $servings = (int) ($diet->servings ?? 0);
+
+        $serveTimes = [];
+
+        if ($servings > 0) {
+            $serveTimesInput = $request->validate([
+                'serve_times' => ['required', 'array', 'size:' . $servings],
+                'serve_times.*' => ['required', 'date_format:H:i'],
+            ]);
+
+            $serveTimes = array_values($serveTimesInput['serve_times']);
+        }
+
+        AssignDiet::updateOrCreate(
+            ['user_id' => $validated['user_id'], 'diet_id' => $validated['diet_id']],
+            ['serve_times' => $serveTimes]
+        );
+
         $message = __('message.assigndiet');
 
         return response()->json(['status' => true, 'type' => 'diet', 'event' => 'norefresh', 'message' => $message]);
