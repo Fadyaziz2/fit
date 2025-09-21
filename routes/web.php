@@ -12,6 +12,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Artisan;
 // Packages
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\CategoryDietController;
@@ -55,9 +56,13 @@ use App\Http\Controllers\SubAdminController;
 
 require __DIR__.'/auth.php';
 
-Route::get('/storage', function () {
-    Artisan::call('storage:link');
-});
+Route::get('storage/{path}', function ($path) {
+    if (Storage::disk('public')->exists($path)) {
+        return Storage::disk('public')->response($path);
+    }
+
+    abort(404);
+})->where('path', '.*');
 
 Route::get('optimize', function () {
     Artisan::call('optimize:clear');
