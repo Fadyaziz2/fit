@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
 use App\Models\UserProductRecommendation;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class UserController extends Controller
 {
@@ -104,11 +105,13 @@ class UserController extends Controller
         }
 
         $data = User::with(['userProfile', 'roles', 'dislikedIngredients', 'userDiseases'])->findOrFail($id);
+        $data->load('media');
 
         $subscriptions = Subscription::where('user_id', $id)->get();
-    
+
         $profileImage = getSingleMedia($data, 'profile_image');
-        return $dataTable->with('user_id',$id)->render('users.profile', compact('data', 'profileImage','subscriptions'));
+        $attachments = $data->getMedia('attachments');
+        return $dataTable->with('user_id',$id)->render('users.profile', compact('data', 'profileImage','subscriptions', 'attachments'));
     }
 
     /**
@@ -203,6 +206,49 @@ class UserController extends Controller
 
         return redirect()->back()->with($status,$message);
 
+    }
+
+    public function storeAttachments(Request $request, User $user)
+    {
+        if( !auth()->user()->can('user-edit') ) {
+            $message = __('message.permission_denied_for_account');
+            return redirect()->back()->withErrors($message);
+        }
+
+        $request->validate([
+            'attachments' => ['required', 'array'],
+            'attachments.*' => ['file', 'mimes:jpeg,png,jpg,gif,webp,pdf,doc,docx,mp4,mov,avi,mkv', 'max:51200'],
+        ], [], [
+            'attachments' => __('message.attachments'),
+            'attachments.*' => __('message.attachments'),
+        ]);
+
+        $files = $request->file('attachments', []);
+
+        foreach ($files as $file) {
+            $user->addMedia($file)->preservingOriginal()->toMediaCollection('attachments');
+        }
+
+        return redirect()->back()->withSuccess(__('message.save_form', ['form' => __('message.attachments')]));
+    }
+
+    public function destroyAttachment(User $user, Media $media)
+    {
+        if( !auth()->user()->can('user-edit') ) {
+            $message = __('message.permission_denied_for_account');
+            return redirect()->back()->withErrors($message);
+        }
+
+        abort_if(
+            $media->model_type !== $user->getMorphClass() ||
+            $media->model_id !== $user->getKey() ||
+            $media->collection_name !== 'attachments',
+            404
+        );
+
+        $media->delete();
+
+        return redirect()->back()->withSuccess(__('message.delete_form', ['form' => __('message.attachments')]));
     }
 
     public function assignDietForm(Request $request)
