@@ -2,11 +2,14 @@
 {{ $dataTable->scripts() }}
     <script>
         function getAssignList(type = ''){
-            url = "{{ route('get.assigndietlist') }}";
+            let url = "{{ route('get.assigndietlist') }}";
             if( type == 'workout' ) {
                 url = "{{ route('get.assignworkoutlist') }}";
             }
-            
+            if( type == 'product' ) {
+                url = "{{ route('get.recommendproductlist') }}";
+            }
+
             $.ajax({
                 type: 'get',
                 url: url,
@@ -21,6 +24,7 @@
         $(document).ready(function () {
             getAssignList('diet');
             getAssignList('workout');
+            getAssignList('product');
 
             let weight_chart_options = generateChartOptions( "{{__('message.weight')}}" , [], []);
             let weightChart = createChart('#apex-line-area-weight', weight_chart_options);
@@ -339,6 +343,39 @@
                                 </tr>
                             </thead>
                             <tbody id="workout-data">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <div class="header-title">
+                        <h4 class="card-title mb-0">{{ __('message.recommended_products') }}</h4>
+                    </div>
+                    <div class="text-center ms-3 ms-lg-0 ms-md-0">
+                        <a href="#" class="float-end btn btn-sm btn-primary" data-modal-form="form" data-size="small"
+                            data--href="{{ route('add.recommendproduct', $data['id']) }}"
+                            data-app-title="{{ __('message.add_form_title',['form' => __('message.recommendproduct')]) }}"
+                            data-placement="top">{{ __('message.add_form_title', ['form' => __('message.product')] ) }}</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive mt-4 assign-profile-max-height">
+                        <table id="basic-table" class="table table-striped mb-0" role="grid">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('message.image') }}</th>
+                                    <th>{{ __('message.title') }}</th>
+                                    <th>{{ __('message.price') }}</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="product-data">
                             </tbody>
                         </table>
                     </div>

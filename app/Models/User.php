@@ -12,7 +12,9 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Permission\Traits\HasRoles;
 
 use App\Models\Ingredient;
+use App\Models\Product;
 use App\Models\UserDisease;
+use App\Models\UserProductRecommendation;
 
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
@@ -69,6 +71,16 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->hasMany(UserFavouriteWorkout::class, 'user_id', 'id');
     }
 
+    public function recommendedProducts()
+    {
+        return $this->belongsToMany(Product::class, 'user_product_recommendations')->withTimestamps();
+    }
+
+    public function productRecommendations()
+    {
+        return $this->hasMany(UserProductRecommendation::class);
+    }
+
     public function dislikedIngredients()
     {
         return $this->belongsToMany(Ingredient::class, 'user_disliked_ingredients')->withTimestamps();
@@ -104,6 +116,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
                     $row->userDiseases()->delete();
                     $row->userNotification()->delete();
                     $row->chatgptFitBot()->delete();
+                    $row->productRecommendations()->delete();
                 break;
                 default:
                     # code...

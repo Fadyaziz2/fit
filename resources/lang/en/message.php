@@ -230,6 +230,8 @@ return [
     'productcategory' => 'Product category',
     'assigndiet' => 'Assign Diet',
     'assignworkout' => 'Assign Workout',
+    'recommendproduct' => 'Recommend Product',
+    'recommended_products' => 'Recommended Products',
     'information' => 'information',
     'minute' => 'Minute',
     'hours' => 'Hours',
