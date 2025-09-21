@@ -73,6 +73,8 @@ return [
     'days' => 'Days',
     'day' => 'Day',
     'meal_plan' => 'Meal Plan',
+    'meal_times' => 'Meal times',
+    'meal_time_number' => 'Meal time :number',
     'select_meal' => 'Select Meal',
     'change_meal' => 'Change Meal',
     'no_meal_selected' => 'No meal selected yet.',

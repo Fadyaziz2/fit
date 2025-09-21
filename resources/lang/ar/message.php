@@ -73,6 +73,8 @@ return [
     'days' => 'أيام',
     'day' => 'يوم',
     'meal_plan' => 'خطة الوجبات',
+    'meal_times' => 'مواعيد الوجبات',
+    'meal_time_number' => 'موعد الوجبة :number',
     'select_meal' => 'اختر وجبة',
     'change_meal' => 'تعديل الوجبة',
     'no_meal_selected' => 'لم يتم اختيار وجبة بعد.',
