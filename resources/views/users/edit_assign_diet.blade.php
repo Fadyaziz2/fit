@@ -29,28 +29,63 @@
                                     <th class="text-nowrap">{{ __('message.day') }} {{ $dayIndex + 1 }}</th>
                                     @for($mealIndex = 0; $mealIndex < $maxMeals; $mealIndex++)
                                         @php
-                                            $defaultIngredientId = $dayMeals[$mealIndex] ?? null;
-                                            $defaultIngredient = $ingredientsMap->get($defaultIngredientId);
-                                            $customIngredientId = data_get($customPlan, $dayIndex . '.' . $mealIndex);
-                                            $selectedIngredientId = $customIngredientId ?? $defaultIngredientId;
+                                            $defaultIngredientIds = $dayMeals[$mealIndex] ?? [];
+                                            if (!is_array($defaultIngredientIds)) {
+                                                $defaultIngredientIds = is_numeric($defaultIngredientIds) ? [(int) $defaultIngredientIds] : [];
+                                            }
+
+                                            $customDayMeals = $customPlan[$dayIndex] ?? [];
+                                            $hasCustomOverride = is_array($customDayMeals) && array_key_exists($mealIndex, $customDayMeals);
+                                            $customIngredientIds = $hasCustomOverride ? $customDayMeals[$mealIndex] : [];
+
+                                            if (!is_array($customIngredientIds)) {
+                                                $customIngredientIds = is_numeric($customIngredientIds) ? [(int) $customIngredientIds] : [];
+                                            }
+
+                                            $selectedIngredientIds = $hasCustomOverride ? $customIngredientIds : $defaultIngredientIds;
+
+                                            $defaultIngredientTitles = collect($defaultIngredientIds)
+                                                ->map(fn ($id) => optional($ingredientsMap->get($id))->title)
+                                                ->filter()
+                                                ->values();
+
+                                            $selectedIngredientIds = collect($selectedIngredientIds)
+                                                ->filter(fn ($id) => is_numeric($id) && (int) $id > 0)
+                                                ->map(fn ($id) => (int) $id)
+                                                ->unique()
+                                                ->values()
+                                                ->all();
+
+                                            $customIngredientIds = collect($customIngredientIds)
+                                                ->filter(fn ($id) => is_numeric($id) && (int) $id > 0)
+                                                ->map(fn ($id) => (int) $id)
+                                                ->unique()
+                                                ->values()
+                                                ->all();
                                         @endphp
                                         <td>
                                             <div class="d-flex flex-column gap-2">
                                                 <div>
                                                     <small class="text-muted d-block">{{ __('message.default_meal_label') }}</small>
-                                                    <span class="fw-semibold">{{ $defaultIngredient?->title ?? __('message.no_meal_selected') }}</span>
-                                                    @if($customIngredientId && $selectedIngredientId !== $defaultIngredientId)
+                                                    <span class="fw-semibold">
+                                                        @if($defaultIngredientTitles->isNotEmpty())
+                                                            {{ $defaultIngredientTitles->implode(', ') }}
+                                                        @else
+                                                            {{ __('message.no_ingredients_selected') }}
+                                                        @endif
+                                                    </span>
+                                                    @if($hasCustomOverride)
                                                         <span class="badge bg-primary ms-1">{{ __('message.custom_meal_plan_badge') }}</span>
                                                     @endif
                                                 </div>
-                                                <select name="plan[{{ $dayIndex }}][{{ $mealIndex }}]" class="form-select">
-                                                    <option value="">{{ __('message.keep_default_meal_option') }}</option>
+                                                <select name="plan[{{ $dayIndex }}][{{ $mealIndex }}][]" class="form-select" multiple>
                                                     @foreach($ingredients as $ingredient)
-                                                        <option value="{{ $ingredient->id }}" {{ $selectedIngredientId === $ingredient->id ? 'selected' : '' }}>
+                                                        <option value="{{ $ingredient->id }}" {{ in_array($ingredient->id, $selectedIngredientIds, true) ? 'selected' : '' }}>
                                                             {{ $ingredient->title }}
                                                         </option>
                                                     @endforeach
                                                 </select>
+                                                <small class="text-muted">{{ __('message.multi_select_helper') }}</small>
                                             </div>
                                         </td>
                                     @endfor

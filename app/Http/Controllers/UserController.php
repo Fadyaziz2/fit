@@ -17,6 +17,7 @@ use App\DataTables\SubscriptionDataTable;
 use App\Models\UserGraph;
 use Carbon\Carbon;
 use App\Models\Ingredient;
+use InvalidArgumentException;
 
 class UserController extends Controller
 {
@@ -260,7 +261,16 @@ class UserController extends Controller
 
         if (is_array($planData)) {
             foreach ($planData as $dayIndex => $meals) {
-                $planArray[(int) $dayIndex] = array_values(is_array($meals) ? $meals : []);
+                $dayKey = (int) $dayIndex;
+                $planArray[$dayKey] = [];
+
+                if (!is_array($meals)) {
+                    continue;
+                }
+
+                foreach ($meals as $meal) {
+                    $planArray[$dayKey][] = $this->normalizeMealSelection($meal);
+                }
             }
         }
 
@@ -291,10 +301,12 @@ class UserController extends Controller
         for ($day = 0; $day < $daysCount; $day++) {
             $dayMeals = $planArray[$day] ?? [];
             if ($maxMeals > 0) {
-                $dayMeals = array_pad($dayMeals, $maxMeals, null);
+                $dayMeals = array_pad($dayMeals, $maxMeals, []);
             }
 
-            $normalizedPlan[$day] = $dayMeals;
+            $normalizedPlan[$day] = array_map(function ($meal) {
+                return $this->normalizeMealSelection($meal);
+            }, $dayMeals);
         }
 
         if ($daysCount === 0 && empty($normalizedPlan)) {
@@ -342,34 +354,14 @@ class UserController extends Controller
 
     public function updateAssignDietMeals(Request $request)
     {
-        $planInput = $request->input('plan', []);
-
-        if (!is_array($planInput)) {
-            $planInput = [];
-        }
-
-        foreach ($planInput as $dayIndex => $dayMeals) {
-            if (!is_array($dayMeals)) {
-                unset($planInput[$dayIndex]);
-                continue;
-            }
-
-            foreach ($dayMeals as $mealIndex => $value) {
-                if ($value === '' || $value === null) {
-                    $planInput[$dayIndex][$mealIndex] = null;
-                    continue;
-                }
-
-                if (!is_numeric($value)) {
-                    return response()->json([
-                        'status' => false,
-                        'event' => 'validation',
-                        'message' => __('message.invalid_meal_selection'),
-                    ]);
-                }
-
-                $planInput[$dayIndex][$mealIndex] = (int) $value;
-            }
+        try {
+            $planInput = $this->normalizePlanInput($request->input('plan', []), true);
+        } catch (InvalidArgumentException $exception) {
+            return response()->json([
+                'status' => false,
+                'event' => 'validation',
+                'message' => __('message.invalid_meal_selection'),
+            ]);
         }
 
         $request->merge(['plan' => $planInput]);
@@ -379,7 +371,8 @@ class UserController extends Controller
             'diet_id' => ['required', 'exists:diets,id'],
             'plan' => ['nullable', 'array'],
             'plan.*' => ['nullable', 'array'],
-            'plan.*.*' => ['nullable', 'integer'],
+            'plan.*.*' => ['nullable', 'array'],
+            'plan.*.*.*' => ['nullable', 'integer'],
         ]);
 
         $assignment = AssignDiet::where('user_id', $validated['user_id'])
@@ -395,7 +388,7 @@ class UserController extends Controller
         $structure = $this->buildDietPlanStructure($diet);
         $normalizedDietPlan = $structure['plan'];
 
-        $selectedPlan = $validated['plan'] ?? [];
+        $selectedPlan = $this->normalizePlanInput($validated['plan'] ?? []);
 
         $selectedIds = collect($selectedPlan)
             ->flatten()
@@ -419,24 +412,20 @@ class UserController extends Controller
         foreach ($normalizedDietPlan as $dayIndex => $dayMeals) {
             $selectedDayMeals = $selectedPlan[$dayIndex] ?? [];
 
-            foreach ($dayMeals as $mealIndex => $defaultIngredientId) {
-                $selectedValue = $selectedDayMeals[$mealIndex] ?? null;
+            foreach ($dayMeals as $mealIndex => $defaultIngredients) {
+                $defaultSelection = $this->normalizeMealSelection($defaultIngredients);
 
-                if ($selectedValue === null) {
+                if (!array_key_exists($mealIndex, $selectedDayMeals)) {
                     continue;
                 }
 
-                if (!is_numeric($selectedValue)) {
+                $selectedIngredients = $this->normalizeMealSelection($selectedDayMeals[$mealIndex]);
+
+                if ($selectedIngredients === $defaultSelection) {
                     continue;
                 }
 
-                $selectedIngredientId = (int) $selectedValue;
-
-                if ((int) $defaultIngredientId === $selectedIngredientId) {
-                    continue;
-                }
-
-                $customPlan[$dayIndex][$mealIndex] = $selectedIngredientId;
+                $customPlan[$dayIndex][$mealIndex] = $selectedIngredients;
             }
 
             if (isset($customPlan[$dayIndex]) && empty($customPlan[$dayIndex])) {
@@ -455,6 +444,92 @@ class UserController extends Controller
             'event' => 'norefresh',
             'message' => $message,
         ]);
+    }
+
+    protected function normalizePlanInput($plan, bool $strict = false): array
+    {
+        if (!is_array($plan)) {
+            if ($strict && $plan !== null && $plan !== '') {
+                throw new InvalidArgumentException('Invalid plan structure.');
+            }
+
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($plan as $dayIndex => $dayMeals) {
+            if (!is_array($dayMeals)) {
+                if ($strict && $dayMeals !== null && $dayMeals !== '') {
+                    throw new InvalidArgumentException('Invalid meal selection.');
+                }
+
+                continue;
+            }
+
+            $dayKey = (int) $dayIndex;
+
+            foreach ($dayMeals as $mealIndex => $meal) {
+                $mealKey = (int) $mealIndex;
+                $normalized[$dayKey][$mealKey] = $this->normalizeMealSelection($meal, $strict);
+            }
+        }
+
+        ksort($normalized);
+
+        foreach ($normalized as $dayKey => $dayMeals) {
+            ksort($dayMeals);
+            $normalized[$dayKey] = $dayMeals;
+        }
+
+        return $normalized;
+    }
+
+    protected function normalizeMealSelection($value, bool $strict = false): array
+    {
+        if (is_array($value)) {
+            $normalized = [];
+
+            foreach ($value as $item) {
+                if ($item === null || $item === '') {
+                    continue;
+                }
+
+                if (!is_numeric($item)) {
+                    if ($strict) {
+                        throw new InvalidArgumentException('Invalid meal ingredient.');
+                    }
+
+                    continue;
+                }
+
+                $id = (int) $item;
+
+                if ($id <= 0 || in_array($id, $normalized, true)) {
+                    continue;
+                }
+
+                $normalized[] = $id;
+            }
+
+            return $normalized;
+        }
+
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        if (!is_numeric($value)) {
+            if ($strict) {
+                throw new InvalidArgumentException('Invalid meal ingredient.');
+            }
+
+            return [];
+        }
+
+        $id = (int) $value;
+
+        return $id > 0 ? [$id] : [];
     }
 
     public function getAssignWorkoutList(Request $request)

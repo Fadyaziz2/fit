@@ -26,7 +26,7 @@ class DietDetailResource extends JsonResource
             'total_time'          => $this->total_time,
             'is_featured'         => $this->is_featured,
             'status'              => $this->status,
-            'ingredients'         => $this->ingredients,
+            'ingredients'         => $this->normalizePlan($this->ingredients),
             'description'         => $this->description,
             'diet_image'          => getSingleMedia($this, 'diet_image', null),
             'is_premium'          => $this->is_premium,
@@ -35,5 +35,58 @@ class DietDetailResource extends JsonResource
             'created_at'          => $this->created_at,
             'updated_at'          => $this->updated_at,
         ];
+    }
+
+    protected function normalizePlan($plan): array
+    {
+        if (!is_array($plan)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($plan as $dayIndex => $dayMeals) {
+            if (!is_array($dayMeals)) {
+                $normalized[] = [];
+                continue;
+            }
+
+            $normalized[] = array_values(array_map(function ($meal) {
+                return $this->normalizeMealSelection($meal);
+            }, $dayMeals));
+        }
+
+        return $normalized;
+    }
+
+    protected function normalizeMealSelection($value): array
+    {
+        if (is_array($value)) {
+            $normalized = [];
+
+            foreach ($value as $item) {
+                if (!is_numeric($item)) {
+                    continue;
+                }
+
+                $id = (int) $item;
+
+                if ($id <= 0 || in_array($id, $normalized, true)) {
+                    continue;
+                }
+
+                $normalized[] = $id;
+            }
+
+            return $normalized;
+        }
+
+        if (is_numeric($value)) {
+            $id = (int) $value;
+
+            return $id > 0 ? [$id] : [];
+        }
+
+        return [];
     }
 }

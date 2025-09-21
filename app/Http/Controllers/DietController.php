@@ -224,6 +224,10 @@ class DietController extends Controller
 
         $decoded = json_decode($value, true);
 
+        if (isset($decoded['plan']) && is_array($decoded['plan'])) {
+            $decoded = $decoded['plan'];
+        }
+
         if (!is_array($decoded)) {
             return [];
         }
@@ -234,11 +238,7 @@ class DietController extends Controller
             }
 
             return array_values(array_map(function ($meal) {
-                if (is_numeric($meal) && (int) $meal > 0) {
-                    return (int) $meal;
-                }
-
-                return null;
+                return $this->normalizeMealSelection($meal);
             }, $dayMeals));
         }, $decoded));
     }
@@ -304,5 +304,36 @@ class DietController extends Controller
         $averages['calories'] = round(($averages['protein'] * 4) + ($averages['carbs'] * 4) + ($averages['fat'] * 9), 2);
 
         return $averages;
+    }
+
+    protected function normalizeMealSelection($value): array
+    {
+        if (is_array($value)) {
+            $normalized = [];
+
+            foreach ($value as $item) {
+                if (!is_numeric($item)) {
+                    continue;
+                }
+
+                $id = (int) $item;
+
+                if ($id <= 0 || in_array($id, $normalized, true)) {
+                    continue;
+                }
+
+                $normalized[] = $id;
+            }
+
+            return $normalized;
+        }
+
+        if (is_numeric($value)) {
+            $id = (int) $value;
+
+            return $id > 0 ? [$id] : [];
+        }
+
+        return [];
     }
 }
