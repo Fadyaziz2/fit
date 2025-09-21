@@ -25,9 +25,11 @@ class IngredientRequest extends FormRequest
     {
         $rules = [
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'protein' => 'required|numeric|min:0',
             'fat' => 'required|numeric|min:0',
             'carbs' => 'required|numeric|min:0',
+            'ingredient_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
         ];
 
         return $rules;

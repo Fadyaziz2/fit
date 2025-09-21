@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\Product;
 use App\Models\Package;
 use App\Models\ProductCategory;
+use App\Models\Ingredient;
 use App\Helpers\AuthHelper;
 use App\Models\AppSetting;
 use App\Models\DefaultKeyword;
@@ -148,6 +149,10 @@ class HomeController extends Controller
             case 'product_image':
                 $data = Product::find($request->id);
                 $message = __('message.msg_removed',[ 'name' => __('message.product') ]);
+                break;
+            case 'ingredient_image':
+                $data = Ingredient::find($request->id);
+                $message = __('message.msg_removed',[ 'name' => __('message.ingredient') ]);
                 break;
             case 'language_image':
                 $data = LanguageList::find($request->id);

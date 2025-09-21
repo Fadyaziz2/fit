@@ -22,6 +22,11 @@ class IngredientDataTable extends DataTable
     {
         return datatables()
             ->eloquent($query)
+            ->addColumn('ingredient_image', function ($query) {
+                $image = getSingleMedia($query, 'ingredient_image');
+
+                return '<img src=' . $image . ' width="40" height="40" class="rounded" />';
+            })
             ->editColumn('protein', function ($query) {
                 return number_format($query->protein, 2);
             })
@@ -57,7 +62,7 @@ class IngredientDataTable extends DataTable
                     $query->orderBy($column_name, $direction);
                 }
             })
-            ->rawColumns(['action']);
+            ->rawColumns(['action', 'ingredient_image']);
     }
 
     /**
@@ -84,6 +89,7 @@ class IngredientDataTable extends DataTable
                 ->searchable(false)
                 ->title(__('message.srno'))
                 ->orderable(false),
+            ['data' => 'ingredient_image', 'name' => 'ingredient_image', 'title' => __('message.image'), 'orderable' => false, 'searchable' => false],
             ['data' => 'title', 'name' => 'title', 'title' => __('message.title')],
             ['data' => 'protein', 'name' => 'protein', 'title' => __('message.protein')],
             ['data' => 'fat', 'name' => 'fat', 'title' => __('message.fat')],
