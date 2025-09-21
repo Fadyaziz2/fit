@@ -20,6 +20,7 @@ use App\Models\Ingredient;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
+use App\Models\UserProductRecommendation;
 
 class UserController extends Controller
 {
@@ -670,6 +671,63 @@ class UserController extends Controller
         return response()->json([ 'data' => $view, 'status' => true ]);
     }
 
+    public function recommendProductForm(Request $request)
+    {
+        $user_id = request('user_id');
+        $view = view('users.recommend_product', compact('user_id'))->render();
+
+        return response()->json(['data' => $view, 'status' => true]);
+    }
+
+    public function recommendProductSave(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+            'product_ids' => ['required', 'array'],
+            'product_ids.*' => ['integer', 'exists:products,id'],
+        ]);
+
+        $productIds = collect($validated['product_ids'])
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->map(fn ($value) => (int) $value)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($productIds)) {
+            return response()->json([
+                'status' => false,
+                'event' => 'validation',
+                'message' => __('message.request_required', ['name' => __('message.product')]),
+            ]);
+        }
+
+        $user = User::findOrFail($validated['user_id']);
+        $user->recommendedProducts()->syncWithoutDetaching($productIds);
+
+        $message = __('message.recommendproduct');
+
+        return response()->json([
+            'status' => true,
+            'type' => 'product',
+            'event' => 'norefresh',
+            'message' => $message,
+        ]);
+    }
+
+    public function getRecommendProductList(Request $request)
+    {
+        $user_id = request('user_id');
+        $recommendations = UserProductRecommendation::with('product')
+            ->where('user_id', $user_id)
+            ->orderByDesc('id')
+            ->get();
+
+        $view = view('users.recommend-product-list', compact('user_id', 'recommendations'))->render();
+
+        return response()->json(['data' => $view, 'status' => true]);
+    }
+
     public function assignDietDestroy(Request $request)
     {
         $assigndiet = AssignDiet::where('user_id', $request->user_id )->where('diet_id', $request->diet_id )->first();
@@ -723,6 +781,33 @@ class UserController extends Controller
         }
 
         return redirect()->back()->with($status,$message);
+    }
+
+    public function recommendProductDestroy(Request $request)
+    {
+        $recommendation = UserProductRecommendation::where('user_id', $request->user_id)
+            ->where('product_id', $request->product_id)
+            ->first();
+
+        $status = 'errors';
+        $message = __('message.not_found_entry', ['name' => __('message.recommendproduct')]);
+
+        if ($recommendation) {
+            $recommendation->delete();
+            $status = 'success';
+            $message = __('message.delete_form', ['form' => __('message.recommendproduct')]);
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'status' => true,
+                'message' => $message,
+                'type' => 'product',
+                'event' => 'norefresh',
+            ]);
+        }
+
+        return redirect()->back()->with($status, $message);
     }
 
     public function fetchUserGraphData($type, $unit, $dateValue, $user_id)

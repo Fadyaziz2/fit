@@ -128,7 +128,13 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
 
     Route::get('assignworkout-list',[ UserController::class, 'getAssignWorkoutList'])->name('get.assignworkoutlist');
 
-    //Fitness CategoryDiet 
+    Route::get('recommendproduct/{user_id}',[ UserController::class, 'recommendProductForm' ])->name('add.recommendproduct');
+    Route::post('recommendproduct',[ UserController::class, 'recommendProductSave' ])->name('save.recommendproduct');
+    Route::post('recommendproduct-delete',[ UserController::class, 'recommendProductDestroy' ])->name('delete.recommendproduct');
+
+    Route::get('recommendproduct-list',[ UserController::class, 'getRecommendProductList'])->name('get.recommendproductlist');
+
+    //Fitness CategoryDiet
     Route::resource('categorydiet', CategoryDietController::class);
     
     //Fitness Workout 

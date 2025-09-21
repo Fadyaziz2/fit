@@ -283,6 +283,13 @@ class HomeController extends Controller
                 }
                 $items = $items->get();
                 break;
+        case 'product':
+                $items = Product::select('id','title as text')->where('status','active');
+                if($value != ''){
+                    $items->where('title', 'LIKE', '%'.$value.'%');
+                }
+                $items = $items->get();
+                break;
         case 'workout':
                 $items = Workout::select('id','title as text');
                 if($value != ''){

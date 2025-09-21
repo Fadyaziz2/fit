@@ -226,6 +226,8 @@ return [
     'productcategory' => 'فئة المنتج',
     'assigndiet' => 'تعيين النظام الغذائي',
     'assignworkout' => 'تعيين تجريب',
+    'recommendproduct' => 'اقتراح منتج',
+    'recommended_products' => 'المنتجات المقترحة',
     'information' => 'معلومة',
     'minute' => 'دقيقة',
     'hours' => 'ساعات',
