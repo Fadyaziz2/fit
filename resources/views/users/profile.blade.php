@@ -384,6 +384,87 @@
         </div>
     </div>
     <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="header-title">
+                        <h4 class="card-title mb-0">{{ __('message.attachments') }}</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @can('user-edit')
+                        <form method="POST" action="{{ route('users.attachments.store', $data->id) }}" enctype="multipart/form-data" class="row g-3 align-items-end">
+                            @csrf
+                            <div class="col-lg-9">
+                                <label class="form-label" for="user-attachments">{{ __('message.attachments') }}</label>
+                                <input type="file" name="attachments[]" id="user-attachments" class="form-control" multiple accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/*">
+                                @php
+                                    $attachmentError = $errors->first('attachments') ?: $errors->first('attachments.*');
+                                @endphp
+                                @if($attachmentError)
+                                    <div class="text-danger mt-2">{{ $attachmentError }}</div>
+                                @endif
+                                <small class="form-text text-muted">{{ __('message.only') }} JPG, PNG, WEBP, PDF, DOC, DOCX, MP4, MOV, AVI, MKV {{ __('message.allowed') }}.</small>
+                            </div>
+                            <div class="col-lg-3 text-lg-end">
+                                <button type="submit" class="btn btn-primary w-100">{{ __('message.add') }}</button>
+                            </div>
+                        </form>
+                        <hr class="my-4">
+                    @endcan
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('message.preview') }}</th>
+                                    <th>{{ __('message.name') }}</th>
+                                    <th>{{ __('message.type') }}</th>
+                                    <th>{{ __('message.size') }}</th>
+                                    <th class="text-end">{{ __('message.action') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($attachments as $attachment)
+                                    @php
+                                        $isImage = $attachment->mime_type && str_starts_with($attachment->mime_type, 'image/');
+                                        $extension = strtoupper(pathinfo($attachment->file_name, PATHINFO_EXTENSION));
+                                    @endphp
+                                    <tr>
+                                        <td class="align-middle">
+                                            @if($isImage)
+                                                <img src="{{ $attachment->getFullUrl() }}" alt="{{ $attachment->file_name }}" class="img-thumbnail" style="max-height: 80px;">
+                                            @else
+                                                <span class="badge bg-secondary">{{ $extension ?: 'FILE' }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="align-middle">{{ $attachment->file_name }}</td>
+                                        <td class="align-middle">{{ $attachment->mime_type ?? '-' }}</td>
+                                        <td class="align-middle">{{ $attachment->human_readable_size }}</td>
+                                        <td class="align-middle text-end">
+                                            <a href="{{ $attachment->getFullUrl() }}" class="btn btn-sm btn-outline-primary me-1" target="_blank" rel="noopener">{{ __('message.view') }}</a>
+                                            <a href="{{ $attachment->getFullUrl() }}" class="btn btn-sm btn-outline-secondary me-1" download>{{ __('message.download') }}</a>
+                                            @can('user-edit')
+                                                <form method="POST" action="{{ route('users.attachments.destroy', [$data->id, $attachment->id]) }}" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('{{ __('message.delete_msg') }}');">{{ __('message.delete') }}</button>
+                                                </form>
+                                            @endcan
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">{{ __('message.no_results_found') }}</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
         <div class="col-lg-12">
             {{ html()->form('POST', route('users.health.update', $data->id))->attribute('data-toggle', 'validator')->open() }}
                 <div class="row">

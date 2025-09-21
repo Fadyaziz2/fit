@@ -106,6 +106,8 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
 
     // Users Module
     Route::resource('users', UserController::class);
+    Route::post('users/{user}/attachments', [UserController::class, 'storeAttachments'])->name('users.attachments.store');
+    Route::delete('users/{user}/attachments/{media}', [UserController::class, 'destroyAttachment'])->name('users.attachments.destroy');
     Route::resource('equipment', EquipmentController::class);
 
     Route::resource('subadmin', SubAdminController::class);
