@@ -21,7 +21,7 @@ def ensureLocalProperties() {
 ensureLocalProperties()
 
 buildscript {
-    ext.kotlin_version = '2.0.20'
+    ext.kotlin_version = '2.1.0'
     repositories {
         google()
         mavenCentral()
@@ -29,7 +29,7 @@ buildscript {
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.android.tools.build:gradle:8.1.0'
+        classpath 'com.android.tools.build:gradle:8.6.0'
         classpath 'com.google.gms:google-services:4.4.2'
     }
 }
@@ -38,6 +38,14 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+    configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == "org.jetbrains.kotlin") {
+                details.useVersion kotlin_version
+                details.because("Align Kotlin dependencies with the Kotlin Gradle plugin version $kotlin_version")
+            }
+        }
     }
     subprojects {
         afterEvaluate { project ->
