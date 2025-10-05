@@ -1,36 +1,13 @@
-import java.util.Properties
-def ensureLocalProperties() {
-    def localPropertiesFile = rootProject.file('local.properties')
-    if (localPropertiesFile.exists()) {
-        return
-    }
-
-    def sdkDir = System.getenv('ANDROID_SDK_ROOT') ?: System.getenv('ANDROID_HOME')
-    if (sdkDir == null || sdkDir.trim().isEmpty()) {
-        return
-    }
-
-    def properties = new Properties()
-    properties.setProperty('sdk.dir', sdkDir.replace('\\', '\\\\'))
-
-    localPropertiesFile.withWriter('UTF-8') { writer ->
-        properties.store(writer, 'Automatically generated to provide the Android SDK path')
-    }
-}
-
-ensureLocalProperties()
-
 buildscript {
-    ext.kotlin_version = '2.1.0'
+    ext.kotlin_version = '2.1.10'
     repositories {
         google()
         mavenCentral()
     }
-
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath 'com.android.tools.build:gradle:8.6.0'
-        classpath 'com.google.gms:google-services:4.4.2'
+        classpath "com.android.tools.build:gradle:8.5.2"
+        classpath "com.google.gms:google-services:4.4.2"
     }
 }
 
@@ -39,36 +16,44 @@ allprojects {
         google()
         mavenCentral()
     }
-    configurations.configureEach {
-        resolutionStrategy.eachDependency { details ->
-            if (details.requested.group == "org.jetbrains.kotlin") {
-                details.useVersion kotlin_version
-                details.because("Align Kotlin dependencies with the Kotlin Gradle plugin version $kotlin_version")
+}
+
+subprojects {
+    // يضيف namespace تلقائياً لو ناقص في موديولات قديمة
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                if (namespace == null) {
+                    namespace project.group
+                }
             }
         }
     }
-    subprojects {
-        afterEvaluate { project ->
-            if (project.hasProperty('android')) {
-                project.android {
-                    if (namespace == null) {
-                        namespace project.group
-                    }
-                }
+
+    // قَسْر نسخ محددة لمنع التعارضات
+    configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            // توحيد كوتلن على 2.0.20
+            if (details.requested.group == "org.jetbrains.kotlin") {
+                details.useVersion("2.1.10")
+            }
+            // إبقاء core/core-ktx أقل من 1.17 لتوافق AGP 8.5.x
+            if (details.requested.group == "androidx.core" &&
+                    (details.requested.name == "core-ktx" || details.requested.name == "core")) {
+                details.useVersion("1.13.1")
+                details.because("Keep core/core-ktx below 1.17.0 to stay compatible with AGP 8.5.x")
             }
         }
     }
 }
 
 rootProject.buildDir = '../build'
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
     project.evaluationDependsOn(':app')
 }
 
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }
-

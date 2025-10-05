@@ -156,12 +156,6 @@
 @import path_provider_foundation;
 #endif
 
-#if __has_include(<paytm_allinonesdk/AllInOneSdkPlugin.h>)
-#import <paytm_allinonesdk/AllInOneSdkPlugin.h>
-#else
-@import paytm_allinonesdk;
-#endif
-
 #if __has_include(<pedometer/PedometerPlugin.h>)
 #import <pedometer/PedometerPlugin.h>
 #else
@@ -262,7 +256,6 @@
   [OneSignalPlugin registerWithRegistrar:[registry registrarForPlugin:@"OneSignalPlugin"]];
   [FPPPackageInfoPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPPackageInfoPlusPlugin"]];
   [PathProviderPlugin registerWithRegistrar:[registry registrarForPlugin:@"PathProviderPlugin"]];
-  [AllInOneSdkPlugin registerWithRegistrar:[registry registrarForPlugin:@"AllInOneSdkPlugin"]];
   [PedometerPlugin registerWithRegistrar:[registry registrarForPlugin:@"PedometerPlugin"]];
   [PermissionHandlerPlugin registerWithRegistrar:[registry registrarForPlugin:@"PermissionHandlerPlugin"]];
   [RazorpayFlutterPlugin registerWithRegistrar:[registry registrarForPlugin:@"RazorpayFlutterPlugin"]];

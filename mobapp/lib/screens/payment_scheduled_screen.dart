@@ -12,7 +12,6 @@ import 'package:http/http.dart' as http;
 import 'package:mighty_fitness/components/tab_payment.dart';
 import 'package:mighty_fitness/screens/web_view_screen.dart';
 import 'package:my_fatoorah/my_fatoorah.dart';
-import 'package:paytm_allinonesdk/paytm_allinonesdk.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../extensions/animatedList/animated_list_view.dart';
@@ -636,25 +635,7 @@ class PaymentScheduledScreenState extends State<PaymentScheduledScreen> {
 
       String txnToken = response.body;
 
-      var responseData = AllInOneSdk.startTransaction(paytmMerchantId ?? '', orderId, widget.mSubscriptionModel!.price.toString(), txnToken, "", isPaytmTestType, false);
-      responseData.then((value) {
-        print(value);
-        setState(() {
-          print("${value.toString()}");
-        });
-      }).catchError((onError) {
-        if (onError is PlatformException) {
-          appStore.setLoading(false);
-          setState(() {
-            print("${widget.mSubscriptionModel!.price.toString()}");
-          });
-        } else {
-          setState(() {
-            appStore.setLoading(false);
-            print("${onError.toString()}");
-          });
-        }
-      });
+
     } catch (e) {
       appStore.setLoading(false);
       print(e);

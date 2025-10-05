@@ -133,10 +133,10 @@ packages:
     dependency: "direct main"
     description:
       name: awesome_notifications
-      sha256: d9e46ce7f5171ee1e9b1c5bc6dc40bd77528561f592842ce97ce3a0a9ae155ef
+      sha256: "0d5fa4457f2ba4e536adc3ef6af709cdcecf4a05a1f3035981e9afa2f899b2a8"
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.3+1"
+    version: "0.10.1"
   bambara_flutter:
     dependency: "direct main"
     description:
@@ -1512,14 +1512,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.14"
-  paytm_allinonesdk:
-    dependency: "direct main"
-    description:
-      name: paytm_allinonesdk
-      sha256: "7a6b4cbd79acc2dc8aa77941801badaafd99b47a6ded42ce771fbc99a4da3703"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.2.8"
   pedometer:
     dependency: "direct main"
     description:

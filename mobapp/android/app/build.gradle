@@ -16,7 +16,7 @@ if (localPropertiesFile.exists()) {
 
 
 android {
-    compileSdkVersion 34
+    compileSdkVersion 36
     ndkVersion "26.1.10909125"
     namespace "com.mighty.fitness"
 
@@ -28,8 +28,8 @@ android {
 
     kotlinOptions {
         jvmTarget = '17'
-       // apiVersion = '2.0'
-       // languageVersion = '1.8'
+        // apiVersion = '2.0'
+        // languageVersion = '1.8'
     }
 
     java {
@@ -58,7 +58,7 @@ android {
             minifyEnabled false
             shrinkResources false
             signingConfig signingConfigs.debug
-          //  proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            //  proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
 
         }
     }
@@ -91,10 +91,10 @@ dependencies {
     implementation "com.google.firebase:firebase-analytics"
     implementation 'androidx.multidex:multidex:2.0.1'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
-  /*  implementation('com.braintreepayments.api:drop-in:5.2.1') {
-        exclude group: "org.jfrog.cardinalcommerce.gradle", module: "cardinalmobilesdk"
-    }*/
-   // implementation("org.jfrog.cardinalcommerce.gradle:cardinalmobilesdk:2.2.7-2")
+    /*  implementation('com.braintreepayments.api:drop-in:5.2.1') {
+          exclude group: "org.jfrog.cardinalcommerce.gradle", module: "cardinalmobilesdk"
+      }*/
+    // implementation("org.jfrog.cardinalcommerce.gradle:cardinalmobilesdk:2.2.7-2")
     implementation 'androidx.window:window:1.0.0'
     implementation 'androidx.window:window-java:1.0.0'
 

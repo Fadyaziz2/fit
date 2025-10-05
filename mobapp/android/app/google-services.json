@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "934981979133",
+    "project_id": "micro-579a7",
+    "storage_bucket": "micro-579a7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:934981979133:android:ce4980dde5e4662ae2e794",
+        "android_client_info": {
+          "package_name": "com.mighty.fitness"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfyRmoiZRDniQ2cLLiZQKNh50xVnqA1DM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
