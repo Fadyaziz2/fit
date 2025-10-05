@@ -3,7 +3,7 @@ import 'package:mighty_fitness/utils/app_images.dart';
 
 import '../main.dart';
 
-const APP_NAME = "YOUR_APP_NAME";
+const APP_NAME = "Micro";
 //endregion
 var initialSteps = 0;
 
