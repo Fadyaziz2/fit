@@ -18,7 +18,7 @@
         android:allowBackup="false"
         android:hardwareAccelerated="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="Mighty Fitness"
+        android:label="Micro health"
         android:largeHeap="true"
         android:usesCleartextTraffic="true"
         tools:replace="android:label">
