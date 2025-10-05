@@ -122,10 +122,10 @@ Future<NotificationWeekAndTime?> pickSchedule(
       reminderModel.status = 0;
       reminderModel.duration = mTime;
       reminderModel.week = weekdays[currentIndex!];
-      reminderModel.title = "Mighty Fitness";
+      reminderModel.title = "Micro health";
       reminderModel.subTitle = "Testing";
       notificationStore.addToReminder(reminderModel);
-      // return NotificationWeekAndTime(dayOfTheWeek: selectedDay!, timeOfDay: timeOfDay, title: "Mighty Fitness", subTitle: "Testing");
+      // return NotificationWeekAndTime(dayOfTheWeek: selectedDay!, timeOfDay: timeOfDay, title: "Micro health", subTitle: "Testing");
     }
   }
   return null;
