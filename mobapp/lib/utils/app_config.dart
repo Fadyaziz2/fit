@@ -9,7 +9,7 @@ var initialSteps = 0;
 
 //region baseurl
 /// Note: /Add your domain is www.abc.com
-const mBackendURL = "YOUR_DOMAIN_URL";
+const mBackendURL = "http://207.180.239.207/fitt/public";
 
 
 
