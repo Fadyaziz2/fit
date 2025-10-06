@@ -361,6 +361,13 @@ class _HomeScreenState extends State<HomeScreen>{
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               DashboardResponse? mDashboardResponse = snapshot.data;
+              bool hasFeaturedProducts = mDashboardResponse?.featuredProducts?.isNotEmpty ?? false;
+              bool hasBodyParts = mDashboardResponse?.bodypart?.isNotEmpty ?? false;
+              bool hasEquipments = mDashboardResponse?.equipment?.isNotEmpty ?? false;
+              bool hasWorkouts = mDashboardResponse?.workout?.isNotEmpty ?? false;
+              bool hasLevels = mDashboardResponse?.level?.isNotEmpty ?? false;
+              bool hasAnyDashboardContent =
+                  hasFeaturedProducts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels;
 
               return SingleChildScrollView(
                 physics: BouncingScrollPhysics(),
@@ -403,10 +410,135 @@ class _HomeScreenState extends State<HomeScreen>{
                       },
                     ).paddingSymmetric(horizontal: 16),
                     16.height,
-                    ..._buildDashboardSections(
-                      context: context,
-                      dashboardResponse: mDashboardResponse,
-                    ),
+                    if (!hasAnyDashboardContent)
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                        child: NoDataWidget(
+                          image: no_data_found,
+                          title: languages.lblResultNoFound,
+                        ),
+                      ),
+                    if (hasFeaturedProducts)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          mHeading(languages.lblSelectedProductsForYou, onCall: () {
+                            ProductScreen().launch(context);
+                          }),
+                          SizedBox(
+                            height: 250,
+                            child: ListView.separated(
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              scrollDirection: Axis.horizontal,
+                              physics: BouncingScrollPhysics(),
+                              itemCount: mDashboardResponse!.featuredProducts!.length,
+                              separatorBuilder: (context, index) => 16.width,
+                              itemBuilder: (context, index) {
+                                ProductModel product = mDashboardResponse.featuredProducts![index];
+                                return SizedBox(
+                                  width: context.width() * 0.58,
+                                  child: ProductComponent(
+                                    mProductModel: product,
+                                    showActions: true,
+                                    onAddToCart: (prod) => _addProductToCart(prod),
+                                    onToggleFavourite: (prod) => _toggleProductFavourite(prod),
+                                    onCall: () {
+                                      setState(() {});
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          16.height,
+                        ],
+                      ),
+                    if (hasBodyParts)
+                      Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        mHeading(languages.lblBodyPartExercise, onCall: () {
+                          ViewBodyPartScreen().launch(context);
+                        }),
+                        HorizontalList(
+                          physics: BouncingScrollPhysics(),
+                          controller: mScrollController,
+                          itemCount: mDashboardResponse!.bodypart!.length,
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          spacing: 16,
+                          itemBuilder: (context, index) {
+                            return BodyPartComponent(bodyPartModel: mDashboardResponse.bodypart![index]);
+                          },
+                        ),
+                      ],
+                      ),
+                    if (hasEquipments)
+                      Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        10.height,
+                        mHeading(languages.lblEquipmentsExercise, onCall: () {
+                          ViewEquipmentScreen().launch(context);
+                        }),
+                        HorizontalList(
+                          physics: BouncingScrollPhysics(),
+                          itemCount: mDashboardResponse.equipment!.length,
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          spacing: 16,
+                          itemBuilder: (context, index) {
+                            return EquipmentComponent(mEquipmentModel: mDashboardResponse.equipment![index]);
+                          },
+                        ),
+                      ],
+                      ),
+                    if (hasWorkouts)
+                      Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        10.height,
+                        mHeading(languages.lblWorkouts, onCall: () {
+                          FilterWorkoutScreen().launch(context).then((value) {
+                            setState(() {});
+                          });
+                        }),
+                        HorizontalList(
+                          physics: BouncingScrollPhysics(),
+                          itemCount: mDashboardResponse.workout!.length,
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          spacing: 16,
+                          itemBuilder: (context, index) {
+                            return WorkoutComponent(
+                              mWorkoutModel: mDashboardResponse.workout![index],
+                              onCall: () {
+                                appStore.setLoading(true);
+                                setState(() {});
+                                appStore.setLoading(false);
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                      ),
+                    if (hasLevels)
+                      Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        10.height,
+                        mHeading(languages.lblLevels, onCall: () {
+                          ViewLevelScreen().launch(context);
+                        }),
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          itemCount: mDashboardResponse.level!.length,
+                          itemBuilder: (context, index) {
+                            return LevelComponent(mLevelModel: mDashboardResponse.level![index]);
+                          },
+                        ),
+                        16.height,
+                      ],
+                      )
                   ],
                 ),
               );
