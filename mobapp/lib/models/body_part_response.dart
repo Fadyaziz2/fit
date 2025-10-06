@@ -1,11 +1,5 @@
+import '../utils/json_utils.dart';
 import 'pagination_model.dart';
-
-String? _stringFromJson(dynamic value) {
-  if (value == null) {
-    return null;
-  }
-  return value.toString();
-}
 
 class BodyPartResponse {
   Pagination? pagination;
@@ -60,12 +54,12 @@ class BodyPartModel {
 
   BodyPartModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    title = _stringFromJson(json['title']);
-    status = _stringFromJson(json['status']);
-    description = _stringFromJson(json['description']);
-    bodypartImage = _stringFromJson(json['bodypart_image']);
-    createdAt = _stringFromJson(json['created_at']);
-    updatedAt = _stringFromJson(json['updated_at']);
+    title = parseStringFromJson(json['title']);
+    status = parseStringFromJson(json['status']);
+    description = parseStringFromJson(json['description']);
+    bodypartImage = parseStringFromJson(json['bodypart_image']);
+    createdAt = parseStringFromJson(json['created_at']);
+    updatedAt = parseStringFromJson(json['updated_at']);
     select = json['select'];
   }
 

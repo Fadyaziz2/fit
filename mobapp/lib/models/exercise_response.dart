@@ -1,11 +1,5 @@
+import '../utils/json_utils.dart';
 import '../models/pagination_model.dart';
-
-String? _stringFromJson(dynamic value) {
-  if (value == null) {
-    return null;
-  }
-  return value.toString();
-}
 
 class ExerciseResponse {
   Pagination? pagination;
@@ -84,19 +78,19 @@ class ExerciseModel {
 
   ExerciseModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    title = _stringFromJson(json['title']);
-    status = _stringFromJson(json['status']);
+    title = parseStringFromJson(json['title']);
+    status = parseStringFromJson(json['status']);
     isPremium = json['is_premium'];
-    exerciseImage = _stringFromJson(json['exercise_image']);
-    videoType = _stringFromJson(json['video_type']);
-    videoUrl = _stringFromJson(json['video_url']);
+    exerciseImage = parseStringFromJson(json['exercise_image']);
+    videoType = parseStringFromJson(json['video_type']);
+    videoUrl = parseStringFromJson(json['video_url']);
     if (json['bodypart_name'] != null) {
       bodypartName = <BodypartName>[];
       json['bodypart_name'].forEach((v) {
         bodypartName!.add(new BodypartName.fromJson(v));
       });
     }
-    duration = _stringFromJson(json['duration']);
+    duration = parseStringFromJson(json['duration']);
     if (json['sets'] != null) {
       sets = <Sets>[];
       json['sets'].forEach((v) {
@@ -104,15 +98,15 @@ class ExerciseModel {
       });
     }
     equipmentId = json['equipment_id'];
-    equipmentTitle = _stringFromJson(json['equipment_title']);
+    equipmentTitle = parseStringFromJson(json['equipment_title']);
     levelId = json['level_id'];
-    levelTitle = _stringFromJson(json['level_title']);
-    instruction = _stringFromJson(json['instruction']);
-    tips = _stringFromJson(json['tips']);
-    createdAt = _stringFromJson(json['created_at']);
-    updatedAt = _stringFromJson(json['updated_at']);
-    type = _stringFromJson(json['type']);
-    based = _stringFromJson(json['based']);
+    levelTitle = parseStringFromJson(json['level_title']);
+    instruction = parseStringFromJson(json['instruction']);
+    tips = parseStringFromJson(json['tips']);
+    createdAt = parseStringFromJson(json['created_at']);
+    updatedAt = parseStringFromJson(json['updated_at']);
+    type = parseStringFromJson(json['type']);
+    based = parseStringFromJson(json['based']);
   }
 
   Map<String, dynamic> toJson() {
@@ -155,8 +149,8 @@ class BodypartName {
 
   BodypartName.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    title = _stringFromJson(json['title']);
-    bodypartImage = _stringFromJson(json['bodypart_image']);
+    title = parseStringFromJson(json['title']);
+    bodypartImage = parseStringFromJson(json['bodypart_image']);
   }
 
   Map<String, dynamic> toJson() {
@@ -177,10 +171,10 @@ class Sets {
   Sets({this.reps, this.rest, this.time, this.weight});
 
   Sets.fromJson(Map<String, dynamic> json) {
-    reps = _stringFromJson(json['reps']);
-    rest = _stringFromJson(json['rest']);
-    time = _stringFromJson(json['time']);
-    weight = _stringFromJson(json['weight']);
+    reps = parseStringFromJson(json['reps']);
+    rest = parseStringFromJson(json['rest']);
+    time = parseStringFromJson(json['time']);
+    weight = parseStringFromJson(json['weight']);
   }
 
   Map<String, dynamic> toJson() {
