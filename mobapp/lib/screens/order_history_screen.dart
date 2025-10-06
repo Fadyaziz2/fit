@@ -129,8 +129,8 @@ class _OrderCard extends StatelessWidget {
                             backgroundColor: statusColor.withOpacity(0.12),
                           ),
                           child: Text(order.statusLabel.validate().capitalizeFirstLetter(),
-                              style: secondaryTextStyle(
-                                  color: statusColor, fontWeight: FontWeight.bold)),
+                              style:
+                                  secondaryTextStyle(color: statusColor, weight: FontWeight.bold)),
                         ),
                         8.width,
                         Text(order.createdAtFormatted.validate(),
