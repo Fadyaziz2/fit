@@ -1,17 +1,11 @@
 import '../models/workout_detail_response.dart';
+import '../utils/json_utils.dart';
 
 import 'body_part_response.dart';
 import 'equipment_response.dart';
 import 'exercise_response.dart';
 import 'level_response.dart';
 import 'product_response.dart';
-
-String? _stringFromJson(dynamic value) {
-  if (value == null) {
-    return null;
-  }
-  return value.toString();
-}
 
 class DashboardResponse {
   List<BodyPartModel>? bodypart;
@@ -160,23 +154,23 @@ class Diet {
 
   Diet.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    title = _stringFromJson(json['title']);
-    calories = _stringFromJson(json['calories']);
-    carbs = _stringFromJson(json['carbs']);
-    protein = _stringFromJson(json['protein']);
-    fat = _stringFromJson(json['fat']);
-    servings = _stringFromJson(json['servings']);
-    totalTime = _stringFromJson(json['total_time']);
-    isFeatured = _stringFromJson(json['is_featured']);
-    status = _stringFromJson(json['status']);
-    ingredients = _stringFromJson(json['ingredients']);
-    description = _stringFromJson(json['description']);
-    dietImage = _stringFromJson(json['diet_image']);
+    title = parseStringFromJson(json['title']);
+    calories = parseStringFromJson(json['calories']);
+    carbs = parseStringFromJson(json['carbs']);
+    protein = parseStringFromJson(json['protein']);
+    fat = parseStringFromJson(json['fat']);
+    servings = parseStringFromJson(json['servings']);
+    totalTime = parseStringFromJson(json['total_time']);
+    isFeatured = parseStringFromJson(json['is_featured']);
+    status = parseStringFromJson(json['status']);
+    ingredients = parseStringFromJson(json['ingredients']);
+    description = parseStringFromJson(json['description']);
+    dietImage = parseStringFromJson(json['diet_image']);
     isPremium = json['is_premium'];
     categorydietId = json['categorydiet_id'];
-    categorydietTitle = _stringFromJson(json['categorydiet_title']);
-    createdAt = _stringFromJson(json['created_at']);
-    updatedAt = _stringFromJson(json['updated_at']);
+    categorydietTitle = parseStringFromJson(json['categorydiet_title']);
+    createdAt = parseStringFromJson(json['created_at']);
+    updatedAt = parseStringFromJson(json['updated_at']);
     isFavourite = json['is_favourite'];
   }
 
@@ -216,10 +210,10 @@ class Workouttype {
 
   Workouttype.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    title = json['title'];
-    status = json['status'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    title = parseStringFromJson(json['title']);
+    status = parseStringFromJson(json['status']);
+    createdAt = parseStringFromJson(json['created_at']);
+    updatedAt = parseStringFromJson(json['updated_at']);
   }
 
   Map<String, dynamic> toJson() {

@@ -1,4 +1,5 @@
 
+import '../utils/json_utils.dart';
 import '../models/pagination_model.dart';
 
 class ProductResponse {
@@ -72,9 +73,9 @@ class ProductModel {
 
   ProductModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    title = json['title'];
-    description = json['description'];
-    affiliateLink = json['affiliate_link'];
+    title = parseStringFromJson(json['title']);
+    description = parseStringFromJson(json['description']);
+    affiliateLink = parseStringFromJson(json['affiliate_link']);
     price = json['price'];
     finalPrice = json['final_price'] != null ? num.tryParse(json['final_price'].toString()) : null;
     discountPrice = json['discount_price'] != null ? num.tryParse(json['discount_price'].toString()) : null;
@@ -82,15 +83,16 @@ class ProductModel {
     discountActive = json['discount_active'] == true || json['discount_active'] == 1;
     productcategoryId = json['productcategory_id'];
     if (json['productcategory_title'] != null) {
-      productcategoryTitle = json['productcategory_title'];
+      productcategoryTitle = parseStringFromJson(json['productcategory_title']);
     } else if (json['productcategory'] is Map<String, dynamic>) {
-      productcategoryTitle = (json['productcategory'] as Map<String, dynamic>)['title'];
+      productcategoryTitle = parseStringFromJson(
+          (json['productcategory'] as Map<String, dynamic>)['title']);
     }
-    featured = json['featured'];
-    status = json['status'];
-    productImage = json['product_image'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    featured = parseStringFromJson(json['featured']);
+    status = parseStringFromJson(json['status']);
+    productImage = parseStringFromJson(json['product_image']);
+    createdAt = parseStringFromJson(json['created_at']);
+    updatedAt = parseStringFromJson(json['updated_at']);
     isFavourite = json['is_favourite'] == true || json['is_favourite'] == 1;
     isInCart = json['is_in_cart'] == true || json['is_in_cart'] == 1;
     cartQuantity = json['cart_quantity'] != null ? (json['cart_quantity'] as num).toInt() : 0;
