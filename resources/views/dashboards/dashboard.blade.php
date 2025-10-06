@@ -181,10 +181,61 @@
                                                 </div>
                                         </div>
                                 @endif
+                                @if($auth_user->can('successstory-list') || $auth_user->can('successstory'))
+                                        <div class="col-md-12">
+                                                <div class="card" data-aos="fade-up" data-aos-delay="750">
+                                                        <div class="card-header d-flex justify-content-between flex-wrap">
+                                                                <div class="header-title">
+                                                                        <h4 class="card-title">{{ __('message.list_form_title',[ 'form' => __('message.successstory')] ) }}</h4>
+                                                                </div>
+                                                                <div class="card-action">
+                                                                        <a href="{{ route('successstory.index') }}" data-bs-toggle="tooltip" title="{{ __('message.list_form_title', [ 'form' => __('message.successstory') ]) }}">{{ __('message.see_all') }}</a>
+                                                                </div>
+                                                        </div>
+                                                        <div class="card-body p-0">
+                                                                <div class="table-responsive mt-4 dashboard_table_list">
+                                                                        <table class="table table-striped mb-0" role="grid">
+                                                                                <thead>
+                                                                                        <tr>
+                                                                                                <th>{{ __('message.before_image') }}</th>
+                                                                                                <th>{{ __('message.after_image') }}</th>
+                                                                                                <th>{{ __('message.title') }}</th>
+                                                                                                <th>{{ __('message.status') }}</th>
+                                                                                                <th>{{ __('message.action') }}</th>
+                                                                                        </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                        @if( count($data['success_stories'] ?? []) > 0 )
+                                                                                                @foreach ($data['success_stories'] as $story)
+                                                                                                <tr>
+                                                                                                        <td><img src="{{ getSingleMedia($story, 'success_story_before_image') }}" alt="before-image" class="bg-soft-primary rounded img-fluid avatar-40 me-3"></td>
+                                                                                                        <td><img src="{{ getSingleMedia($story, 'success_story_after_image') }}" alt="after-image" class="bg-soft-success rounded img-fluid avatar-40 me-3"></td>
+                                                                                                        <td>{{ $story->title }}</td>
+                                                                                                        <td>
+                                                                                                                @php $status = $story->status === 'active' ? 'primary' : 'warning'; @endphp
+                                                                                                                <span class="text-capitalize badge bg-{{ $status }}">{{ $story->status === 'active' ? __('message.active') : __('message.inactive') }}</span>
+                                                                                                        </td>
+                                                                                                        <td>
+                                                                                                                @include('successstory.action', ['story' => $story, 'id' => $story->id])
+                                                                                                        </td>
+                                                                                                </tr>
+                                                                                                @endforeach
+                                                                                        @else
+                                                                                                <tr>
+                                                                                                        <td colspan="5">{{ __('message.not_found_entry', [ 'name' => __('message.successstory') ]) }}</td>
+                                                                                                </tr>
+                                                                                        @endif
+                                                                                </tbody>
+                                                                        </table>
+                                                                </div>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                @endif
                                 @if($auth_user->can('exercise-list'))
-					<div class="col-md-6">
-						<div class="card" data-aos="fade-up" data-aos-delay="800">
-							<div class="card-header d-flex justify-content-between flex-wrap">
+                                        <div class="col-md-6">
+                                                <div class="card" data-aos="fade-up" data-aos-delay="800">
+                                                        <div class="card-header d-flex justify-content-between flex-wrap">
 								<div class="header-title">
 									<h4 class="card-title">{{ __('message.list_form_title',['form' => __('message.exercise')] ) }}</h4>
 								</div>

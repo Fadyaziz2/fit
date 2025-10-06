@@ -28,6 +28,7 @@ Route::get('user-detail',[ API\UserController::class, 'userDetail']);
 Route::get('get-appsetting', [ API\UserController::class, 'getAppSetting'] );
 Route::get('language-table-list',[API\LanguageTableController::class, 'getList']);
 Route::get('banner-list',[ API\BannerController::class, 'getList' ]);
+Route::get('success-story-list',[ API\SuccessStoryController::class, 'getList' ]);
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
 

@@ -23,6 +23,8 @@ use App\Models\Product;
 use App\Http\Resources\ProductResource;
 use App\Models\Banner;
 use App\Http\Resources\BannerResource;
+use App\Models\SuccessStory;
+use App\Http\Resources\SuccessStoryResource;
 class DashboardController extends Controller
 {
     public function dashboardDetail(Request $request)
@@ -64,6 +66,7 @@ class DashboardController extends Controller
         }
 
         $banners = Banner::active()->orderBy('display_order')->orderByDesc('created_at')->get();
+        $successStories = SuccessStory::active()->orderBy('display_order')->orderByDesc('created_at')->get();
 
         $response = [
             'bodypart'      => BodyPartResource::collection($bodypart),
@@ -76,6 +79,7 @@ class DashboardController extends Controller
             'featured_diet' => DietResource::collection($featured_diet),
             'featured_products' => ProductResource::collection($featured_products),
             'product_banners' => BannerResource::collection($banners),
+            'success_stories' => SuccessStoryResource::collection($successStories),
         ];
         $response['subscription'] = SettingData('subscription', 'subscription_system') ?? '1';
         $response['AdsBannerDetail'] = SettingData('AdsBannerDetail') ?? [];
@@ -90,6 +94,7 @@ class DashboardController extends Controller
         $workout = Workout::where('status','active')->orderBy('id','desc')->take(10)->get();
                 
         $banners = Banner::active()->orderBy('display_order')->orderByDesc('created_at')->get();
+        $successStories = SuccessStory::active()->orderBy('display_order')->orderByDesc('created_at')->get();
 
         $response = [
             'bodypart'      => BodyPartResource::collection($bodypart),
@@ -97,6 +102,7 @@ class DashboardController extends Controller
             'equipment'     => EquipmentResource::collection($equipment),
             'workout'       => WorkoutResource::collection($workout),
             'product_banners' => BannerResource::collection($banners),
+            'success_stories' => SuccessStoryResource::collection($successStories),
         ];
         $response['subscription'] = SettingData('subscription', 'subscription_system') ?? '1';
         $response['AdsBannerDetail'] = SettingData('AdsBannerDetail') ?? [];

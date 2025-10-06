@@ -260,7 +260,17 @@
                 ->data('permission', ['banner-add', 'banner-edit'])
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
                 ->link->attr(['class' => activeRoute(route('banner.create')) || request()->is('banner/*/edit') ? 'nav-link active' : 'nav-link']);
-            
+
+            $menu->product->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.successstory')]).'</span>', ['route' => 'successstory.index'])
+                ->data('permission', 'successstory-list')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('successstory.index')) ? 'nav-link active' : 'nav-link']);
+
+            $menu->product->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.successstory')]).'</span>', ['route' => 'successstory.create'])
+                ->data('permission', ['successstory-add', 'successstory-edit'])
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('successstory.create')) || request()->is('successstory/*/edit') ? 'nav-link active' : 'nav-link']);
+
         $menu->add('<span class="item-name">'.__('message.post').'</span>', ['class' => ''])
                 ->prepend('<i class="icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
