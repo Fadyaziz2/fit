@@ -62,6 +62,7 @@ class HomeController extends Controller
         $data['workout'] = Workout::orderBy('id', 'desc')->take(10)->get();
         $data['diet'] = Diet::orderBy('id', 'desc')->take(10)->get();
         $data['post'] = Post::orderBy('id', 'desc')->take(10)->get();
+        $data['banners'] = Banner::orderBy('id', 'desc')->take(10)->get();
         return view('dashboards.dashboard', compact('assets', 'data', 'auth_user'));
     }
 
