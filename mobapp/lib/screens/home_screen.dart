@@ -34,6 +34,7 @@ import '../models/equipment_response.dart';
 import '../models/workout_detail_response.dart';
 import '../models/level_response.dart';
 import '../models/product_response.dart';
+import '../models/banner_model.dart';
 import '../network/rest_api.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/search_screen.dart';
@@ -44,6 +45,7 @@ import '../utils/app_images.dart';
 import 'filter_workout_screen.dart';
 import 'notification_screen.dart';
 import '../components/product_component.dart';
+import '../components/product_banner_carousel.dart';
 import '../extensions/no_data_widget.dart';
 
 bool? isFirstTimeGraph = false;
@@ -366,18 +368,20 @@ class _HomeScreenState extends State<HomeScreen>{
             if (snapshot.hasData) {
               DashboardResponse? mDashboardResponse = snapshot.data;
               List<ProductModel> featuredProducts = mDashboardResponse?.featuredProducts ?? <ProductModel>[];
+              List<BannerModel> productBanners = mDashboardResponse?.productBanners ?? <BannerModel>[];
               List<BodyPartModel> bodyParts = mDashboardResponse?.bodypart ?? <BodyPartModel>[];
               List<EquipmentModel> equipments = mDashboardResponse?.equipment ?? <EquipmentModel>[];
               List<WorkoutDetailModel> workouts = mDashboardResponse?.workout ?? <WorkoutDetailModel>[];
               List<LevelModel> levels = mDashboardResponse?.level ?? <LevelModel>[];
 
               bool hasFeaturedProducts = featuredProducts.isNotEmpty;
+              bool hasProductBanners = productBanners.isNotEmpty;
               bool hasBodyParts = bodyParts.isNotEmpty;
               bool hasEquipments = equipments.isNotEmpty;
               bool hasWorkouts = workouts.isNotEmpty;
               bool hasLevels = levels.isNotEmpty;
               bool hasAnyDashboardContent =
-                  hasFeaturedProducts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels;
+                  hasFeaturedProducts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels || hasProductBanners;
 
               return SingleChildScrollView(
                 physics: BouncingScrollPhysics(),
@@ -420,6 +424,8 @@ class _HomeScreenState extends State<HomeScreen>{
                       },
                     ).paddingSymmetric(horizontal: 16),
                     16.height,
+                    if (hasProductBanners)
+                      ProductBannerCarousel(banners: productBanners).paddingBottom(16),
                     if (!hasAnyDashboardContent)
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
