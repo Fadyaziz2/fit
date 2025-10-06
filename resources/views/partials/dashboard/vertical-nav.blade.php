@@ -227,7 +227,7 @@
                             <path d="M5 6H16.4504C18.5054 6 19.5328 6 19.9775 6.67426C20.4221 7.34853 20.0173 8.29294 19.2078 10.1818L18.7792 11.1818C18.4013 12.0636 18.2123 12.5045 17.8366 12.7523C17.4609 13 16.9812 13 16.0218 13H5" stroke="currentColor" stroke-width="1.5"/>
                         </svg></i>')
                 ->nickname('product')
-                ->data('permission', 'product-list')
+                ->data('permission', ['product-list', 'productcategory-list', 'banner-list', 'banner-add'])
                 ->link->attr(['class' => 'nav-link' ])
                 ->href('#product');
 
@@ -254,7 +254,12 @@
             $menu->product->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.banner')]).'</span>', ['route' => 'banner.index'])
                 ->data('permission', 'banner-list')
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
-                ->link->attr(['class' => activeRoute(route('banner.index')) || request()->is('banner/*') ? 'nav-link active' : 'nav-link']);
+                ->link->attr(['class' => activeRoute(route('banner.index')) ? 'nav-link active' : 'nav-link']);
+
+            $menu->product->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.banner')]).'</span>', ['route' => 'banner.create'])
+                ->data('permission', ['banner-add', 'banner-edit'])
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('banner.create')) || request()->is('banner/*/edit') ? 'nav-link active' : 'nav-link']);
             
         $menu->add('<span class="item-name">'.__('message.post').'</span>', ['class' => ''])
                 ->prepend('<i class="icon">
