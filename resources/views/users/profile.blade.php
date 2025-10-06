@@ -21,16 +21,21 @@
                 }
             });
         }
-        const specialistDirectory = @json($specialists->mapWithKeys(function ($specialist) {
-            return [
-                (string) $specialist->id => [
-                    'name' => $specialist->name,
-                    'branch' => optional($specialist->branch)->name,
-                    'phone' => $specialist->phone,
-                    'email' => $specialist->email,
-                ],
-            ];
-        }));
+      @php
+            $specialistDirectory = $specialists->mapWithKeys(function ($specialist) {
+                return [
+                    (string) $specialist->id => [
+                        'name' => $specialist->name,
+                        'branch' => optional($specialist->branch)->name,
+                        'phone' => $specialist->phone,
+                        'email' => $specialist->email,
+                    ],
+                ];
+            })->toArray();
+        @endphp
+
+        const specialistDirectory = @json($specialistDirectory);
+
 
         function renderSpecialistDetails(specialistId) {
             const container = $('#specialist-details');
