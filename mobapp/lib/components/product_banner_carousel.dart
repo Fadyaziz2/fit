@@ -2,10 +2,16 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:mighty_fitness/main.dart';
-import 'package:mighty_fitness/models/banner_model.dart';
-import 'package:mighty_fitness/utils/app_common.dart';
-import 'package:nb_utils/nb_utils.dart';
+
+import '../extensions/decorations.dart';
+import '../extensions/extension_util/context_extensions.dart';
+import '../extensions/extension_util/int_extensions.dart';
+import '../extensions/extension_util/string_extensions.dart';
+import '../extensions/extension_util/widget_extensions.dart';
+import '../extensions/text_styles.dart';
+import '../main.dart';
+import '../models/banner_model.dart';
+import '../utils/app_common.dart';
 
 class ProductBannerCarousel extends StatefulWidget {
   final List<BannerModel> banners;
