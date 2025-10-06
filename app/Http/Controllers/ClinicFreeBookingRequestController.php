@@ -8,6 +8,7 @@ use App\Models\SpecialistAppointment;
 use App\Models\SpecialistSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ClinicFreeBookingRequestController extends Controller
 {
@@ -124,5 +125,75 @@ class ClinicFreeBookingRequestController extends Controller
         $freeRequest->save();
 
         return redirect()->route('clinic.free_requests.index')->withSuccess(__('message.update_form', ['form' => __('message.free_booking_request')]));
+    }
+
+    public function availableSlots(Request $request)
+    {
+        $this->authorizeAccess();
+
+        $validator = Validator::make($request->all(), [
+            'specialist_id' => 'required|exists:specialists,id',
+            'date' => 'required|date_format:Y-m-d',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $specialist = Specialist::with('schedules')->findOrFail($request->specialist_id);
+        $date = Carbon::parse($request->date);
+
+        $schedules = $specialist->schedules
+            ->where('day_of_week', $date->dayOfWeek)
+            ->sortBy('start_time');
+
+        $slots = [];
+
+        foreach ($schedules as $schedule) {
+            $start = Carbon::parse($schedule->start_time);
+            $end = Carbon::parse($schedule->end_time);
+
+            if ($end->lessThanOrEqualTo($start)) {
+                continue;
+            }
+
+            $current = $start->copy();
+
+            while ($current->lt($end)) {
+                $slotEnd = $current->copy()->addMinutes($schedule->slot_duration);
+
+                if ($slotEnd->gt($end)) {
+                    break;
+                }
+
+                $slotTime = $current->format('H:i:s');
+
+                $isBooked = SpecialistAppointment::where('specialist_id', $specialist->id)
+                    ->where('appointment_date', $date->toDateString())
+                    ->where('appointment_time', $slotTime)
+                    ->whereIn('status', ['pending', 'confirmed', 'completed'])
+                    ->exists();
+
+                $slots[] = [
+                    'time' => $current->format('H:i'),
+                    'is_available' => ! $isBooked,
+                ];
+
+                $current = $slotEnd;
+            }
+        }
+
+        $slots = collect($slots)
+            ->unique('time')
+            ->sortBy('time')
+            ->values()
+            ->all();
+
+        return response()->json([
+            'date' => $date->toDateString(),
+            'slots' => $slots,
+        ]);
     }
 }
