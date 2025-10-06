@@ -40,6 +40,7 @@ import '../utils/app_images.dart';
 import 'filter_workout_screen.dart';
 import 'notification_screen.dart';
 import '../components/product_component.dart';
+import '../extensions/no_data_widget.dart';
 
 bool? isFirstTimeGraph = false;
 
@@ -360,6 +361,14 @@ class _HomeScreenState extends State<HomeScreen>{
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               DashboardResponse? mDashboardResponse = snapshot.data;
+              bool hasFeaturedProducts = mDashboardResponse?.featuredProducts?.isNotEmpty ?? false;
+              bool hasBodyParts = mDashboardResponse?.bodypart?.isNotEmpty ?? false;
+              bool hasEquipments = mDashboardResponse?.equipment?.isNotEmpty ?? false;
+              bool hasWorkouts = mDashboardResponse?.workout?.isNotEmpty ?? false;
+              bool hasLevels = mDashboardResponse?.level?.isNotEmpty ?? false;
+              bool hasAnyDashboardContent =
+                  hasFeaturedProducts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels;
+
               return SingleChildScrollView(
                 physics: BouncingScrollPhysics(),
                 child: Column(
@@ -401,7 +410,15 @@ class _HomeScreenState extends State<HomeScreen>{
                       },
                     ).paddingSymmetric(horizontal: 16),
                     16.height,
-                    if (mDashboardResponse?.featuredProducts?.isNotEmpty ?? false)
+                    if (!hasAnyDashboardContent)
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                        child: NoDataWidget(
+                          image: no_data_found,
+                          title: languages.lblResultNoFound,
+                        ),
+                      ),
+                    if (hasFeaturedProducts)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -436,7 +453,8 @@ class _HomeScreenState extends State<HomeScreen>{
                           16.height,
                         ],
                       ),
-                    Column(
+                    if (hasBodyParts)
+                      Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         mHeading(languages.lblBodyPartExercise, onCall: () {
@@ -453,8 +471,9 @@ class _HomeScreenState extends State<HomeScreen>{
                           },
                         ),
                       ],
-                    ).visible(mDashboardResponse.bodypart!.isNotEmpty),
-                    Column(
+                      ),
+                    if (hasEquipments)
+                      Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         10.height,
@@ -471,8 +490,9 @@ class _HomeScreenState extends State<HomeScreen>{
                           },
                         ),
                       ],
-                    ).visible(mDashboardResponse.equipment!.isNotEmpty),
-                    Column(
+                      ),
+                    if (hasWorkouts)
+                      Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         10.height,
@@ -498,8 +518,9 @@ class _HomeScreenState extends State<HomeScreen>{
                           },
                         ),
                       ],
-                    ).visible(mDashboardResponse.workout!.isNotEmpty),
-                    Column(
+                      ),
+                    if (hasLevels)
+                      Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         10.height,
@@ -517,7 +538,7 @@ class _HomeScreenState extends State<HomeScreen>{
                         ),
                         16.height,
                       ],
-                    ).visible(mDashboardResponse.level!.isNotEmpty)
+                      )
                   ],
                 ),
               );
