@@ -39,6 +39,21 @@ class CartItemModel {
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
   }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['quantity'] = quantity;
+    data['unit_price'] = unitPrice;
+    data['unit_discount'] = unitDiscount;
+    data['total_price'] = totalPrice;
+    if (product != null) {
+      data['product'] = product!.toJson();
+    }
+    data['created_at'] = createdAt;
+    data['updated_at'] = updatedAt;
+    return data;
+  }
 }
 
 class CartSummary {
