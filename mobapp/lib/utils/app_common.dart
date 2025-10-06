@@ -244,8 +244,11 @@ Future<void> getSettingData() async {
     setValue(HELP_SUPPORT, value.helpSupportUrl.validate());
     setValue(PRIVACY_POLICY, value.helpSupportUrl.validate());
     setValue(TERMS_SERVICE, value.helpSupportUrl.validate());
-    setValue(CRISP_CHAT_ENABLED, value.crisp_chat?.isCrispChatEnabled);
-    setValue(CRISP_CHAT_WEB_SITE_ID, value.crisp_chat?.crispChatWebsiteId);
+    setValue(CRISP_CHAT_ENABLED, value.crisp_chat?.isCrispChatEnabled ?? false);
+    setValue(
+      CRISP_CHAT_WEB_SITE_ID,
+      (value.crisp_chat?.crispChatWebsiteId).validate(),
+    );
 
   });
 }
