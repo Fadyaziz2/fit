@@ -30,6 +30,7 @@ import '../models/login_response.dart';
 import '../models/notification_response.dart';
 import '../models/product_category_response.dart';
 import '../models/product_response.dart';
+import '../models/cart_response.dart';
 import '../models/social_login_response.dart';
 import '../models/subscribePlan_response.dart';
 import '../models/subscribe_package_response.dart';
@@ -249,6 +250,26 @@ Future<ProductResponse> getProductApi({bool? isCategory = false, String? mSearch
       return ProductResponse.fromJson(await (handleResponse(await buildHttpResponse("product-list?title=$mSearch", method: HttpMethod.GET))));
     }
   }
+}
+
+Future<ProductResponse> getFavouriteProductApi({int? page = 1}) async {
+  return ProductResponse.fromJson(await (handleResponse(await buildHttpResponse("product-favourite-list?page=$page", method: HttpMethod.GET))));
+}
+
+Future<FitnessBaseResponse> setProductFavApi(Map req) async {
+  return FitnessBaseResponse.fromJson(await handleResponse(await buildHttpResponse('product-favourite-toggle', request: req, method: HttpMethod.POST)));
+}
+
+Future<FitnessBaseResponse> addToCartApi(Map req) async {
+  return FitnessBaseResponse.fromJson(await handleResponse(await buildHttpResponse('cart-add', request: req, method: HttpMethod.POST)));
+}
+
+Future<FitnessBaseResponse> removeFromCartApi(Map req) async {
+  return FitnessBaseResponse.fromJson(await handleResponse(await buildHttpResponse('cart-remove', request: req, method: HttpMethod.POST)));
+}
+
+Future<CartResponse> getCartListApi() async {
+  return CartResponse.fromJson(await handleResponse(await buildHttpResponse('cart-list', method: HttpMethod.GET)));
 }
 
 Future<UserResponse> getUserDataApi({int? id}) async {

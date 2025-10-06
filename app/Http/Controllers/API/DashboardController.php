@@ -19,10 +19,14 @@ use App\Http\Resources\WorkoutResource;
 use App\Models\Exercise;
 use App\Http\Resources\ExerciseResource;
 use App\Models\Setting;
+use App\Models\Product;
+use App\Http\Resources\ProductResource;
 class DashboardController extends Controller
 {
     public function dashboardDetail(Request $request)
     {
+        $userId = auth()->id();
+
         $bodypart = BodyPart::where('status','active')->orderBy('id','desc')->paginate(10);
         $level = Level::where('status','active')->orderBy('id','desc')->paginate(10);
         $equipment = Equipment::where('status','active')->orderBy('id','desc')->paginate(10);
@@ -31,7 +35,22 @@ class DashboardController extends Controller
         $workout = Workout::where('status','active')->orderBy('id','desc')->paginate(10);
         $exercise = Exercise::where('status','active')->orderBy('id','desc')->paginate(10);
         $featured_diet = Diet::where('status','active')->where('is_featured', 'yes')->orderBy('id', 'desc')->paginate(10);
-        
+        $featured_products = Product::where('status', 'active')
+            ->where('featured', 'yes')
+            ->when($userId, function ($q) use ($userId) {
+                $q->with([
+                    'favouriteProducts' => function ($query) use ($userId) {
+                        $query->where('user_id', $userId);
+                    },
+                    'cartItems' => function ($query) use ($userId) {
+                        $query->where('user_id', $userId);
+                    },
+                ]);
+            })
+            ->orderBy('id', 'desc')
+            ->take(20)
+            ->get();
+
         $response = [
             'bodypart'      => BodyPartResource::collection($bodypart),
             'level'         => LevelResource::collection($level),
@@ -41,6 +60,7 @@ class DashboardController extends Controller
             'workouttype'   => WorkoutTypeResource::collection($workouttype),
             'workout'       => WorkoutResource::collection($workout),
             'featured_diet' => DietResource::collection($featured_diet),
+            'featured_products' => ProductResource::collection($featured_products),
         ];
         $response['subscription'] = SettingData('subscription', 'subscription_system') ?? '1';
         $response['AdsBannerDetail'] = SettingData('AdsBannerDetail') ?? [];

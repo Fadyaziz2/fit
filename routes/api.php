@@ -81,6 +81,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('product-list', [ API\ProductController::class, 'getlist']);
     Route::get('productcategory-list', [ API\ProductCategoryController::class, 'getlist']);
     Route::post('product-detail', [ API\ProductController::class, 'getDetail']);
+    Route::get('product-favourite-list', [ API\ProductController::class, 'getUserFavouriteProducts']);
+    Route::post('product-favourite-toggle', [ API\ProductController::class, 'toggleFavourite']);
+
+    Route::get('cart-list', [ API\CartController::class, 'getList']);
+    Route::post('cart-add', [ API\CartController::class, 'add']);
+    Route::post('cart-remove', [ API\CartController::class, 'remove']);
 
     Route::get('package-list', [ API\PackageController::class, 'getList' ]);
 
