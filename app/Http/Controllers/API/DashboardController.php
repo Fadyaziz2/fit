@@ -27,14 +27,14 @@ class DashboardController extends Controller
     {
         $userId = auth()->id();
 
-        $bodypart = BodyPart::where('status','active')->orderBy('id','desc')->paginate(10);
-        $level = Level::where('status','active')->orderBy('id','desc')->paginate(10);
-        $equipment = Equipment::where('status','active')->orderBy('id','desc')->paginate(10);
-        $diet = Diet::where('status','active')->orderBy('id','desc')->paginate(10);
-        $workouttype = WorkoutType::where('status','active')->orderBy('id','desc')->paginate(10);
-        $workout = Workout::where('status','active')->orderBy('id','desc')->paginate(10);
-        $exercise = Exercise::where('status','active')->orderBy('id','desc')->paginate(10);
-        $featured_diet = Diet::where('status','active')->where('is_featured', 'yes')->orderBy('id', 'desc')->paginate(10);
+        $bodypart = BodyPart::where('status','active')->orderBy('id','desc')->take(10)->get();
+        $level = Level::where('status','active')->orderBy('id','desc')->take(10)->get();
+        $equipment = Equipment::where('status','active')->orderBy('id','desc')->take(10)->get();
+        $diet = Diet::where('status','active')->orderBy('id','desc')->take(10)->get();
+        $workouttype = WorkoutType::where('status','active')->orderBy('id','desc')->take(10)->get();
+        $workout = Workout::where('status','active')->orderBy('id','desc')->take(10)->get();
+        $exercise = Exercise::where('status','active')->orderBy('id','desc')->take(10)->get();
+        $featured_diet = Diet::where('status','active')->where('is_featured', 'yes')->orderBy('id', 'desc')->take(10)->get();
         $productQuery = Product::query()
             ->where('status', 'active')
             ->when($userId, function ($q) use ($userId) {
@@ -79,10 +79,10 @@ class DashboardController extends Controller
 
     public function dashboard(Request $request)
     {
-        $bodypart = BodyPart::where('status','active')->orderBy('id','desc')->paginate(10);
-        $level = Level::where('status','active')->orderBy('id','desc')->paginate(10);
-        $equipment = Equipment::where('status','active')->orderBy('id','desc')->paginate(10);
-        $workout = Workout::where('status','active')->orderBy('id','desc')->paginate(10);
+        $bodypart = BodyPart::where('status','active')->orderBy('id','desc')->take(10)->get();
+        $level = Level::where('status','active')->orderBy('id','desc')->take(10)->get();
+        $equipment = Equipment::where('status','active')->orderBy('id','desc')->take(10)->get();
+        $workout = Workout::where('status','active')->orderBy('id','desc')->take(10)->get();
                 
         $response = [
             'bodypart'      => BodyPartResource::collection($bodypart),
