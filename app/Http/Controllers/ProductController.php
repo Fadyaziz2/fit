@@ -61,8 +61,28 @@ class ProductController extends Controller
             return redirect()->back()->withErrors($message);
         }
         $data = $request->all();
-        $data['discount_active'] = $request->boolean('discount_active');
-        if (empty($data['discount_active'])) {
+
+        $discountPrice = $data['discount_price'] ?? null;
+        $price = $data['price'] ?? null;
+
+        $isDiscountActive = $request->boolean('discount_active');
+
+        if (!$isDiscountActive && !is_null($discountPrice)) {
+            $discountPrice = (float) $discountPrice;
+            $price = is_null($price) ? null : (float) $price;
+
+            if ($discountPrice > 0 && (is_null($price) || $discountPrice < $price)) {
+                $isDiscountActive = true;
+            }
+        }
+
+        $data['discount_active'] = $isDiscountActive;
+
+        if ($isDiscountActive && !is_null($discountPrice)) {
+            $data['discount_price'] = (float) $discountPrice;
+        }
+
+        if (!$isDiscountActive) {
             $data['discount_price'] = null;
         }
 
@@ -120,8 +140,28 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
 
         $data = $request->all();
-        $data['discount_active'] = $request->boolean('discount_active');
-        if (empty($data['discount_active'])) {
+
+        $discountPrice = $data['discount_price'] ?? null;
+        $price = $data['price'] ?? $product->price;
+
+        $isDiscountActive = $request->boolean('discount_active');
+
+        if (!$isDiscountActive && !is_null($discountPrice)) {
+            $discountPrice = (float) $discountPrice;
+            $price = is_null($price) ? null : (float) $price;
+
+            if ($discountPrice > 0 && (is_null($price) || $discountPrice < $price)) {
+                $isDiscountActive = true;
+            }
+        }
+
+        $data['discount_active'] = $isDiscountActive;
+
+        if ($isDiscountActive && !is_null($discountPrice)) {
+            $data['discount_price'] = (float) $discountPrice;
+        }
+
+        if (!$isDiscountActive) {
             $data['discount_price'] = null;
         }
 
