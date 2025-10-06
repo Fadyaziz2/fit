@@ -150,7 +150,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     controller: _nameController,
                     textFieldType: TextFieldType.NAME,
                     decoration: defaultInputDecoration(context,
-                        hint: languages.lblFullName, labelText: languages.lblFullName),
+                        hint: languages.lblFullName, label: languages.lblFullName),
                     validator: (value) {
                       if (value.validate().isEmpty) {
                         return languages.lblEnterFirstName;
@@ -163,7 +163,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     controller: _phoneController,
                     textFieldType: TextFieldType.PHONE,
                     decoration: defaultInputDecoration(context,
-                        hint: languages.lblPhoneNumber, labelText: languages.lblPhoneNumber),
+                        hint: languages.lblPhoneNumber, label: languages.lblPhoneNumber),
                     validator: (value) {
                       if (value.validate().isEmpty) {
                         return languages.lblEnterPhoneNumber;
@@ -178,7 +178,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     minLines: 3,
                     maxLines: 5,
                     decoration: defaultInputDecoration(context,
-                        hint: languages.lblAddress, labelText: languages.lblAddress),
+                        hint: languages.lblAddress, label: languages.lblAddress),
                     validator: (value) {
                       if (value.validate().isEmpty) {
                         return languages.lblAddress;
@@ -194,7 +194,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     maxLines: 4,
                     decoration: defaultInputDecoration(context,
                         hint: languages.lblOrderNote,
-                        labelText: languages.lblOrderNote),
+                        label: languages.lblOrderNote),
                   ),
                   24.height,
                   Text(languages.lblPaymentMethod, style: boldTextStyle(size: 18)),
