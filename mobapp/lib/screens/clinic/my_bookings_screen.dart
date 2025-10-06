@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mighty_fitness/extensions/extension_util/widget_extensions.dart';
+import 'package:mighty_fitness/extensions/extension_util/context_extensions.dart';
 import 'package:mighty_fitness/extensions/loader_widget.dart';
 import 'package:mighty_fitness/extensions/text_styles.dart';
 import 'package:mighty_fitness/main.dart';
@@ -38,7 +39,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Loader();
+            return Loader();
           }
 
           if (snapshot.hasError) {
