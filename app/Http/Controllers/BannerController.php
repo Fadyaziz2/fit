@@ -14,13 +14,13 @@ class BannerController extends Controller
         $pageTitle = __('message.list_form_title', ['form' => __('message.banner')]);
         $authUser = AuthHelper::authSession();
 
-        if (!$authUser->can('banner-list')) {
+        if (!$authUser->hasAnyPermission(['banner-list', 'banner'])) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
 
         $assets = ['data-table'];
-        $headerAction = $authUser->can('banner-add')
+        $headerAction = $authUser->hasAnyPermission(['banner-add', 'banner'])
             ? '<a href="' . route('banner.create') . '" class="btn btn-sm btn-primary" role="button">' . __('message.add_form_title', ['form' => __('message.banner')]) . '</a>'
             : '';
 
@@ -29,7 +29,7 @@ class BannerController extends Controller
 
     public function create()
     {
-        if (!auth()->user()->can('banner-add')) {
+        if (!auth()->user()->hasAnyPermission(['banner-add', 'banner'])) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
@@ -40,7 +40,7 @@ class BannerController extends Controller
 
     public function store(BannerRequest $request)
     {
-        if (!auth()->user()->can('banner-add')) {
+        if (!auth()->user()->hasAnyPermission(['banner-add', 'banner'])) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
@@ -55,7 +55,7 @@ class BannerController extends Controller
 
     public function edit($id)
     {
-        if (!auth()->user()->can('banner-edit')) {
+        if (!auth()->user()->hasAnyPermission(['banner-edit', 'banner'])) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
@@ -68,7 +68,7 @@ class BannerController extends Controller
 
     public function update(BannerRequest $request, $id)
     {
-        if (!auth()->user()->can('banner-edit')) {
+        if (!auth()->user()->hasAnyPermission(['banner-edit', 'banner'])) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
@@ -91,7 +91,7 @@ class BannerController extends Controller
 
     public function destroy($id)
     {
-        if (!auth()->user()->can('banner-delete')) {
+        if (!auth()->user()->hasAnyPermission(['banner-delete', 'banner'])) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
