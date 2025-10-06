@@ -29,6 +29,7 @@ Route::get('get-appsetting', [ API\UserController::class, 'getAppSetting'] );
 Route::get('language-table-list',[API\LanguageTableController::class, 'getList']);
 Route::get('banner-list',[ API\BannerController::class, 'getList' ]);
 Route::get('success-story-list',[ API\SuccessStoryController::class, 'getList' ]);
+Route::get('exclusive-offer',[ API\ExclusiveOfferController::class, 'show' ]);
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
 
