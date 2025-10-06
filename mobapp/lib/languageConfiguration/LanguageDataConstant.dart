@@ -8,6 +8,7 @@ import 'package:mighty_fitness/utils/app_config.dart';
 
 //import 'package:nb_utils/nb_utils.dart';
 
+import '../extensions/extension_util/string_extensions.dart';
 import '../extensions/shared_pref.dart';
 import '../main.dart';
 import 'LanguageDefaultJson.dart';
@@ -76,17 +77,40 @@ performLanguageOperation(List<LanguageJsonData>? _defaultServerLanguageData) {
 
 List<Locale> getSupportedLocales() {
   print("get supported called");
-  List<Locale> list = [];
+
+  List<Locale> locales = [];
+  Set<String> seenLocales = {};
+
+  void addLocale(Locale locale) {
+    String key = locale.toString();
+    if (seenLocales.add(key)) {
+      locales.add(locale);
+    }
+  }
+
   if (defaultServerLanguageData != null &&
-      defaultServerLanguageData!.length > 0) {
-    for (int index = 0; index < defaultServerLanguageData!.length; index++) {
-      list.add(Locale(defaultServerLanguageData![index].languageCode!,
-          defaultServerLanguageData![index].countryCode!));
+      defaultServerLanguageData!.isNotEmpty) {
+    for (final language in defaultServerLanguageData!) {
+      String languageCode = language.languageCode.validate(value: defaultLanguageCode);
+      String? rawCountryCode = language.countryCode;
+
+      if (rawCountryCode.validate().isNotEmpty) {
+        String normalizedCountryCode = rawCountryCode!
+            .replaceAll('-', '_')
+            .split('_')
+            .last
+            .toUpperCase();
+        addLocale(Locale(languageCode, normalizedCountryCode));
+      }
+
+      addLocale(Locale(languageCode));
     }
   } else {
-    list.add(defaultLanguageLocale);
+    addLocale(defaultLanguageLocale);
+    addLocale(Locale(defaultLanguageLocale.languageCode));
   }
-  return list;
+
+  return locales;
 }
 
 String getContentValueFromKey(int keywordId) {
