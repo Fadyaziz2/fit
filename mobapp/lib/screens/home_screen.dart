@@ -29,13 +29,16 @@ import '../extensions/horizontal_list.dart';
 import '../extensions/loader_widget.dart';
 import '../extensions/text_styles.dart';
 import '../models/dashboard_response.dart';
+import '../models/product_response.dart';
 import '../network/rest_api.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/search_screen.dart';
+import '../screens/product_screen.dart';
 import '../utils/app_common.dart';
 import '../utils/app_images.dart';
 import 'filter_workout_screen.dart';
 import 'notification_screen.dart';
+import '../components/product_component.dart';
 
 bool? isFirstTimeGraph = false;
 
@@ -160,6 +163,39 @@ class _HomeScreenState extends State<HomeScreen>{
         });
       }
     }).catchError((e, s) {
+      appStore.setLoading(false);
+    });
+  }
+
+  Future<void> _toggleProductFavourite(ProductModel product) async {
+    if (product.id == null) return;
+    appStore.setLoading(true);
+    Map req = {"product_id": product.id};
+    await setProductFavApi(req).then((value) {
+      toast(value.message);
+      product.isFavourite = !(product.isFavourite ?? false);
+      setState(() {});
+    }).catchError((e) {
+      print(e);
+      appStore.setLoading(false);
+    }).whenComplete(() {
+      appStore.setLoading(false);
+    });
+  }
+
+  Future<void> _addProductToCart(ProductModel product) async {
+    if (product.id == null) return;
+    appStore.setLoading(true);
+    Map req = {"product_id": product.id};
+    await addToCartApi(req).then((value) {
+      toast(value.message);
+      product.isInCart = true;
+      product.cartQuantity = (product.cartQuantity ?? 0) + 1;
+      setState(() {});
+    }).catchError((e) {
+      print(e);
+      appStore.setLoading(false);
+    }).whenComplete(() {
       appStore.setLoading(false);
     });
   }
@@ -301,6 +337,41 @@ class _HomeScreenState extends State<HomeScreen>{
                       },
                     ).paddingSymmetric(horizontal: 16),
                     16.height,
+                    if (mDashboardResponse?.featuredProducts?.isNotEmpty ?? false)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          mHeading(languages.lblSelectedProductsForYou, onCall: () {
+                            ProductScreen().launch(context);
+                          }),
+                          SizedBox(
+                            height: 250,
+                            child: ListView.separated(
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              scrollDirection: Axis.horizontal,
+                              physics: BouncingScrollPhysics(),
+                              itemCount: mDashboardResponse!.featuredProducts!.length,
+                              separatorBuilder: (context, index) => 16.width,
+                              itemBuilder: (context, index) {
+                                ProductModel product = mDashboardResponse.featuredProducts![index];
+                                return SizedBox(
+                                  width: context.width() * 0.58,
+                                  child: ProductComponent(
+                                    mProductModel: product,
+                                    showActions: true,
+                                    onAddToCart: (prod) => _addProductToCart(prod),
+                                    onToggleFavourite: (prod) => _toggleProductFavourite(prod),
+                                    onCall: () {
+                                      setState(() {});
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          16.height,
+                        ],
+                      ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

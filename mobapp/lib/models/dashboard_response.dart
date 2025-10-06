@@ -4,6 +4,7 @@ import 'body_part_response.dart';
 import 'equipment_response.dart';
 import 'exercise_response.dart';
 import 'level_response.dart';
+import 'product_response.dart';
 
 class DashboardResponse {
   List<BodyPartModel>? bodypart;
@@ -14,8 +15,9 @@ class DashboardResponse {
   List<Workouttype>? workouttype;
   List<WorkoutDetailModel>? workout;
   List<Diet>? featuredDiet;
+  List<ProductModel>? featuredProducts;
 
-  DashboardResponse({this.bodypart, this.level, this.equipment, this.exercise, this.diet, this.workouttype, this.workout, this.featuredDiet});
+  DashboardResponse({this.bodypart, this.level, this.equipment, this.exercise, this.diet, this.workouttype, this.workout, this.featuredDiet, this.featuredProducts});
 
   DashboardResponse.fromJson(Map<String, dynamic> json) {
     if (json['bodypart'] != null) {
@@ -66,6 +68,12 @@ class DashboardResponse {
         featuredDiet!.add(new Diet.fromJson(v));
       });
     }
+    if (json['featured_products'] != null) {
+      featuredProducts = <ProductModel>[];
+      json['featured_products'].forEach((v) {
+        featuredProducts!.add(ProductModel.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -93,6 +101,9 @@ class DashboardResponse {
     }
     if (this.featuredDiet != null) {
       data['featured_diet'] = this.featuredDiet!.map((v) => v.toJson()).toList();
+    }
+    if (this.featuredProducts != null) {
+      data['featured_products'] = this.featuredProducts!.map((v) => v.toJson()).toList();
     }
     return data;
   }
