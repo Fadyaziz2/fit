@@ -65,7 +65,7 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>{
+class _HomeScreenState extends State<HomeScreen> {
   ScrollController mScrollController = ScrollController();
   TextEditingController mSearchCont = TextEditingController();
   String? mSearchValue = "";
@@ -74,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen>{
   List<ProductModel> _exclusiveDiscountProducts = [];
   bool _isLoadingCategories = false;
   bool _isLoadingDiscounts = false;
+  bool _isBookingMenuOpen = false;
 
   @override
   void initState() {
@@ -327,94 +328,170 @@ class _HomeScreenState extends State<HomeScreen>{
 
   Widget _buildBookingButton() {
     final label = appStore.selectedLanguageCode == 'ar' ? 'حجز' : 'Book';
-    return Container(
-      decoration: boxDecorationWithRoundedCorners(
-        borderRadius: radius(16),
-        backgroundColor: primaryColor,
-        boxShadow: [
-          BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 18, offset: const Offset(0, 8)),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
-        children: [
-          const Icon(Icons.calendar_today, color: Colors.white, size: 18),
-          6.width,
-          Text(label, style: boldTextStyle(color: Colors.white, size: 14)),
-        ],
-      ),
-    ).onTap(() {
-      _showBookingOptions();
-    });
-  }
-
-  void _showBookingOptions() {
-    final hasSpecialist = (userStore.assignedSpecialistId ?? 0) > 0;
-    final freeUsed = userStore.freeBookingUsedAt.isNotEmpty;
     final myBookingsLabel = appStore.selectedLanguageCode == 'ar' ? 'حجوزاتى' : 'My bookings';
     final newBookingLabel = appStore.selectedLanguageCode == 'ar' ? 'حجز جديد' : 'New booking';
     final freeLabel = appStore.selectedLanguageCode == 'ar' ? 'حجز مجاني' : 'Free request';
+    final closeLabel = appStore.selectedLanguageCode == 'ar' ? 'إغلاق' : 'Close';
     final freeUsedLabel = appStore.selectedLanguageCode == 'ar'
         ? 'تم استخدام الحجز المجاني بالفعل.'
         : 'Free booking already used.';
+    final hasSpecialist = (userStore.assignedSpecialistId ?? 0) > 0;
+    final freeUsed = userStore.freeBookingUsedAt.isNotEmpty;
 
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: radius(4))).paddingBottom(12),
-                ListTile(
-                  leading: Icon(Icons.event_note, color: primaryColor),
-                  title: Text(myBookingsLabel, style: boldTextStyle()),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    MyBookingsScreen().launch(context);
-                  },
-                ),
-                if (hasSpecialist)
-                  ListTile(
-                    leading: Icon(Icons.add_circle_outline, color: primaryColor),
-                    title: Text(newBookingLabel, style: boldTextStyle()),
-                    onTap: () async {
-                      Navigator.of(ctx).pop();
-                      if ((userStore.assignedSpecialistId ?? 0) == 0) {
-                        toast(appStore.selectedLanguageCode == 'ar'
-                            ? 'لا يوجد أخصائي مرتبط بحسابك.'
-                            : 'No specialist assigned to your account.');
-                        return;
-                      }
-                      final refreshed = await NewBookingScreen().launch(context);
-                      if (refreshed == true) {
-                        await getUSerDetail(context, userStore.userId);
-                        setState(() {});
-                      }
-                    },
-                  )
-                else
-                  ListTile(
-                    leading: Icon(Icons.phone_outlined, color: freeUsed ? Colors.grey : primaryColor),
-                    title: Text(freeLabel, style: boldTextStyle(color: freeUsed ? Colors.grey : null)),
-                    subtitle: freeUsed ? Text(freeUsedLabel, style: secondaryTextStyle(color: Colors.grey)) : null,
-                    enabled: !freeUsed,
-                    onTap: freeUsed
-                        ? null
-                        : () async {
-                            Navigator.of(ctx).pop();
-                            await _showFreeBookingDialog();
-                          },
-                  ),
+    final List<Widget> menuItems = [];
+
+    if (_isBookingMenuOpen) {
+      menuItems.addAll([
+        _buildCircularMenuItem(
+          icon: Icons.close,
+          label: closeLabel,
+          backgroundColor: Colors.white,
+          iconColor: primaryColor,
+          onTap: () async {
+            _closeBookingMenu();
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildCircularMenuItem(
+          icon: Icons.event_note,
+          label: myBookingsLabel,
+          onTap: () async {
+            await _openMyBookings();
+          },
+        ),
+        const SizedBox(height: 12),
+        if (hasSpecialist)
+          _buildCircularMenuItem(
+            icon: Icons.add_circle_outline,
+            label: newBookingLabel,
+            onTap: () async {
+              await _openNewBooking();
+            },
+          )
+        else
+          _buildCircularMenuItem(
+            icon: Icons.phone_outlined,
+            label: freeLabel,
+            enabled: !freeUsed,
+            disabledMessage: freeUsedLabel,
+            onTap: () async {
+              await _handleFreeBookingRequest();
+            },
+          ),
+      ]);
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_isBookingMenuOpen) ...menuItems,
+        if (_isBookingMenuOpen) const SizedBox(height: 16),
+        GestureDetector(
+          onTap: _toggleBookingMenu,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: primaryColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 18, offset: const Offset(0, 8)),
               ],
             ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.calendar_today, color: Colors.white, size: 22),
           ),
-        );
-      },
+        ),
+        const SizedBox(height: 8),
+        Text(label, style: boldTextStyle(color: primaryColor, size: 12)),
+      ],
     );
+  }
+
+  Widget _buildCircularMenuItem({
+    required IconData icon,
+    required String label,
+    Future<void> Function()? onTap,
+    bool enabled = true,
+    Color? backgroundColor,
+    Color? iconColor,
+    String? disabledMessage,
+  }) {
+    final Color resolvedBackground = backgroundColor ?? primaryColor;
+    final Color resolvedIconColor = iconColor ?? Colors.white;
+
+    return GestureDetector(
+      onTap: () async {
+        if (enabled) {
+          if (onTap != null) await onTap();
+        } else if (disabledMessage.validate().isNotEmpty) {
+          toast(disabledMessage);
+        }
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: enabled ? resolvedBackground : Colors.grey.shade300,
+              shape: BoxShape.circle,
+              boxShadow: const [
+                BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 6)),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, color: enabled ? resolvedIconColor : Colors.grey, size: 24),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: secondaryTextStyle(size: 12, color: enabled ? null : Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _toggleBookingMenu() {
+    setState(() {
+      _isBookingMenuOpen = !_isBookingMenuOpen;
+    });
+  }
+
+  void _closeBookingMenu() {
+    if (_isBookingMenuOpen) {
+      setState(() {
+        _isBookingMenuOpen = false;
+      });
+    }
+  }
+
+  Future<void> _openMyBookings() async {
+    _closeBookingMenu();
+    await MyBookingsScreen().launch(context);
+  }
+
+  Future<void> _openNewBooking() async {
+    _closeBookingMenu();
+    if ((userStore.assignedSpecialistId ?? 0) == 0) {
+      toast(appStore.selectedLanguageCode == 'ar'
+          ? 'لا يوجد أخصائي مرتبط بحسابك.'
+          : 'No specialist assigned to your account.');
+      return;
+    }
+    final refreshed = await NewBookingScreen().launch(context);
+    if (refreshed == true) {
+      await getUSerDetail(context, userStore.userId);
+      setState(() {});
+    }
+  }
+
+  Future<void> _handleFreeBookingRequest() async {
+    _closeBookingMenu();
+    await _showFreeBookingDialog();
   }
 
   Future<void> _showFreeBookingDialog() async {
