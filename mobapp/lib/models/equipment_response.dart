@@ -1,5 +1,12 @@
 import '../../models/pagination_model.dart';
 
+String? _stringFromJson(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+  return value.toString();
+}
+
 class EquipmentResponse {
   Pagination? pagination;
   List<EquipmentModel>? data;
@@ -42,12 +49,12 @@ class EquipmentModel {
 
   EquipmentModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    title = json['title'];
-    status = json['status'];
-    description = json['description'];
-    equipmentImage = json['equipment_image'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    title = _stringFromJson(json['title']);
+    status = _stringFromJson(json['status']);
+    description = _stringFromJson(json['description']);
+    equipmentImage = _stringFromJson(json['equipment_image']);
+    createdAt = _stringFromJson(json['created_at']);
+    updatedAt = _stringFromJson(json['updated_at']);
   }
 
   Map<String, dynamic> toJson() {
