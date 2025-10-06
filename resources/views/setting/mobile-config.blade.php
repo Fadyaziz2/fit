@@ -40,7 +40,7 @@
                                     <input type="hidden" name="key[]" value="{{ $key.'_'.$sub_keys }}">
                                     @if($key == 'CURRENCY' && $sub_keys == 'CODE')
                                         @php
-                                            $currency_code = $data->value ?? 'USD';
+                                            $currency_code = $data->value ?? 'JOD';
                                             $currency = currencyArray($currency_code);
                                         @endphp
                                         <select class="form-control select2js" name="value[]" id="{{ $key.'_'.$sub_keys }}">

@@ -427,10 +427,10 @@ function getPriceFormat($price)
         $price = 0;
     }
     
-    $currency_code = SettingData('CURRENCY', 'CURRENCY_CODE') ?? 'USD';
+    $currency_code = SettingData('CURRENCY', 'CURRENCY_CODE') ?? 'JOD';
     $currecy = currencyArray($currency_code);
 
-    $code = $currecy['symbol'] ?? '$';
+    $code = $currecy['symbol'] ?? 'د.ا';
     $position = SettingData('CURRENCY', 'CURRENCY_POSITION') ?? 'left';
     
     if ($position == 'left') {
