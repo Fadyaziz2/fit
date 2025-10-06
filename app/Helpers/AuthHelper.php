@@ -8,15 +8,15 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthHelper {
     public static function authSession(){
-        $session = new \App\Models\User;
-        if(Session::has('auth_user')){
-            $session = Session::get('auth_user');
-        }else{
-            $user = Auth::user();
-            Session::put('auth_user',$user);
-            $session = Session::get('auth_user');
+        if (Auth::check()) {
+            return Auth::user()->fresh();
         }
-        return $session;
+
+        if (Session::has('auth_user')) {
+            return Session::get('auth_user');
+        }
+
+        return new \App\Models\User;
     }
 
     public static function checkMenuRoleAndPermission($menu)
