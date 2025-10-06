@@ -19,6 +19,8 @@ Future<void> showExclusiveOfferDialog(BuildContext context, ExclusiveOfferModel 
     builder: (ctx) {
       final textTheme = Theme.of(ctx).textTheme;
       final buttonTextStyle = textTheme.labelLarge ?? const TextStyle(fontSize: 16);
+      final titleTextStyle = textTheme.titleLarge ?? textTheme.headlineSmall;
+      final bodyTextColor = textTheme.bodyMedium?.color ?? Colors.black87;
 
       return Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -61,14 +63,14 @@ Future<void> showExclusiveOfferDialog(BuildContext context, ExclusiveOfferModel 
                 if (offer.title.validate().isNotEmpty)
                   Text(
                     offer.title.validate(),
-                    style: textTheme.headline6?.copyWith(fontWeight: FontWeight.w600),
+                    style: titleTextStyle?.copyWith(fontWeight: FontWeight.w600),
                     textAlign: TextAlign.center,
                   ),
                 if (offer.description.validate().isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
                     offer.description.validate(),
-                    style: primaryTextStyle(size: 14, color: context.bodyTextColor),
+                    style: primaryTextStyle(size: 14, color: bodyTextColor),
                     textAlign: TextAlign.center,
                   ),
                 ],
