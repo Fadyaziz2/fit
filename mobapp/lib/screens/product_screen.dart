@@ -123,10 +123,18 @@ class ProductScreenState extends State<ProductScreen> {
   }
 
   Widget mStoreProductList() {
-    return AnimatedWrap(
-      runSpacing: 16,
-      spacing: 16,
-      children: List.generate(mProductList!.length, (index) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.66,
+      ),
+      itemCount: mProductList!.length,
+      itemBuilder: (context, index) {
         return ProductComponent(
           mProductModel: mProductList![index],
           onCall: () {
@@ -134,8 +142,8 @@ class ProductScreenState extends State<ProductScreen> {
             setState(() {});
           },
         );
-      }),
-    ).paddingSymmetric(horizontal: 16);
+      },
+    );
   }
 
   @override
