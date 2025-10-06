@@ -268,5 +268,6 @@ Future<void> logout(BuildContext context, {Function? onLogout}) async {
     await removeKey(EMAIL);
   }
   userStore.setLogin(false);
+  cartCountNotifier.value = 0;
   onLogout?.call();
 }

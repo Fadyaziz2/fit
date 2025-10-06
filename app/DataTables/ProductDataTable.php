@@ -39,9 +39,21 @@ class ProductDataTable extends DataTable
                 }
                 return '<span class="text-capitalize badge bg-'.$status.'">'.$query->status.'</span>';
             })
-            ->addColumn('price', function($price){             
+            ->addColumn('price', function($price){
                 $price = getPriceFormat($price->price);
                 return $price;
+            })
+            ->addColumn('discount_price', function($product){
+                if ($product->discount_active && $product->discount_price) {
+                    return getPriceFormat($product->discount_price);
+                }
+                return '-';
+            })
+            ->addColumn('discount_percent', function($product){
+                if ($product->discount_active && $product->discount_percent > 0) {
+                    return $product->discount_percent.'%';
+                }
+                return '-';
             })
             ->editColumn('created_at', function ($query) {
                 return dateAgoFormate($query->created_at, true);
@@ -96,9 +108,11 @@ class ProductDataTable extends DataTable
                 ->searchable(false)
                 ->title(__('message.srno'))
                 ->orderable(false),
-            ['data' => 'title', 'name' => 'title', 'title' => __('message.title')],            
+            ['data' => 'title', 'name' => 'title', 'title' => __('message.title')],
             ['data' => 'affiliate_link', 'name' => 'affiliate_link', 'title' => __('message.affiliate_link')],
             ['data' => 'price', 'name' => 'price', 'title' => __('message.price')],
+            ['data' => 'discount_price', 'name' => 'discount_price', 'title' => __('message.discount_price'), 'orderable' => false],
+            ['data' => 'discount_percent', 'name' => 'discount_percent', 'title' => __('message.discount_percent'), 'orderable' => false],
             ['data' => 'productcategory.title', 'name' => 'productcategory.title', 'title' => __('message.productcategory'), 'orderable' => false],
             ['data' => 'featured', 'name' => 'featured', 'title' => __('message.featured')],
             ['data' => 'status', 'name' => 'status', 'title' => __('message.status')],

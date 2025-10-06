@@ -15,6 +15,10 @@ use App\Models\Ingredient;
 use App\Models\Product;
 use App\Models\UserDisease;
 use App\Models\UserProductRecommendation;
+use App\Models\UserFavouriteProduct;
+use App\Models\UserFavouriteDiet;
+use App\Models\UserFavouriteWorkout;
+use App\Models\CartItem;
 
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
@@ -71,6 +75,16 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->hasMany(UserFavouriteWorkout::class, 'user_id', 'id');
     }
 
+    public function userFavouriteProducts()
+    {
+        return $this->hasMany(UserFavouriteProduct::class, 'user_id', 'id');
+    }
+
+    public function cartItems()
+    {
+        return $this->hasMany(CartItem::class, 'user_id', 'id');
+    }
+
     public function recommendedProducts()
     {
         return $this->belongsToMany(Product::class, 'user_product_recommendations')->withTimestamps();
@@ -112,6 +126,8 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
                     $row->userAssignWorkout()->delete();
                     $row->userFavouriteDiet()->delete();
                     $row->userFavouriteWorkout()->delete();
+                    $row->userFavouriteProducts()->delete();
+                    $row->cartItems()->delete();
                     $row->dislikedIngredients()->detach();
                     $row->userDiseases()->delete();
                     $row->userNotification()->delete();

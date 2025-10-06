@@ -1,3 +1,8 @@
+import 'cart_response.dart';
+import 'diet_response.dart';
+import 'product_response.dart';
+import 'workout_detail_response.dart';
+
 class UserResponse {
   Data? data;
   SubscriptionDetail? subscriptionDetail;
@@ -41,6 +46,12 @@ class Data {
   String? updatedAt;
   UserProfile? userProfile;
   int? isSubscribe;
+  List<WorkoutDetailModel>? favouriteWorkouts;
+  List<DietModel>? favouriteDiets;
+  List<ProductModel>? favouriteProducts;
+  List<CartItemModel>? cartItems;
+  int? cartItemCount;
+  num? cartTotalAmount;
 
   Data(
       {this.id,
@@ -59,7 +70,13 @@ class Data {
         this.createdAt,
         this.updatedAt,
         this.userProfile,
-        this.isSubscribe});
+        this.isSubscribe,
+        this.favouriteWorkouts,
+        this.favouriteDiets,
+        this.favouriteProducts,
+        this.cartItems,
+        this.cartItemCount,
+        this.cartTotalAmount});
 
   Data.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -81,6 +98,34 @@ class Data {
         ? new UserProfile.fromJson(json['user_profile'])
         : null;
     isSubscribe = json['is_subscribe'];
+    if (json['favourite_workouts'] != null) {
+      favouriteWorkouts = <WorkoutDetailModel>[];
+      json['favourite_workouts'].forEach((v) {
+        favouriteWorkouts!.add(WorkoutDetailModel.fromJson(v));
+      });
+    }
+    if (json['favourite_diets'] != null) {
+      favouriteDiets = <DietModel>[];
+      json['favourite_diets'].forEach((v) {
+        favouriteDiets!.add(DietModel.fromJson(v));
+      });
+    }
+    if (json['favourite_products'] != null) {
+      favouriteProducts = <ProductModel>[];
+      json['favourite_products'].forEach((v) {
+        favouriteProducts!.add(ProductModel.fromJson(v));
+      });
+    }
+    if (json['cart_items'] != null) {
+      cartItems = <CartItemModel>[];
+      json['cart_items'].forEach((v) {
+        cartItems!.add(CartItemModel.fromJson(v));
+      });
+    }
+    cartItemCount = json['cart_item_count'];
+    cartTotalAmount = json['cart_total_amount'] != null
+        ? num.tryParse(json['cart_total_amount'].toString())
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -104,6 +149,23 @@ class Data {
       data['user_profile'] = this.userProfile!.toJson();
     }
     data['is_subscribe'] = this.isSubscribe;
+    if (this.favouriteWorkouts != null) {
+      data['favourite_workouts'] =
+          this.favouriteWorkouts!.map((v) => v.toJson()).toList();
+    }
+    if (this.favouriteDiets != null) {
+      data['favourite_diets'] =
+          this.favouriteDiets!.map((v) => v.toJson()).toList();
+    }
+    if (this.favouriteProducts != null) {
+      data['favourite_products'] =
+          this.favouriteProducts!.map((v) => v.toJson()).toList();
+    }
+    if (this.cartItems != null) {
+      data['cart_items'] = this.cartItems!.map((v) => v.toJson()).toList();
+    }
+    data['cart_item_count'] = this.cartItemCount;
+    data['cart_total_amount'] = this.cartTotalAmount;
     return data;
   }
 }

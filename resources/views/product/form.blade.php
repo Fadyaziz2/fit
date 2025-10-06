@@ -47,6 +47,23 @@
                                 {{ html()->number('price', old('price'))->placeholder(__('message.price'))->class('form-control')->attribute('min', 0)->attribute('step', 'any')->attribute('required', 'required') }}
                             </div>
                             <div class="form-group col-md-4">
+                                {{ html()->label(__('message.discount_active'))->class('form-control-label') }}
+                                <div class="form-check form-switch">
+                                    <input type="hidden" name="discount_active" value="0">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="discount_active" name="discount_active" value="1" {{ old('discount_active', isset($data) ? ($data->discount_active ? 1 : 0) : 0) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="discount_active">{{ __('message.yes') }}</label>
+                                </div>
+                                <small class="form-text text-muted">{{ __('message.discount_price_hint') }}</small>
+                            </div>
+                            <div class="form-group col-md-4">
+                                {{ html()->label(__('message.discount_price'))->class('form-control-label') }}
+                                {{ html()->number('discount_price', old('discount_price', isset($data) ? $data->discount_price : null))->class('form-control')->attribute('min', 0)->attribute('step', 'any')->placeholder(__('message.discount_price')) }}
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="form-control-label">{{ __('message.discount_percent') }}</label>
+                                <input type="text" class="form-control" value="{{ isset($data) && $data->discount_active ? number_format($data->discount_percent, 2).'%' : '-' }}" readonly>
+                            </div>
+                            <div class="form-group col-md-4">
                                 {{ html()->label(__('message.productcategory').' <span class="text-danger">*</span>')->class('form-control-label') }}
                                 {{ html()->select('productcategory_id', isset($id) ? [ optional($data->productcategory)->id => optional($data->productcategory)->title ] : [], old('productcategory_id'))
                                     ->class('select2js form-group productcategory')

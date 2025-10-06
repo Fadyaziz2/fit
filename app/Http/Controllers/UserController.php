@@ -104,14 +104,47 @@ class UserController extends Controller
             return redirect()->back()->withErrors($message);
         }
 
-        $data = User::with(['userProfile', 'roles', 'dislikedIngredients', 'userDiseases'])->findOrFail($id);
+        $data = User::with([
+            'userProfile',
+            'roles',
+            'dislikedIngredients',
+            'userDiseases',
+            'userFavouriteWorkout.workout.media',
+            'userFavouriteDiet.diet.media',
+            'userFavouriteProducts.product.media',
+            'cartItems.product.media',
+            'cartItems.product.productcategory',
+        ])->findOrFail($id);
         $data->load('media');
 
         $subscriptions = Subscription::where('user_id', $id)->get();
 
         $profileImage = getSingleMedia($data, 'profile_image');
         $attachments = $data->getMedia('attachments');
-        return $dataTable->with('user_id',$id)->render('users.profile', compact('data', 'profileImage','subscriptions', 'attachments'));
+        $favouriteWorkouts = $data->userFavouriteWorkout->map(function ($favourite) {
+            return $favourite->workout;
+        })->filter();
+
+        $favouriteDiets = $data->userFavouriteDiet->map(function ($favourite) {
+            return $favourite->diet;
+        })->filter();
+
+        $favouriteProducts = $data->userFavouriteProducts->map(function ($favourite) {
+            return $favourite->product;
+        })->filter();
+
+        $cartItems = $data->cartItems;
+
+        return $dataTable->with('user_id',$id)->render('users.profile', compact(
+            'data',
+            'profileImage',
+            'subscriptions',
+            'attachments',
+            'favouriteWorkouts',
+            'favouriteDiets',
+            'favouriteProducts',
+            'cartItems'
+        ));
     }
 
     /**

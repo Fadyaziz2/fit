@@ -60,7 +60,13 @@ class ProductController extends Controller
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
-        $product = Product::create($request->all());
+        $data = $request->all();
+        $data['discount_active'] = $request->boolean('discount_active');
+        if (empty($data['discount_active'])) {
+            $data['discount_price'] = null;
+        }
+
+        $product = Product::create($data);
 
         storeMediaFile($product,$request->product_image, 'product_image'); 
 
@@ -113,8 +119,14 @@ class ProductController extends Controller
 
         $product = Product::findOrFail($id);
 
+        $data = $request->all();
+        $data['discount_active'] = $request->boolean('discount_active');
+        if (empty($data['discount_active'])) {
+            $data['discount_price'] = null;
+        }
+
         // product data...
-        $product->fill($request->all())->update();
+        $product->fill($data)->update();
 
         // Save product image...
         if (isset($request->product_image) && $request->product_image != null) {

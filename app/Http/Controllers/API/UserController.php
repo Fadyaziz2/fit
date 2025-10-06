@@ -86,7 +86,14 @@ class UserController extends Controller
     {
         $id = $request->id;
 
-        $user = User::where('id',$id)->where('user_type', 'user')->first();
+        $user = User::with([
+            'userProfile',
+            'userFavouriteDiet.diet.media',
+            'userFavouriteWorkout.workout.media',
+            'userFavouriteProducts.product.media',
+            'cartItems.product.media',
+            'cartItems.product.productcategory',
+        ])->where('id',$id)->where('user_type', 'user')->first();
         
         if(empty($user)) {
             $message = __('message.not_found_entry', ['name' => __('message.user') ]);

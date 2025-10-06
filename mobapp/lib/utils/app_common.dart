@@ -31,6 +31,8 @@ import '../network/rest_api.dart';
 import 'app_config.dart';
 import 'app_constants.dart';
 
+ValueNotifier<int> cartCountNotifier = ValueNotifier<int>(0);
+
 void setTheme() {
   int themeModeIndex = getIntAsync(THEME_MODE_INDEX, defaultValue: ThemeModeSystem);
 
@@ -268,6 +270,7 @@ Future<void> getUSerDetail(BuildContext context, int? id) async {
     userStore.setSubscribe(value.subscriptionDetail!.isSubscribe.validate());
     userStore.setSubscriptionDetail(value.subscriptionDetail!);
     print("user data->" + value.toJson().toString());
+    cartCountNotifier.value = value.data?.cartItemCount ?? 0;
     appStore.setLoading(false);
   }).catchError((e) {
     print("error-" + e.toString());

@@ -20,6 +20,7 @@ import '../../screens/sign_in_screen.dart';
 import '../extensions/colors.dart';
 import '../extensions/confirmation_dialog.dart';
 import '../extensions/decorations.dart';
+import '../extensions/loader_widget.dart';
 import '../extensions/text_styles.dart';
 import '../main.dart';
 import '../service/auth_service.dart';
@@ -28,6 +29,10 @@ import '../utils/app_common.dart';
 import '../utils/app_images.dart';
 import 'about_app_screen.dart';
 import 'favourite_screen.dart';
+import '../models/diet_response.dart';
+import '../models/product_response.dart';
+import '../models/workout_detail_response.dart';
+import '../network/rest_api.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -35,9 +40,20 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  List<WorkoutDetailModel> _favouriteWorkouts = [];
+  List<DietModel> _favouriteDiets = [];
+  List<ProductModel> _favouriteProducts = [];
+  bool _isFetchingFavourites = false;
+
   @override
   void setState(fn) {
     if (mounted) super.setState(fn);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFavouriteData();
   }
 
   Widget mOtherInfo(String title, String value, String heading) {
@@ -62,6 +78,139 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(title, style: secondaryTextStyle(size: 12, color: textColor)),
         ],
       ),
+    );
+  }
+
+  Future<void> _fetchFavouriteData() async {
+    if (!userStore.isLoggedIn) return;
+
+    setState(() {
+      _isFetchingFavourites = true;
+    });
+
+    await getUserDataApi(id: userStore.userId).then((value) {
+      _favouriteWorkouts = value.data?.favouriteWorkouts ?? [];
+      _favouriteDiets = value.data?.favouriteDiets ?? [];
+      _favouriteProducts = value.data?.favouriteProducts ?? [];
+      cartCountNotifier.value = value.data?.cartItemCount ?? cartCountNotifier.value;
+      setState(() {});
+    }).catchError((e) {
+      toast(e.toString());
+    }).whenComplete(() {
+      if (mounted) {
+        setState(() {
+          _isFetchingFavourites = false;
+        });
+      }
+    });
+  }
+
+  Widget _buildFavouriteSection() {
+    if (_isFetchingFavourites) {
+      return Loader().paddingAll(24);
+    }
+
+    if (_favouriteWorkouts.isEmpty &&
+        _favouriteDiets.isEmpty &&
+        _favouriteProducts.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(24),
+        decoration: boxDecorationWithRoundedCorners(
+            borderRadius: radius(14),
+            backgroundColor:
+                appStore.isDarkMode ? socialBackground : context.cardColor),
+        child: Text(languages.lblNoFoundData,
+                style: secondaryTextStyle(), textAlign: TextAlign.center)
+            .center(),
+      ).paddingSymmetric(horizontal: 16);
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.all(16),
+      decoration: boxDecorationWithRoundedCorners(
+        borderRadius: radius(14),
+        backgroundColor:
+            appStore.isDarkMode ? socialBackground : context.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: shadowColorGlobal,
+            blurRadius: 10,
+            spreadRadius: 2,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(languages.lblFavoriteWorkoutAndNutristions,
+              style: boldTextStyle(size: 18)),
+          12.height,
+          if (_favouriteWorkouts.isNotEmpty)
+            _buildHorizontalFavouriteList<WorkoutDetailModel>(
+              title: languages.lblWorkouts,
+              items: _favouriteWorkouts,
+              itemBuilder: (workout) => _FavouriteItemCard(
+                image: workout.workoutImage,
+                title: workout.title,
+                subtitle: workout.levelTitle,
+              ),
+            ),
+          if (_favouriteDiets.isNotEmpty)
+            _buildHorizontalFavouriteList<DietModel>(
+              title: languages.lblDiet,
+              items: _favouriteDiets,
+              itemBuilder: (diet) => _FavouriteItemCard(
+                image: diet.dietImage,
+                title: diet.title,
+                subtitle: diet.calories,
+              ),
+            ),
+          if (_favouriteProducts.isNotEmpty)
+            _buildHorizontalFavouriteList<ProductModel>(
+              title: languages.lblProductList,
+              items: _favouriteProducts,
+              itemBuilder: (product) => _FavouriteItemCard(
+                image: product.productImage,
+                title: product.title,
+                subtitle:
+                    '${userStore.currencySymbol.validate()}${(product.finalPrice ?? product.price ?? 0).toStringAsFixed(2)}',
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHorizontalFavouriteList<T>({
+    required String title,
+    required List<T> items,
+    required _FavouriteItemCard Function(T) itemBuilder,
+  }) {
+    if (items.isEmpty) return SizedBox();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: boldTextStyle()),
+        8.height,
+        SizedBox(
+          height: 150,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.only(bottom: 4),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => 12.width,
+            itemBuilder: (context, index) {
+              return itemBuilder(items[index]);
+            },
+          ),
+        ),
+        12.height,
+      ],
     );
   }
 
@@ -159,6 +308,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                             ),
                             8.height,
+                            _buildFavouriteSection(),
+                            16.height,
                             mOption(ic_blog, languages.lblBlog, () {
                               BlogScreen().launch(context);
                             }),
@@ -176,7 +327,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               }),
                             Divider(height: 0, color: grayColor),
                             mOption(ic_fav_outline, languages.lblFavoriteWorkoutAndNutristions, () {
-                              FavouriteScreen(index: 0).launch(context);
+                              FavouriteScreen(index: 0)
+                                  .launch(context)
+                                  .then((value) => _fetchFavouriteData());
                             }),
                             Divider(height: 0, color: grayColor),
                             mOption(ic_reminder, languages.lblDailyReminders, () {
@@ -225,6 +378,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _FavouriteItemCard extends StatelessWidget {
+  final String? image;
+  final String? title;
+  final String? subtitle;
+
+  const _FavouriteItemCard({this.image, this.title, this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 130,
+      decoration: boxDecorationWithRoundedCorners(
+        borderRadius: radius(12),
+        backgroundColor:
+            appStore.isDarkMode ? socialBackground : context.cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: shadowColorGlobal,
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          )
+        ],
+      ),
+      padding: EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          cachedImage(image,
+                  height: 70, width: double.infinity, fit: BoxFit.cover)
+              .cornerRadiusWithClipRRect(10),
+          8.height,
+          Text(title.validate(),
+              style: boldTextStyle(size: 13),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis),
+          if (subtitle.validate().isNotEmpty)
+            Text(subtitle.validate(),
+                    style: secondaryTextStyle(size: 11),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis)
+                .paddingTop(4),
+        ],
       ),
     );
   }

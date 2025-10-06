@@ -34,11 +34,15 @@ class ProductRequest extends FormRequest
             case 'post':
                 $rules = [
                     'title' => 'required',
+                    'discount_active' => 'nullable|boolean',
+                    'discount_price' => 'nullable|numeric|min:0|lt:price|required_if:discount_active,1',
                 ];
                 break;
             case 'patch':
                 $rules = [
                     'title' => 'required',
+                    'discount_active' => 'nullable|boolean',
+                    'discount_price' => 'nullable|numeric|min:0|lt:price|required_if:discount_active,1',
                 ];
                 break;
         }
