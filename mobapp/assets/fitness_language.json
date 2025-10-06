@@ -443,6 +443,12 @@
       },
       {
         "screenId": "8",
+        "keyword_id": 263,
+        "keyword_name": "lblExclusiveDiscounts",
+        "keyword_value": "Exclusive discounts"
+      },
+      {
+        "screenId": "8",
         "keyword_id": 246,
         "keyword_name": "lblUpdateNow",
         "keyword_value": "Update Now"

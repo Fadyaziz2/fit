@@ -16,8 +16,9 @@ class ViewAllProductScreen extends StatefulWidget {
   final bool? isCategory;
   final int? id;
   final String? title;
+  final bool showDiscountOnly;
 
-  const ViewAllProductScreen({super.key, this.isCategory = false, this.title, this.id});
+  const ViewAllProductScreen({super.key, this.isCategory = false, this.title, this.id, this.showDiscountOnly = false});
 
   @override
   State<ViewAllProductScreen> createState() => _ViewAllProductScreenState();
@@ -55,21 +56,48 @@ class _ViewAllProductScreenState extends State<ViewAllProductScreen> {
 
   Future<void> getAllProductData() async {
     appStore.setLoading(true);
-    await getProductApi(page: page, isCategory: widget.isCategory, productId: widget.id.validate()).then((value) {
+    await getProductApi(page: page, isCategory: widget.isCategory, productId: widget.id.validate()).then((value) async {
       appStore.setLoading(false);
-      numPage = value.pagination!.totalPages;
+      numPage = value.pagination?.totalPages;
       isLastPage = false;
       if (page == 1) {
         mProductList.clear();
       }
-      Iterable it = value.data!;
-      it.map((e) => mProductList.add(e)).toList();
+
+      List<ProductModel> fetchedProducts = value.data ?? [];
+      List<ProductModel> productsToAdd;
+
+      if (widget.showDiscountOnly) {
+        productsToAdd = fetchedProducts.where((product) => _isProductDiscounted(product)).toList();
+      } else {
+        productsToAdd = fetchedProducts;
+      }
+
+      mProductList.addAll(productsToAdd);
       setState(() {});
+
+      if (widget.showDiscountOnly && productsToAdd.isEmpty) {
+        int totalPages = numPage ?? page;
+        if (page < totalPages) {
+          page++;
+          await getAllProductData();
+        }
+      }
     }).catchError((e) {
       isLastPage = true;
       appStore.setLoading(false);
       setState(() {});
     });
+  }
+
+  bool _isProductDiscounted(ProductModel product) {
+    final bool hasActiveFlag = product.discountActive == true;
+    final bool hasDiscountPrice = (product.discountPrice ?? 0) > 0;
+    final bool hasDiscountPercent = (product.discountPercent ?? 0) > 0;
+    final bool hasLowerFinalPrice =
+        product.price != null && product.finalPrice != null && product.finalPrice! < product.price!;
+
+    return hasActiveFlag || hasDiscountPrice || hasDiscountPercent || hasLowerFinalPrice;
   }
 
   @override
@@ -80,7 +108,11 @@ class _ViewAllProductScreenState extends State<ViewAllProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: appBarWidget(widget.isCategory == true ? widget.title.toString() : languages.lblProductList, elevation: 0, context: context),
+      appBar: appBarWidget(
+        widget.isCategory == true ? widget.title.toString() : (widget.title ?? languages.lblProductList),
+        elevation: 0,
+        context: context,
+      ),
       body: Stack(
         children: [
           mProductList.isNotEmpty
