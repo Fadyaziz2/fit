@@ -29,6 +29,10 @@ import '../extensions/horizontal_list.dart';
 import '../extensions/loader_widget.dart';
 import '../extensions/text_styles.dart';
 import '../models/dashboard_response.dart';
+import '../models/body_part_response.dart';
+import '../models/equipment_response.dart';
+import '../models/workout_detail_response.dart';
+import '../models/level_response.dart';
 import '../models/product_response.dart';
 import '../network/rest_api.dart';
 import '../screens/edit_profile_screen.dart';
@@ -361,11 +365,17 @@ class _HomeScreenState extends State<HomeScreen>{
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               DashboardResponse? mDashboardResponse = snapshot.data;
-              bool hasFeaturedProducts = mDashboardResponse?.featuredProducts?.isNotEmpty ?? false;
-              bool hasBodyParts = mDashboardResponse?.bodypart?.isNotEmpty ?? false;
-              bool hasEquipments = mDashboardResponse?.equipment?.isNotEmpty ?? false;
-              bool hasWorkouts = mDashboardResponse?.workout?.isNotEmpty ?? false;
-              bool hasLevels = mDashboardResponse?.level?.isNotEmpty ?? false;
+              List<ProductModel> featuredProducts = mDashboardResponse?.featuredProducts ?? <ProductModel>[];
+              List<BodyPartModel> bodyParts = mDashboardResponse?.bodypart ?? <BodyPartModel>[];
+              List<EquipmentModel> equipments = mDashboardResponse?.equipment ?? <EquipmentModel>[];
+              List<WorkoutDetailModel> workouts = mDashboardResponse?.workout ?? <WorkoutDetailModel>[];
+              List<LevelModel> levels = mDashboardResponse?.level ?? <LevelModel>[];
+
+              bool hasFeaturedProducts = featuredProducts.isNotEmpty;
+              bool hasBodyParts = bodyParts.isNotEmpty;
+              bool hasEquipments = equipments.isNotEmpty;
+              bool hasWorkouts = workouts.isNotEmpty;
+              bool hasLevels = levels.isNotEmpty;
               bool hasAnyDashboardContent =
                   hasFeaturedProducts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels;
 
@@ -431,10 +441,10 @@ class _HomeScreenState extends State<HomeScreen>{
                               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               scrollDirection: Axis.horizontal,
                               physics: BouncingScrollPhysics(),
-                              itemCount: mDashboardResponse!.featuredProducts!.length,
+                              itemCount: featuredProducts.length,
                               separatorBuilder: (context, index) => 16.width,
                               itemBuilder: (context, index) {
-                                ProductModel product = mDashboardResponse.featuredProducts![index];
+                                ProductModel product = featuredProducts[index];
                                 return SizedBox(
                                   width: context.width() * 0.58,
                                   child: ProductComponent(
@@ -463,11 +473,11 @@ class _HomeScreenState extends State<HomeScreen>{
                         HorizontalList(
                           physics: BouncingScrollPhysics(),
                           controller: mScrollController,
-                          itemCount: mDashboardResponse!.bodypart!.length,
+                          itemCount: bodyParts.length,
                           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           spacing: 16,
                           itemBuilder: (context, index) {
-                            return BodyPartComponent(bodyPartModel: mDashboardResponse.bodypart![index]);
+                            return BodyPartComponent(bodyPartModel: bodyParts[index]);
                           },
                         ),
                       ],
@@ -482,11 +492,11 @@ class _HomeScreenState extends State<HomeScreen>{
                         }),
                         HorizontalList(
                           physics: BouncingScrollPhysics(),
-                          itemCount: mDashboardResponse.equipment!.length,
+                          itemCount: equipments.length,
                           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           spacing: 16,
                           itemBuilder: (context, index) {
-                            return EquipmentComponent(mEquipmentModel: mDashboardResponse.equipment![index]);
+                            return EquipmentComponent(mEquipmentModel: equipments[index]);
                           },
                         ),
                       ],
@@ -503,12 +513,12 @@ class _HomeScreenState extends State<HomeScreen>{
                         }),
                         HorizontalList(
                           physics: BouncingScrollPhysics(),
-                          itemCount: mDashboardResponse.workout!.length,
+                          itemCount: workouts.length,
                           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           spacing: 16,
                           itemBuilder: (context, index) {
                             return WorkoutComponent(
-                              mWorkoutModel: mDashboardResponse.workout![index],
+                              mWorkoutModel: workouts[index],
                               onCall: () {
                                 appStore.setLoading(true);
                                 setState(() {});
@@ -531,9 +541,9 @@ class _HomeScreenState extends State<HomeScreen>{
                           shrinkWrap: true,
                           physics: NeverScrollableScrollPhysics(),
                           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          itemCount: mDashboardResponse.level!.length,
+                          itemCount: levels.length,
                           itemBuilder: (context, index) {
-                            return LevelComponent(mLevelModel: mDashboardResponse.level![index]);
+                            return LevelComponent(mLevelModel: levels[index]);
                           },
                         ),
                         16.height,
@@ -555,13 +565,19 @@ class _HomeScreenState extends State<HomeScreen>{
     required DashboardResponse? dashboardResponse,
   }) {
     List<Widget> sections = [];
-    bool hasFeaturedProducts = _hasDashboardSection(dashboardResponse?.featuredProducts);
-    bool hasBodyParts = _hasDashboardSection(dashboardResponse?.bodypart);
-    bool hasEquipments = _hasDashboardSection(dashboardResponse?.equipment);
-    bool hasWorkouts = _hasDashboardSection(dashboardResponse?.workout);
-    bool hasLevels = _hasDashboardSection(dashboardResponse?.level);
+    List<ProductModel> featuredProducts = dashboardResponse?.featuredProducts ?? <ProductModel>[];
+    List<BodyPartModel> bodyParts = dashboardResponse?.bodypart ?? <BodyPartModel>[];
+    List<EquipmentModel> equipments = dashboardResponse?.equipment ?? <EquipmentModel>[];
+    List<WorkoutDetailModel> workouts = dashboardResponse?.workout ?? <WorkoutDetailModel>[];
+    List<LevelModel> levels = dashboardResponse?.level ?? <LevelModel>[];
 
-    if (hasFeaturedProducts && dashboardResponse?.featuredProducts != null)
+    bool hasFeaturedProducts = featuredProducts.isNotEmpty;
+    bool hasBodyParts = bodyParts.isNotEmpty;
+    bool hasEquipments = equipments.isNotEmpty;
+    bool hasWorkouts = workouts.isNotEmpty;
+    bool hasLevels = levels.isNotEmpty;
+
+    if (hasFeaturedProducts)
       sections.add(
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,10 +591,10 @@ class _HomeScreenState extends State<HomeScreen>{
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 scrollDirection: Axis.horizontal,
                 physics: BouncingScrollPhysics(),
-                itemCount: dashboardResponse!.featuredProducts!.length,
+                itemCount: featuredProducts.length,
                 separatorBuilder: (context, index) => 16.width,
                 itemBuilder: (context, index) {
-                  ProductModel product = dashboardResponse.featuredProducts![index];
+                  ProductModel product = featuredProducts[index];
                   return SizedBox(
                     width: context.width() * 0.58,
                     child: ProductComponent(
@@ -598,7 +614,7 @@ class _HomeScreenState extends State<HomeScreen>{
           ],
         ),
       );
-    if (hasBodyParts && dashboardResponse?.bodypart != null)
+    if (hasBodyParts)
       sections.add(
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -609,17 +625,17 @@ class _HomeScreenState extends State<HomeScreen>{
             HorizontalList(
               physics: BouncingScrollPhysics(),
               controller: mScrollController,
-              itemCount: dashboardResponse!.bodypart!.length,
+              itemCount: bodyParts.length,
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               spacing: 16,
               itemBuilder: (context, index) {
-                return BodyPartComponent(bodyPartModel: dashboardResponse.bodypart![index]);
+                return BodyPartComponent(bodyPartModel: bodyParts[index]);
               },
             ),
           ],
         ),
       );
-    if (hasEquipments && dashboardResponse?.equipment != null)
+    if (hasEquipments)
       sections.add(
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,17 +646,17 @@ class _HomeScreenState extends State<HomeScreen>{
             }),
             HorizontalList(
               physics: BouncingScrollPhysics(),
-              itemCount: dashboardResponse!.equipment!.length,
+              itemCount: equipments.length,
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               spacing: 16,
               itemBuilder: (context, index) {
-                return EquipmentComponent(mEquipmentModel: dashboardResponse.equipment![index]);
+                return EquipmentComponent(mEquipmentModel: equipments[index]);
               },
             ),
           ],
         ),
       );
-    if (hasWorkouts && dashboardResponse?.workout != null)
+    if (hasWorkouts)
       sections.add(
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -653,12 +669,12 @@ class _HomeScreenState extends State<HomeScreen>{
             }),
             HorizontalList(
               physics: BouncingScrollPhysics(),
-              itemCount: dashboardResponse!.workout!.length,
+              itemCount: workouts.length,
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               spacing: 16,
               itemBuilder: (context, index) {
                 return WorkoutComponent(
-                  mWorkoutModel: dashboardResponse.workout![index],
+                  mWorkoutModel: workouts[index],
                   onCall: () {
                     appStore.setLoading(true);
                     setState(() {});
@@ -666,11 +682,11 @@ class _HomeScreenState extends State<HomeScreen>{
                   },
                 );
               },
-            ),
+              ),
           ],
         ),
       );
-    if (hasLevels && dashboardResponse?.level != null)
+    if (hasLevels)
       sections.add(
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,9 +699,9 @@ class _HomeScreenState extends State<HomeScreen>{
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(),
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: dashboardResponse!.level!.length,
+              itemCount: levels.length,
               itemBuilder: (context, index) {
-                return LevelComponent(mLevelModel: dashboardResponse.level![index]);
+                return LevelComponent(mLevelModel: levels[index]);
               },
             ),
             16.height,
@@ -720,9 +736,5 @@ class _HomeScreenState extends State<HomeScreen>{
       onPressed: () => mSearchCont.clear(),
       icon: Icon(Icons.clear),
     );
-  }
-
-  bool _hasDashboardSection(List<dynamic>? section) {
-    return section != null && section.isNotEmpty;
   }
 }
