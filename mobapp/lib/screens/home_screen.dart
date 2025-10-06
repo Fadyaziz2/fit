@@ -430,8 +430,6 @@ class _HomeScreenState extends State<HomeScreen>{
                     16.height,
                     if (hasProductBanners)
                       ProductBannerCarousel(banners: productBanners).paddingBottom(16),
-                    if (hasSuccessStories)
-                      SuccessStorySlider(stories: successStories).paddingSymmetric(horizontal: 16, vertical: 8),
                     if (!hasAnyDashboardContent)
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
@@ -560,7 +558,10 @@ class _HomeScreenState extends State<HomeScreen>{
                         ),
                         16.height,
                       ],
-                      )
+                      ),
+                    if (hasSuccessStories)
+                      SuccessStorySlider(stories: successStories)
+                          .paddingSymmetric(horizontal: 16, vertical: 24),
                   ],
                 ),
               );

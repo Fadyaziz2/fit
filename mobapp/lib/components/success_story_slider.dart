@@ -7,6 +7,7 @@ import '../extensions/extension_util/int_extensions.dart';
 import '../extensions/extension_util/string_extensions.dart';
 import '../extensions/extension_util/widget_extensions.dart';
 import '../extensions/text_styles.dart';
+import '../languageConfiguration/LanguageDefaultJson.dart';
 import '../main.dart';
 import '../models/success_story_model.dart';
 
@@ -56,10 +57,14 @@ class _SuccessStorySliderState extends State<SuccessStorySlider> {
       return const SizedBox.shrink();
     }
 
+    final successStoriesLabel = _localizedText(languages.lblSuccessStories, 'Success Stories');
+    final beforeLabel = _localizedText(languages.lblBefore, 'Before');
+    final afterLabel = _localizedText(languages.lblAfter, 'After');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(languages.lblSuccessStories, style: boldTextStyle(size: 20)).paddingBottom(12),
+        Text(successStoriesLabel, style: boldTextStyle(size: 20)).paddingBottom(12),
         SizedBox(
           height: 260,
           child: PageView.builder(
@@ -103,26 +108,34 @@ class _SuccessStorySliderState extends State<SuccessStorySlider> {
                       Expanded(
                         child: Row(
                           children: [
-                            _buildStoryImage(story.beforeImage, languages.lblBefore),
+                            _buildStoryImage(story.beforeImage, beforeLabel),
                             12.width,
-                            _buildStoryImage(story.afterImage, languages.lblAfter),
+                            _buildStoryImage(story.afterImage, afterLabel),
                           ],
                         ),
                       ),
                       16.height,
                       if (story.title.validate().isNotEmpty)
-                        Text(
-                          story.title.validate(),
-                          style: boldTextStyle(size: 16),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Text(
+                            story.title.validate(),
+                            style: boldTextStyle(size: 16),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       if (story.description.validate().isNotEmpty)
-                        Text(
-                          story.description.validate(),
-                          style: secondaryTextStyle(),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Text(
+                            story.description.validate(),
+                            style: secondaryTextStyle(),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                          ),
                         ).paddingTop(story.title.validate().isNotEmpty ? 6 : 0),
                     ],
                   ),
@@ -150,6 +163,18 @@ class _SuccessStorySliderState extends State<SuccessStorySlider> {
           ),
       ],
     );
+  }
+
+  String _localizedText(String value, String fallback) {
+    final normalizedValue = value.trim();
+    if (normalizedValue.isEmpty) return fallback;
+
+    final upperValue = normalizedValue.toUpperCase();
+    if (upperValue.contains(defaultKeyNotFoundValue)) {
+      return fallback;
+    }
+
+    return normalizedValue;
   }
 
   Widget _buildStoryImage(String? url, String label) {
