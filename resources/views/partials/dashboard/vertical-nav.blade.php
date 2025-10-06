@@ -250,6 +250,11 @@
                 ->data('permission', 'productcategory-list')
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
                 ->link->attr(['class' => activeRoute(route('productcategory.index')) ? 'nav-link active' : 'nav-link']);
+
+            $menu->product->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.banner')]).'</span>', ['route' => 'banner.index'])
+                ->data('permission', 'banner-list')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('banner.index')) || request()->is('banner/*') ? 'nav-link active' : 'nav-link']);
             
         $menu->add('<span class="item-name">'.__('message.post').'</span>', ['class' => ''])
                 ->prepend('<i class="icon">

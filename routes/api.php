@@ -27,6 +27,7 @@ Route::post('social-otp-login',[ API\UserController::class, 'socialOTPLogin' ]);
 Route::get('user-detail',[ API\UserController::class, 'userDetail']);
 Route::get('get-appsetting', [ API\UserController::class, 'getAppSetting'] );
 Route::get('language-table-list',[API\LanguageTableController::class, 'getList']);
+Route::get('banner-list',[ API\BannerController::class, 'getList' ]);
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
 

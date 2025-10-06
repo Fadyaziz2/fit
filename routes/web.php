@@ -25,6 +25,7 @@ use App\Http\Controllers\LevelController;
 use App\Http\Controllers\BodyPartController;
 use App\Http\Controllers\ClassScheduleController;
 use App\Http\Controllers\WorkoutController;
+use App\Http\Controllers\BannerController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PackageController;
@@ -164,6 +165,7 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     
     //product
     Route::resource('product',ProductController::class);
+    Route::resource('banner', BannerController::class);
     Route::resource('product-orders', ProductOrderController::class)->only(['index', 'show', 'update']);
     Route::resource('productcategory',ProductCategoryController::class);
 

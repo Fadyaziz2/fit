@@ -8,6 +8,7 @@ use App\Models\Permission;
 use App\Models\Equipment;
 use App\Models\Level;
 use App\Models\WorkoutType;
+use App\Models\Banner;
 use App\Models\Workout;
 use App\Models\Diet;
 use App\Models\CategoryDiet;
@@ -157,6 +158,10 @@ class HomeController extends Controller
             case 'language_image':
                 $data = LanguageList::find($request->id);
                 $message = __('message.msg_removed',[ 'name' => __('message.language') ]);
+                break;
+            case 'banner_image':
+                $data = Banner::find($request->id);
+                $message = __('message.msg_removed',[ 'name' => __('message.banner') ]);
                 break;
             default:
                 $data = AppSetting::find($request->id);

@@ -21,6 +21,8 @@ use App\Http\Resources\ExerciseResource;
 use App\Models\Setting;
 use App\Models\Product;
 use App\Http\Resources\ProductResource;
+use App\Models\Banner;
+use App\Http\Resources\BannerResource;
 class DashboardController extends Controller
 {
     public function dashboardDetail(Request $request)
@@ -61,6 +63,8 @@ class DashboardController extends Controller
                 ->get();
         }
 
+        $banners = Banner::active()->orderBy('display_order')->orderByDesc('created_at')->get();
+
         $response = [
             'bodypart'      => BodyPartResource::collection($bodypart),
             'level'         => LevelResource::collection($level),
@@ -71,6 +75,7 @@ class DashboardController extends Controller
             'workout'       => WorkoutResource::collection($workout),
             'featured_diet' => DietResource::collection($featured_diet),
             'featured_products' => ProductResource::collection($featured_products),
+            'product_banners' => BannerResource::collection($banners),
         ];
         $response['subscription'] = SettingData('subscription', 'subscription_system') ?? '1';
         $response['AdsBannerDetail'] = SettingData('AdsBannerDetail') ?? [];
@@ -84,11 +89,14 @@ class DashboardController extends Controller
         $equipment = Equipment::where('status','active')->orderBy('id','desc')->take(10)->get();
         $workout = Workout::where('status','active')->orderBy('id','desc')->take(10)->get();
                 
+        $banners = Banner::active()->orderBy('display_order')->orderByDesc('created_at')->get();
+
         $response = [
             'bodypart'      => BodyPartResource::collection($bodypart),
             'level'         => LevelResource::collection($level),
             'equipment'     => EquipmentResource::collection($equipment),
             'workout'       => WorkoutResource::collection($workout),
+            'product_banners' => BannerResource::collection($banners),
         ];
         $response['subscription'] = SettingData('subscription', 'subscription_system') ?? '1';
         $response['AdsBannerDetail'] = SettingData('AdsBannerDetail') ?? [];

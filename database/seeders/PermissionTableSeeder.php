@@ -674,5 +674,34 @@ class PermissionTableSeeder extends Seeder
             'title' => 'Ingredient Delete',
             'parent_id' => $ingredientPermission->id,
         ]);
+
+        $bannerPermission = Permission::create([
+            'name' => 'banner',
+            'title' => 'Banner',
+        ]);
+
+        Permission::create([
+            'name' => 'banner-list',
+            'title' => 'Banner List',
+            'parent_id' => $bannerPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'banner-add',
+            'title' => 'Banner Add',
+            'parent_id' => $bannerPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'banner-edit',
+            'title' => 'Banner Edit',
+            'parent_id' => $bannerPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'banner-delete',
+            'title' => 'Banner Delete',
+            'parent_id' => $bannerPermission->id,
+        ]);
     }
 }
