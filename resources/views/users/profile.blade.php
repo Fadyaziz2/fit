@@ -384,6 +384,140 @@
         </div>
     </div>
     <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="header-title">
+                        <h4 class="card-title mb-0">{{ __('message.favorite_workouts') }}</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @forelse($favouriteWorkouts as $workout)
+                        <div class="d-flex align-items-center {{ !$loop->last ? 'mb-3' : '' }}">
+                            <img src="{{ getSingleMedia($workout, 'workout_image') }}" alt="workout-image" class="rounded avatar-60 object-fit-cover">
+                            <div class="ms-3">
+                                <h6 class="mb-1 text-truncate" title="{{ $workout->title }}">{{ $workout->title ?? '-' }}</h6>
+                                <p class="text-muted small mb-0">{{ optional($workout->level)->title ?? __('message.not_available') }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-muted mb-0">{{ __('message.no_favourites_found') }}</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="header-title">
+                        <h4 class="card-title mb-0">{{ __('message.favorite_diets') }}</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @forelse($favouriteDiets as $diet)
+                        <div class="d-flex align-items-center {{ !$loop->last ? 'mb-3' : '' }}">
+                            <img src="{{ getSingleMedia($diet, 'diet_image') }}" alt="diet-image" class="rounded avatar-60 object-fit-cover">
+                            <div class="ms-3">
+                                <h6 class="mb-1 text-truncate" title="{{ $diet->title }}">{{ $diet->title ?? '-' }}</h6>
+                                <p class="text-muted small mb-0">{{ $diet->calories ? $diet->calories . ' ' . __('message.calories_label') : __('message.not_available') }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-muted mb-0">{{ __('message.no_favourites_found') }}</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="header-title">
+                        <h4 class="card-title mb-0">{{ __('message.favorite_products') }}</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @forelse($favouriteProducts as $product)
+                        <div class="d-flex align-items-center {{ !$loop->last ? 'mb-3' : '' }}">
+                            <img src="{{ getSingleMedia($product, 'product_image') }}" alt="product-image" class="rounded avatar-60 object-fit-cover">
+                            <div class="ms-3">
+                                <h6 class="mb-1 text-truncate" title="{{ $product->title }}">{{ $product->title ?? '-' }}</h6>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fw-semibold text-primary">{{ getPriceFormat($product->final_price) }}</span>
+                                    @if(($product->discount_active ?? false) && $product->discount_price)
+                                        <span class="text-muted text-decoration-line-through small">{{ getPriceFormat($product->price) }}</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-muted mb-0">{{ __('message.no_favourites_found') }}</p>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="header-title">
+                        <h4 class="card-title mb-0">{{ __('message.cart_items') }}</h4>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('message.product') }}</th>
+                                    <th>{{ __('message.quantity') }}</th>
+                                    <th>{{ __('message.unit_price') }}</th>
+                                    <th>{{ __('message.total') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $cartTotalQuantity = $cartItems->sum('quantity');
+                                    $cartTotalAmount = $cartItems->sum('total_price');
+                                @endphp
+                                @forelse($cartItems as $item)
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="{{ getSingleMedia($item->product, 'product_image') }}" alt="cart-product" class="rounded avatar-50 object-fit-cover me-3">
+                                                <div>
+                                                    <h6 class="mb-0">{{ optional($item->product)->title ?? '-' }}</h6>
+                                                    <small class="text-muted">{{ optional($item->product->productcategory)->title ?? '' }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ $item->quantity }}</td>
+                                        <td>{{ getPriceFormat($item->unit_price) }}</td>
+                                        <td>{{ getPriceFormat($item->total_price) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">{{ __('message.no_cart_items') }}</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            @if($cartItems->isNotEmpty())
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="1">{{ __('message.total') }}</th>
+                                        <th>{{ $cartTotalQuantity }}</th>
+                                        <th></th>
+                                        <th>{{ getPriceFormat($cartTotalAmount) }}</th>
+                                    </tr>
+                                </tfoot>
+                            @endif
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">

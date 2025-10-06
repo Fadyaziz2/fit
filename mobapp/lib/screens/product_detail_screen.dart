@@ -173,6 +173,7 @@ class ProductDetailScreenState extends State<ProductDetailScreen> {
       toast(value.message);
       widget.productModel!.isInCart = true;
       widget.productModel!.cartQuantity = (widget.productModel!.cartQuantity ?? 0) + 1;
+      cartCountNotifier.value = cartCountNotifier.value + 1;
       setState(() {});
     }).catchError((e) {
       print(e);

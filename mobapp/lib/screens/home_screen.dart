@@ -34,6 +34,7 @@ import '../network/rest_api.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/product_screen.dart';
+import '../screens/cart_screen.dart';
 import '../utils/app_common.dart';
 import '../utils/app_images.dart';
 import 'filter_workout_screen.dart';
@@ -191,6 +192,7 @@ class _HomeScreenState extends State<HomeScreen>{
       toast(value.message);
       product.isInCart = true;
       product.cartQuantity = (product.cartQuantity ?? 0) + 1;
+      cartCountNotifier.value = cartCountNotifier.value + 1;
       setState(() {});
     }).catchError((e) {
       print(e);
@@ -266,17 +268,79 @@ class _HomeScreenState extends State<HomeScreen>{
                 ).expand(),
               ],
             ).expand(),
-            Container(
-              decoration: boxDecorationWithRoundedCorners(
-                  borderRadius: radius(16),
-                  border: Border.all(color: appStore.isDarkMode ? Colors.white : context.dividerColor.withOpacity(0.9), width: 0.6),
-                  backgroundColor: appStore.isDarkMode ? context.scaffoldBackgroundColor : Colors.white),
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Image.asset(ic_notification, width: 24, height: 24, color: appStore.isDarkMode ? Colors.white : Colors.grey),
-            ).onTap(
-              () {
-                NotificationScreen().launch(context);
-              },
+            Row(
+              children: [
+                ValueListenableBuilder<int>(
+                  valueListenable: cartCountNotifier,
+                  builder: (context, count, _) {
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          decoration: boxDecorationWithRoundedCorners(
+                              borderRadius: radius(16),
+                              border: Border.all(
+                                  color: appStore.isDarkMode
+                                      ? Colors.white
+                                      : context.dividerColor.withOpacity(0.9),
+                                  width: 0.6),
+                              backgroundColor: appStore.isDarkMode
+                                  ? context.scaffoldBackgroundColor
+                                  : Colors.white),
+                          padding: EdgeInsets.all(10),
+                          child: Icon(Icons.shopping_cart_outlined,
+                              size: 20,
+                              color: appStore.isDarkMode
+                                  ? Colors.white
+                                  : Colors.grey),
+                        ).onTap(() {
+                          CartScreen().launch(context);
+                        }),
+                        if (count > 0)
+                          Positioned(
+                            right: -6,
+                            top: -6,
+                            child: Container(
+                              padding:
+                                  EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: boxDecorationWithRoundedCorners(
+                                borderRadius: radius(10),
+                                backgroundColor: primaryColor,
+                              ),
+                              child: Text(
+                                count > 99 ? '99+' : count.toString(),
+                                style:
+                                    secondaryTextStyle(color: Colors.white, size: 10),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+                12.width,
+                Container(
+                  decoration: boxDecorationWithRoundedCorners(
+                      borderRadius: radius(16),
+                      border: Border.all(
+                          color: appStore.isDarkMode
+                              ? Colors.white
+                              : context.dividerColor.withOpacity(0.9),
+                          width: 0.6),
+                      backgroundColor: appStore.isDarkMode
+                          ? context.scaffoldBackgroundColor
+                          : Colors.white),
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  child: Image.asset(ic_notification,
+                      width: 24,
+                      height: 24,
+                      color: appStore.isDarkMode ? Colors.white : Colors.grey),
+                ).onTap(
+                  () {
+                    NotificationScreen().launch(context);
+                  },
+                ),
+              ],
             )
           ],
         ).paddingOnly(top: context.statusBarHeight + 16, left: 16, right: 16, bottom: 6),
