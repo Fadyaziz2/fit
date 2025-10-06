@@ -47,12 +47,12 @@ class DashboardResponse {
         exercise!.add(new ExerciseModel.fromJson(v));
       });
     }
-    if (json['diet'] != null) {
-      diet = <Diet>[];
-      json['diet'].forEach((v) {
-        diet!.add(new Diet.fromJson(v));
-      });
-    }
+    // if (json['diet'] != null) {
+    //   diet = <Diet>[];
+    //   json['diet'].forEach((v) {
+    //     diet!.add(new Diet.fromJson(v));
+    //   });
+    // }
     if (json['workouttype'] != null) {
       workouttype = <Workouttype>[];
       json['workouttype'].forEach((v) {
@@ -65,12 +65,12 @@ class DashboardResponse {
         workout!.add(new WorkoutDetailModel.fromJson(v));
       });
     }
-    if (json['featured_diet'] != null) {
-      featuredDiet = <Diet>[];
-      json['featured_diet'].forEach((v) {
-        featuredDiet!.add(new Diet.fromJson(v));
-      });
-    }
+    // if (json['featured_diet'] != null) {
+    //   featuredDiet = <Diet>[];
+    //   json['featured_diet'].forEach((v) {
+    //     featuredDiet!.add(new Diet.fromJson(v));
+    //   });
+    // }
     if (json['featured_products'] != null) {
       featuredProducts = <ProductModel>[];
       json['featured_products'].forEach((v) {
