@@ -131,8 +131,57 @@
 			</div>
 		</div>
       	<div class="col-md-12 col-lg-12">
-         	<div class="row">
-				@if($auth_user->can('exercise-list'))
+                <div class="row">
+                                @if($auth_user->can('banner-list') || $auth_user->can('banner'))
+                                        <div class="col-md-12">
+                                                <div class="card" data-aos="fade-up" data-aos-delay="700">
+                                                        <div class="card-header d-flex justify-content-between flex-wrap">
+                                                                <div class="header-title">
+                                                                        <h4 class="card-title">{{ __('message.list_form_title',['form' => __('message.banner')] ) }}</h4>
+                                                                </div>
+                                                                <div class="card-action">
+                                                                        <a href="{{ route('banner.index') }}" data-bs-toggle="tooltip" title="{{ __('message.list_form_title', [ 'form' => __('message.banner') ]) }}">{{ __('message.see_all') }}</a>
+                                                                </div>
+                                                        </div>
+                                                        <div class="card-body p-0">
+                                                                <div class="table-responsive mt-4 dashboard_table_list">
+                                                                        <table id="banner-table" class="table table-striped mb-0" role="grid">
+                                                                                <thead>
+                                                                                        <tr>
+                                                                                                <th>{{ __('message.image') }}</th>
+                                                                                                <th>{{ __('message.title') }}</th>
+                                                                                                <th>{{ __('message.status') }}</th>
+                                                                                                <th>{{ __('message.action') }}</th>
+                                                                                        </tr>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                        @if( count($data['banners'] ?? []) > 0 )
+                                                                                                @foreach ($data['banners'] as $banner)
+                                                                                                <tr>
+                                                                                                        <td><img src="{{ getSingleMedia($banner, 'banner_image') }}" alt="banner-image" class="bg-soft-primary rounded img-fluid avatar-40 me-3"></td>
+                                                                                                        <td>{{ $banner->title }}</td>
+                                                                                                        <td>
+                                                                                                                @php $status = $banner->status === 'active' ? 'primary' : 'warning'; @endphp
+                                                                                                                <span class="text-capitalize badge bg-{{ $status }}">{{ $banner->status === 'active' ? __('message.active') : __('message.inactive') }}</span>
+                                                                                                        </td>
+                                                                                                        <td>
+                                                                                                                @include('banner.action', ['banner' => $banner, 'id' => $banner->id])
+                                                                                                        </td>
+                                                                                                </tr>
+                                                                                                @endforeach
+                                                                                        @else
+                                                                                                <tr>
+                                                                                                        <td colspan="4">{{ __('message.not_found_entry', [ 'name' => __('message.banner') ]) }}</td>
+                                                                                                </tr>
+                                                                                        @endif
+                                                                                </tbody>
+                                                                        </table>
+                                                                </div>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                @endif
+                                @if($auth_user->can('exercise-list'))
 					<div class="col-md-6">
 						<div class="card" data-aos="fade-up" data-aos-delay="800">
 							<div class="card-header d-flex justify-content-between flex-wrap">
