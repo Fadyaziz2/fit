@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mighty_fitness/extensions/loader_widget.dart';
 import 'package:mighty_fitness/extensions/text_styles.dart';
+import 'package:mighty_fitness/extensions/extension_util/widget_extensions.dart';
 import 'package:mighty_fitness/main.dart';
 import 'package:mighty_fitness/models/clinic_models.dart';
 import 'package:mighty_fitness/network/rest_api.dart';
@@ -152,7 +153,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
             ),
           Expanded(
             child: isLoadingSlots
-                ? const Loader()
+                ? Loader()
                 : slots.isEmpty
                     ? Center(
                         child: Text(
@@ -207,7 +208,7 @@ class _NewBookingScreenState extends State<NewBookingScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 child: isSubmitting
-                    ? const Loader(color: Colors.white, size: 20)
+                    ? Loader(color: Colors.white, size: 20)
                     : Text(appStore.selectedLanguageCode == 'ar' ? 'حفظ' : languages.lblSave,
                         style: boldTextStyle(color: Colors.white, size: 16)),
               ),
