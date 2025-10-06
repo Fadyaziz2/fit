@@ -5,6 +5,7 @@ import '../extensions/decorations.dart';
 import '../extensions/extension_util/context_extensions.dart';
 import '../extensions/extension_util/int_extensions.dart';
 import '../extensions/extension_util/string_extensions.dart';
+import '../extensions/extension_util/widget_extensions.dart';
 import '../extensions/text_styles.dart';
 import '../main.dart';
 import '../models/success_story_model.dart';
@@ -76,8 +77,10 @@ class _SuccessStorySliderState extends State<SuccessStorySlider> {
                 builder: (context, child) {
                   double value = 1.0;
                   if (_pageController.position.haveDimensions) {
-                    value = (_pageController.page ?? _pageController.initialPage) - index;
-                    value = (1 - (value.abs() * 0.1)).clamp(0.9, 1.0);
+                    final double currentPage =
+                        (_pageController.page ?? _pageController.initialPage.toDouble());
+                    value = currentPage - index;
+                    value = (1.0 - (value.abs() * 0.1)).clamp(0.9, 1.0);
                   }
                   return Center(
                     child: SizedBox(
