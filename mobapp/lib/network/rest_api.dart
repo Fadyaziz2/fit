@@ -24,6 +24,7 @@ import '../models/dashboard_response.dart';
 import '../models/day_exercise_response.dart';
 import '../models/diet_response.dart';
 import '../models/equipment_response.dart';
+import '../models/exclusive_offer_response.dart';
 import '../models/exercise_detail_response.dart';
 import '../models/get_setting_response.dart';
 import '../models/login_response.dart';
@@ -149,6 +150,11 @@ Future<ServerLanguageResponse> getLanguageList(versionNo) async {
   return ServerLanguageResponse.fromJson(
       await handleResponse(await buildHttpResponse('language-table-list?version_no=$versionNo', method: HttpMethod.GET))
           .then((value) => value));
+}
+
+Future<ExclusiveOfferResponse> getExclusiveOfferApi() async {
+  return ExclusiveOfferResponse.fromJson(
+      await handleResponse(await buildHttpResponse('exclusive-offer', method: HttpMethod.GET)));
 }
 
 Future<BlogResponse> getBlogApi(String? isFeatured, {int? page}) async {

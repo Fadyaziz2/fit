@@ -704,6 +704,35 @@ class PermissionTableSeeder extends Seeder
             'parent_id' => $bannerPermission->id,
         ]);
 
+        $exclusiveOfferPermission = Permission::create([
+            'name' => 'exclusive-offer',
+            'title' => 'Exclusive Offer',
+        ]);
+
+        Permission::create([
+            'name' => 'exclusive-offer-list',
+            'title' => 'Exclusive Offer List',
+            'parent_id' => $exclusiveOfferPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'exclusive-offer-add',
+            'title' => 'Exclusive Offer Add',
+            'parent_id' => $exclusiveOfferPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'exclusive-offer-edit',
+            'title' => 'Exclusive Offer Edit',
+            'parent_id' => $exclusiveOfferPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'exclusive-offer-delete',
+            'title' => 'Exclusive Offer Delete',
+            'parent_id' => $exclusiveOfferPermission->id,
+        ]);
+
         $successStoryPermission = Permission::create([
             'name' => 'successstory',
             'title' => 'Success Story',

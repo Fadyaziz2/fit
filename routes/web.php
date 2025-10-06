@@ -29,6 +29,7 @@ use App\Http\Controllers\BannerController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PackageController;
+use App\Http\Controllers\ExclusiveOfferController;
 
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
@@ -166,6 +167,7 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     
     //product
     Route::resource('product',ProductController::class);
+    Route::resource('exclusive-offer', ExclusiveOfferController::class);
     Route::resource('banner', BannerController::class);
     Route::resource('successstory', SuccessStoryController::class);
     Route::resource('product-orders', ProductOrderController::class)->only(['index', 'show', 'update']);

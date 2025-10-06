@@ -5,6 +5,7 @@ import 'package:crisp_chat/crisp_chat.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mighty_fitness/components/CircularButton.dart';
+import 'package:mighty_fitness/components/exclusive_offer_dialog.dart';
 import 'package:mighty_fitness/models/app_setting_response.dart';
 import 'package:mighty_fitness/models/question_answer_model.dart';
 import 'package:mighty_fitness/pages/home/game_home_screen.dart';
@@ -28,6 +29,7 @@ import '../extensions/shared_pref.dart';
 import '../extensions/text_styles.dart';
 import '../main.dart';
 import '../models/bottom_bar_item_model.dart';
+import '../models/exclusive_offer_response.dart';
 import '../network/rest_api.dart';
 import '../screens/product_screen.dart';
 import '../utils/app_colors.dart';
@@ -54,6 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isExpanded = false;
+  bool _exclusiveOfferDialogShown = false;
 
   final tab = [
     HomeScreen(),
@@ -98,6 +101,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       }
     };
     await getSettingList();
+    await _checkExclusiveOffer();
     getFitBotListApiCall();
     Permissions.activityPermissionsGranted();
 
@@ -225,6 +229,22 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         }
       });
     });
+  }
+
+  Future<void> _checkExclusiveOffer() async {
+    if (_exclusiveOfferDialogShown) return;
+
+    try {
+      final response = await getExclusiveOfferApi();
+      final offer = response.data;
+      if (offer != null) {
+        _exclusiveOfferDialogShown = true;
+        if (!mounted) return;
+        await showExclusiveOfferDialog(context, offer);
+      }
+    } catch (e) {
+      debugPrint('Failed to fetch exclusive offer: $e');
+    }
   }
 
   Future<void> getFitBotListApiCall() async {
