@@ -137,7 +137,7 @@
             const slotsContainer = document.getElementById('available-slots');
             const selectedTimeInput = document.getElementById('appointment_time_input');
             const selectedTimeLabel = document.getElementById('selected-slot-label');
-            const fetchUrl = "{{ route('clinic.free_requests.available_slots') }}";
+            const fetchUrl = "{{ route('clinic.free_requests.available_slots', [], false) }}";
 
             const texts = {
                 selectSpecialistAndDate: "{{ __('Select a specialist and date to view available slots.') }}",
@@ -222,17 +222,19 @@
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                     },
+                    credentials: 'same-origin',
                 })
                     .then((response) => {
                         if (!response.ok) {
-                            throw new Error('Request failed');
+                            throw new Error(`Request failed with status ${response.status}`);
                         }
                         return response.json();
                     })
                     .then((data) => {
                         renderSlots(data.slots || []);
                     })
-                    .catch(() => {
+                    .catch((error) => {
+                        console.error('Failed to load available slots:', error);
                         clearSlots("{{ __('Unable to load slots. Please try again later.') }}");
                     });
             };
