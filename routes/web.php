@@ -186,6 +186,8 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
                 'edit' => 'free_requests.edit',
                 'update' => 'free_requests.update',
             ]);
+        Route::get('free-requests/available-slots', [ClinicFreeBookingRequestController::class, 'availableSlots'])
+            ->name('free_requests.available_slots');
         Route::resource('appointments', ClinicAppointmentController::class)->only(['index', 'edit', 'update']);
     });
     Route::resource('product-orders', ProductOrderController::class)->only(['index', 'show', 'update']);
