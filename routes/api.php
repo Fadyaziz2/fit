@@ -30,7 +30,7 @@ Route::get('language-table-list',[API\LanguageTableController::class, 'getList']
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
 
-    Route::get('dashboard-detail',[ API\DashboardController::class, 'dashboard']);
+    Route::get('dashboard-detail',[ API\DashboardController::class, 'dashboardDetail']);
     Route::post('update-profile', [ API\UserController::class, 'updateProfile']);
     Route::post('change-password', [ API\UserController::class, 'changePassword']);
     Route::post('update-user-status', [ API\UserController::class, 'updateUserStatus']);
