@@ -36,11 +36,11 @@ class ProductComponentState extends State<ProductComponent> {
     final double originalPrice = (widget.mProductModel?.price ?? finalPrice).toDouble();
     final double discountPercent = (widget.mProductModel?.discountPercent ?? 0).toDouble();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AspectRatio(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool hasBoundedHeight = constraints.maxHeight.isFinite;
+
+        Widget imageSection = AspectRatio(
           aspectRatio: 1,
           child: Stack(
             children: [
@@ -49,38 +49,38 @@ class ProductComponentState extends State<ProductComponent> {
                 child: cachedImage(widget.mProductModel!.productImage.validate(), fit: BoxFit.contain, width: double.infinity)
                     .cornerRadiusWithClipRRect(defaultRadius),
               ),
-            if (widget.showActions)
-              Positioned(
-                top: 12,
-                left: 12,
-                child: _actionIcon(
-                  context,
-                  icon: Icons.add_shopping_cart,
-                  isActive: widget.mProductModel?.isInCart ?? false,
-                  onTap: () async {
-                    if (widget.onAddToCart != null) {
-                      await widget.onAddToCart!(widget.mProductModel!);
-                      setState(() {});
-                    }
-                  },
+              if (widget.showActions)
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: _actionIcon(
+                    context,
+                    icon: Icons.add_shopping_cart,
+                    isActive: widget.mProductModel?.isInCart ?? false,
+                    onTap: () async {
+                      if (widget.onAddToCart != null) {
+                        await widget.onAddToCart!(widget.mProductModel!);
+                        setState(() {});
+                      }
+                    },
+                  ),
                 ),
-              ),
-            if (widget.showActions)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: _actionIcon(
-                  context,
-                  icon: widget.mProductModel?.isFavourite ?? false ? Icons.favorite : Icons.favorite_border,
-                  isActive: widget.mProductModel?.isFavourite ?? false,
-                  onTap: () async {
-                    if (widget.onToggleFavourite != null) {
-                      await widget.onToggleFavourite!(widget.mProductModel!);
-                      setState(() {});
-                    }
-                  },
+              if (widget.showActions)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: _actionIcon(
+                    context,
+                    icon: widget.mProductModel?.isFavourite ?? false ? Icons.favorite : Icons.favorite_border,
+                    isActive: widget.mProductModel?.isFavourite ?? false,
+                    onTap: () async {
+                      if (widget.onToggleFavourite != null) {
+                        await widget.onToggleFavourite!(widget.mProductModel!);
+                        setState(() {});
+                      }
+                    },
+                  ),
                 ),
-              ),
               if (widget.showActions && hasDiscount)
                 Positioned(
                   bottom: 12,
@@ -96,37 +96,50 @@ class ProductComponentState extends State<ProductComponent> {
                 ),
             ],
           ),
-        ),
-        const SizedBox(height: 8),
-        PriceWidget(
-          price: finalPrice.toStringAsFixed(2),
-          textStyle: boldTextStyle(color: primaryColor),
-        ),
-        if (hasDiscount)
-          Row(
-            children: [
-              Text(originalPrice.toStringAsFixed(2),
-                  style: primaryTextStyle(
-                    size: 12,
-                    decoration: TextDecoration.lineThrough,
-                    color: appStore.isDarkMode ? Colors.white70 : Colors.grey,
-                  )),
-              const SizedBox(width: 6),
-              Text('-${discountPercent.toStringAsFixed(0)}%', style: boldTextStyle(size: 12, color: primaryColor)).visible(discountPercent > 0),
-            ],
-          ),
-        const SizedBox(height: 4),
-        Text(widget.mProductModel!.title.validate(),
-                style: primaryTextStyle(color: appStore.isDarkMode ? Colors.white : Colors.black),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis)
-            .paddingSymmetric(horizontal: 4, vertical: 4),
-      ],
-    ).onTap(() {
-      ProductDetailScreen(productModel: widget.mProductModel!).launch(context).then((value) {
-        widget.onCall?.call();
-      });
-    });
+        );
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: hasBoundedHeight ? MainAxisSize.max : MainAxisSize.min,
+          children: [
+            if (hasBoundedHeight)
+              Expanded(child: imageSection)
+            else
+              imageSection,
+            const SizedBox(height: 8),
+            PriceWidget(
+              price: finalPrice.toStringAsFixed(2),
+              textStyle: boldTextStyle(color: primaryColor),
+            ),
+            if (hasDiscount)
+              Row(
+                children: [
+                  Text(originalPrice.toStringAsFixed(2),
+                      style: primaryTextStyle(
+                        size: 12,
+                        decoration: TextDecoration.lineThrough,
+                        color: appStore.isDarkMode ? Colors.white70 : Colors.grey,
+                      )),
+                  const SizedBox(width: 6),
+                  Text('-${discountPercent.toStringAsFixed(0)}%',
+                          style: boldTextStyle(size: 12, color: primaryColor))
+                      .visible(discountPercent > 0),
+                ],
+              ),
+            const SizedBox(height: 4),
+            Text(widget.mProductModel!.title.validate(),
+                    style: primaryTextStyle(color: appStore.isDarkMode ? Colors.white : Colors.black),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis)
+                .paddingSymmetric(horizontal: 4, vertical: 4),
+          ],
+        ).onTap(() {
+          ProductDetailScreen(productModel: widget.mProductModel!).launch(context).then((value) {
+            widget.onCall?.call();
+          });
+        });
+      },
+    );
   }
 
   Widget _actionIcon(BuildContext context,
