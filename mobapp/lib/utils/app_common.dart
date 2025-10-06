@@ -32,6 +32,7 @@ import 'app_config.dart';
 import 'app_constants.dart';
 
 ValueNotifier<int> cartCountNotifier = ValueNotifier<int>(0);
+ValueNotifier<int> notificationCountNotifier = ValueNotifier<int>(0);
 
 void setTheme() {
   int themeModeIndex = getIntAsync(THEME_MODE_INDEX, defaultValue: ThemeModeSystem);

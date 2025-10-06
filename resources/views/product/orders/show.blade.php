@@ -23,9 +23,10 @@
                             }
 
                             $statusClass = match ($productOrder->status) {
-                                'completed', 'delivered' => 'primary',
-                                'cancelled', 'canceled' => 'danger',
-                                'processing' => 'info',
+                                'delivered' => 'success',
+                                'confirmed' => 'info',
+                                'shipped' => 'primary',
+                                'cancelled', 'canceled', 'returned' => 'danger',
                                 default => 'warning',
                             };
                         @endphp
@@ -53,6 +54,14 @@
                                 <span class="badge text-capitalize bg-{{ $statusClass }}">{{ $statusLabel }}</span>
                             </div>
                             <div class="col-md-6">
+                                <h6 class="text-muted mb-1">{{ __('message.payment_method') }}</h6>
+                                <p class="mb-0 fw-semibold text-capitalize">{{ __('message.' . $productOrder->payment_method) }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-1">{{ __('message.total_amount') }}</h6>
+                                <p class="mb-0 fw-semibold">{{ number_format($productOrder->total_price, 2) }}</p>
+                            </div>
+                            <div class="col-md-6">
                                 <h6 class="text-muted mb-1">{{ __('message.created_at') }}</h6>
                                 <p class="mb-0 fw-semibold">{{ optional($productOrder->created_at)->format(config('app.date_time_format', 'd M Y H:i')) }}</p>
                             </div>
@@ -60,6 +69,30 @@
                                 <h6 class="text-muted mb-1">{{ __('message.updated_at') }}</h6>
                                 <p class="mb-0 fw-semibold">{{ optional($productOrder->updated_at)->format(config('app.date_time_format', 'd M Y H:i')) }}</p>
                             </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-1">{{ __('message.customer_name') }}</h6>
+                                <p class="mb-0 fw-semibold">{{ $productOrder->customer_name ?? '-' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-1">{{ __('message.customer_phone') }}</h6>
+                                <p class="mb-0 fw-semibold">{{ $productOrder->customer_phone ?? '-' }}</p>
+                            </div>
+                            <div class="col-md-12">
+                                <h6 class="text-muted mb-1">{{ __('message.shipping_address') }}</h6>
+                                <p class="mb-0 fw-semibold">{{ $productOrder->shipping_address ?? '-' }}</p>
+                            </div>
+                            @if($productOrder->customer_note)
+                                <div class="col-md-12">
+                                    <h6 class="text-muted mb-1">{{ __('message.customer_note') }}</h6>
+                                    <p class="mb-0 fw-semibold">{{ $productOrder->customer_note }}</p>
+                                </div>
+                            @endif
+                            @if($productOrder->status_comment)
+                                <div class="col-md-12">
+                                    <h6 class="text-muted mb-1">{{ __('message.status_comment') }}</h6>
+                                    <p class="mb-0 fw-semibold">{{ $productOrder->status_comment }}</p>
+                                </div>
+                            @endif
                         </div>
 
                         @if($auth_user && $auth_user->can('product-edit'))
@@ -69,6 +102,10 @@
                                     <div class="col-md-6">
                                         {{ html()->label(__('message.status') . ' <span class="text-danger">*</span>', 'status')->class('form-control-label') }}
                                         {{ html()->select('status', $statuses, $productOrder->status)->class('form-select')->attribute('required', 'required') }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ html()->label(__('message.status_comment'), 'status_comment')->class('form-control-label') }}
+                                        {{ html()->textarea('status_comment', $productOrder->status_comment)->class('form-control')->placeholder(__('message.comment_optional')) }}
                                     </div>
                                     <div class="col-md-6">
                                         {{ html()->submit(__('message.update'))->class('btn btn-primary mt-4') }}

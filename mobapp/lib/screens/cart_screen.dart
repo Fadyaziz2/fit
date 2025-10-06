@@ -6,11 +6,13 @@ import '../extensions/extension_util/widget_extensions.dart';
 import '../extensions/extension_util/string_extensions.dart';
 import '../extensions/loader_widget.dart';
 import '../extensions/no_data_widget.dart';
+import '../extensions/app_button.dart';
 import '../extensions/text_styles.dart';
 import '../extensions/widgets.dart';
 import '../main.dart';
 import '../models/cart_response.dart';
 import '../network/rest_api.dart';
+import '../screens/checkout_screen.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_common.dart';
 import '../extensions/colors.dart';
@@ -49,6 +51,17 @@ class _CartScreenState extends State<CartScreen> {
         });
       }
     });
+  }
+
+  Future<void> _goToCheckout() async {
+    if (_cartResponse == null) return;
+
+    bool? orderPlaced = await CheckoutScreen(cartResponse: _cartResponse!)
+        .launch(context, pageRouteAnimation: PageRouteAnimation.Slide);
+
+    if (orderPlaced == true) {
+      await _loadCart();
+    }
   }
 
   Future<void> _removeItem(int? productId) async {
@@ -122,10 +135,54 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                         ),
                         20.height,
+                        SizedBox(height: 80),
                       ],
                     ),
                   ),
       ),
+      bottomNavigationBar: !_isLoading && cartItems.isNotEmpty
+          ? SafeArea(
+              top: false,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: appStore.isDarkMode ? cardDarkColor : context.cardColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(languages.lblOrderTotal,
+                            style: secondaryTextStyle()),
+                        4.height,
+                        Text(
+                          '${userStore.currencySymbol.validate()}${(summary?.totalAmount ?? 0).toStringAsFixed(2)}',
+                          style: boldTextStyle(size: 18, color: primaryColor),
+                        ),
+                      ],
+                    ).expand(),
+                    16.width,
+                    AppButton(
+                      elevation: 0,
+                      color: primaryColor,
+                      text: languages.lblCheckout,
+                      textStyle: boldTextStyle(color: white),
+                      width: context.width() * 0.4,
+                      onTap: _goToCheckout,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 }

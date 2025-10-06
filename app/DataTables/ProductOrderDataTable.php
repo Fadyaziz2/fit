@@ -25,18 +25,21 @@ class ProductOrderDataTable extends DataTable
             ->editColumn('status', function ($order) {
                 $statusClass = 'warning';
                 switch ($order->status) {
-                    case 'completed':
                     case 'delivered':
+                        $statusClass = 'success';
+                        break;
+                    case 'confirmed':
+                        $statusClass = 'info';
+                        break;
+                    case 'shipped':
                         $statusClass = 'primary';
                         break;
                     case 'cancelled':
                     case 'canceled':
+                    case 'returned':
                         $statusClass = 'danger';
                         break;
-                    case 'processing':
-                        $statusClass = 'info';
-                        break;
-                    case 'pending':
+                    case 'placed':
                     default:
                         $statusClass = 'warning';
                         break;

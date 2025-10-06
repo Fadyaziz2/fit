@@ -31,6 +31,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Future<void> getNotificationStatus(String? id) async {
     appStore.setLoading(true);
     await notificationStatusApi(id.validate()).then((value) {
+      notificationCountNotifier.value = value.allUnreadCount ?? 0;
       setState(() {});
     }).catchError((e) {
       appStore.setLoading(false);
@@ -42,18 +43,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBarWidget(languages.lblNotifications, context: context),
-      body: FutureBuilder(
+      body: FutureBuilder<NotificationResponse>(
           future: notificationApi(),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              return snapshot.data!.notificationData!.isNotEmpty
+              final response = snapshot.data!;
+              notificationCountNotifier.value = response.allUnreadCount ?? 0;
+
+              return response.notificationData!.isNotEmpty
                   ? AnimatedListView(
-                      itemCount: snapshot.data!.notificationData!.length,
+                      itemCount: response.notificationData!.length,
                       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       shrinkWrap: true,
                       physics: BouncingScrollPhysics(),
                       itemBuilder: (context, i) {
-                        NotificationData mNotification = snapshot.data!.notificationData![i];
+                        NotificationData mNotification = response.notificationData![i];
                         return Container(
                           decoration: appStore.isDarkMode ? boxDecorationWithRoundedCorners(backgroundColor: cardDarkColor, borderRadius: radius(16)) : boxDecorationRoundedWithShadow(16),
                           padding: EdgeInsets.all(12),
