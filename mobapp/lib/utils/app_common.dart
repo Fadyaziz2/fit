@@ -265,11 +265,21 @@ Future<void> getUSerDetail(BuildContext context, int? id) async {
     userStore.setUsername(value.data!.username.validate());
     userStore.setDisplayName(value.data!.displayName.validate());
     userStore.setUserImage(value.data!.profileImage.validate());
-    userStore.setAge(value.data!.userProfile!.age.validate());
-    userStore.setHeight(value.data!.userProfile!.height.validate());
-    userStore.setWeight(value.data!.userProfile!.weight.validate());
-    userStore.setWeightUnit(value.data!.userProfile!.weightUnit.validate());
-    userStore.setHeightUnit(value.data!.userProfile!.heightUnit.validate());
+    final profile = value.data!.userProfile;
+    if (profile != null) {
+      userStore.setAge(profile.age.validate());
+      userStore.setHeight(profile.height.validate());
+      userStore.setWeight(profile.weight.validate());
+      userStore.setWeightUnit(profile.weightUnit.validate());
+      userStore.setHeightUnit(profile.heightUnit.validate());
+      await userStore.setAssignedSpecialistId(profile.specialistId);
+      await userStore.setFreeBookingUsedAt(profile.freeBookingUsedAt);
+      await userStore.setAssignedSpecialistBranchId(profile.specialist?.branchId);
+    } else {
+      await userStore.setAssignedSpecialistId(null);
+      await userStore.setFreeBookingUsedAt(null);
+      await userStore.setAssignedSpecialistBranchId(null);
+    }
     userStore.setSubscribe(value.subscriptionDetail!.isSubscribe.validate());
     userStore.setSubscriptionDetail(value.subscriptionDetail!);
     print("user data->" + value.toJson().toString());

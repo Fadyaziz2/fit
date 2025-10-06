@@ -179,6 +179,9 @@ class UserProfile {
   String? heightUnit;
   String? address;
   int? userId;
+  int? specialistId;
+  String? freeBookingUsedAt;
+  SpecialistSummary? specialist;
   String? createdAt;
   String? updatedAt;
 
@@ -191,6 +194,9 @@ class UserProfile {
         this.heightUnit,
         this.address,
         this.userId,
+        this.specialistId,
+        this.freeBookingUsedAt,
+        this.specialist,
         this.createdAt,
         this.updatedAt});
 
@@ -203,6 +209,11 @@ class UserProfile {
     heightUnit = json['height_unit'];
     address = json['address'];
     userId = json['user_id'];
+    specialistId = json['specialist_id'];
+    freeBookingUsedAt = json['free_booking_used_at'];
+    specialist = json['specialist'] != null
+        ? SpecialistSummary.fromJson(json['specialist'])
+        : null;
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
   }
@@ -217,8 +228,41 @@ class UserProfile {
     data['height_unit'] = this.heightUnit;
     data['address'] = this.address;
     data['user_id'] = this.userId;
+    data['specialist_id'] = this.specialistId;
+    data['free_booking_used_at'] = this.freeBookingUsedAt;
+    if (this.specialist != null) {
+      data['specialist'] = this.specialist!.toJson();
+    }
     data['created_at'] = this.createdAt;
     data['updated_at'] = this.updatedAt;
+    return data;
+  }
+}
+
+class SpecialistSummary {
+  int? id;
+  String? name;
+  String? phone;
+  String? specialty;
+  int? branchId;
+
+  SpecialistSummary({this.id, this.name, this.phone, this.specialty, this.branchId});
+
+  SpecialistSummary.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    name = json['name'];
+    phone = json['phone'];
+    specialty = json['specialty'];
+    branchId = json['branch_id'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['name'] = name;
+    data['phone'] = phone;
+    data['specialty'] = specialty;
+    data['branch_id'] = branchId;
     return data;
   }
 }

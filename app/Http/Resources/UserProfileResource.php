@@ -23,6 +23,17 @@ class UserProfileResource extends JsonResource
             'weight_unit'   => $this->weight_unit,
             'address'       => $this->address,
             'user_id'       => $this->user_id,
+            'specialist_id' => $this->specialist_id,
+            'free_booking_used_at' => $this->free_booking_used_at,
+            'specialist'    => $this->whenLoaded('specialist', function () {
+                return [
+                    'id' => $this->specialist?->id,
+                    'name' => $this->specialist?->name,
+                    'phone' => $this->specialist?->phone,
+                    'specialty' => $this->specialist?->specialty,
+                    'branch_id' => $this->specialist?->branch_id,
+                ];
+            }),
             'bmi'           => $this->bmi,
             'bmr'           => $this->bmr,
             'ideal_weight'  => $this->ideal_weight,

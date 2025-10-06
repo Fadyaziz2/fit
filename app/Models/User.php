@@ -19,6 +19,8 @@ use App\Models\UserFavouriteProduct;
 use App\Models\UserFavouriteDiet;
 use App\Models\UserFavouriteWorkout;
 use App\Models\CartItem;
+use App\Models\SpecialistAppointment;
+use App\Models\FreeBookingRequest;
 
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
@@ -113,6 +115,16 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->hasMany(ChatgptFitBot::class, 'user_id', 'id');
     }
 
+    public function specialistAppointments()
+    {
+        return $this->hasMany(SpecialistAppointment::class);
+    }
+
+    public function freeBookingRequests()
+    {
+        return $this->hasMany(FreeBookingRequest::class);
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -132,6 +144,8 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
                     $row->userDiseases()->delete();
                     $row->userNotification()->delete();
                     $row->chatgptFitBot()->delete();
+                    $row->specialistAppointments()->delete();
+                    $row->freeBookingRequests()->delete();
                     $row->productRecommendations()->delete();
                 break;
                 default:

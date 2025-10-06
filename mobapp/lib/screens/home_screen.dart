@@ -49,6 +49,10 @@ import '../components/product_component.dart';
 import '../components/product_banner_carousel.dart';
 import '../components/success_story_slider.dart';
 import '../extensions/no_data_widget.dart';
+import 'clinic/my_bookings_screen.dart';
+import 'clinic/new_booking_screen.dart';
+import '../models/clinic_models.dart';
+import '../network/rest_api.dart';
 
 bool? isFirstTimeGraph = false;
 
@@ -244,6 +248,200 @@ class _HomeScreenState extends State<HomeScreen>{
     );
   }
 
+  Widget _buildBookingButton() {
+    final label = appStore.selectedLanguageCode == 'ar' ? 'حجز' : 'Book';
+    return Container(
+      decoration: boxDecorationWithRoundedCorners(
+        borderRadius: radius(16),
+        backgroundColor: primaryColor,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        children: [
+          const Icon(Icons.calendar_today, color: Colors.white, size: 18),
+          6.width,
+          Text(label, style: boldTextStyle(color: Colors.white, size: 14)),
+        ],
+      ),
+    ).onTap(() {
+      _showBookingOptions();
+    });
+  }
+
+  void _showBookingOptions() {
+    final hasSpecialist = (userStore.assignedSpecialistId ?? 0) > 0;
+    final freeUsed = userStore.freeBookingUsedAt.isNotEmpty;
+    final myBookingsLabel = appStore.selectedLanguageCode == 'ar' ? 'حجوزاتى' : 'My bookings';
+    final newBookingLabel = appStore.selectedLanguageCode == 'ar' ? 'حجز جديد' : 'New booking';
+    final freeLabel = appStore.selectedLanguageCode == 'ar' ? 'حجز مجاني' : 'Free request';
+    final freeUsedLabel = appStore.selectedLanguageCode == 'ar'
+        ? 'تم استخدام الحجز المجاني بالفعل.'
+        : 'Free booking already used.';
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: radius(4))).paddingBottom(12),
+                ListTile(
+                  leading: Icon(Icons.event_note, color: primaryColor),
+                  title: Text(myBookingsLabel, style: boldTextStyle()),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    MyBookingsScreen().launch(context);
+                  },
+                ),
+                if (hasSpecialist)
+                  ListTile(
+                    leading: Icon(Icons.add_circle_outline, color: primaryColor),
+                    title: Text(newBookingLabel, style: boldTextStyle()),
+                    onTap: () async {
+                      Navigator.of(ctx).pop();
+                      if ((userStore.assignedSpecialistId ?? 0) == 0) {
+                        toast(appStore.selectedLanguageCode == 'ar'
+                            ? 'لا يوجد أخصائي مرتبط بحسابك.'
+                            : 'No specialist assigned to your account.');
+                        return;
+                      }
+                      final refreshed = await NewBookingScreen().launch(context);
+                      if (refreshed == true) {
+                        await getUSerDetail(context, userStore.userId);
+                        setState(() {});
+                      }
+                    },
+                  )
+                else
+                  ListTile(
+                    leading: Icon(Icons.phone_outlined, color: freeUsed ? Colors.grey : primaryColor),
+                    title: Text(freeLabel, style: boldTextStyle(color: freeUsed ? Colors.grey : null)),
+                    subtitle: freeUsed ? Text(freeUsedLabel, style: secondaryTextStyle(color: Colors.grey)) : null,
+                    enabled: !freeUsed,
+                    onTap: freeUsed
+                        ? null
+                        : () async {
+                            Navigator.of(ctx).pop();
+                            await _showFreeBookingDialog();
+                          },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showFreeBookingDialog() async {
+    try {
+      appStore.setLoading(true);
+      final branches = await fetchClinicBranches();
+      appStore.setLoading(false);
+      if (branches.isEmpty) {
+        toast(appStore.selectedLanguageCode == 'ar' ? 'لا توجد فروع متاحة حالياً.' : 'No branches available.');
+        return;
+      }
+      int? selectedBranch = branches.first.id;
+      final controller = TextEditingController(text: userStore.phoneNo);
+      bool isSubmitting = false;
+      await showDialog(
+        context: context,
+        builder: (ctx) {
+          return StatefulBuilder(builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: Text(appStore.selectedLanguageCode == 'ar' ? 'طلب حجز مجاني' : 'Free booking request'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<int>(
+                      value: selectedBranch,
+                      items: branches
+                          .map((e) => DropdownMenuItem<int>(value: e.id, child: Text(e.name)))
+                          .toList(),
+                      onChanged: (value) {
+                        setStateDialog(() {
+                          selectedBranch = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        labelText: appStore.selectedLanguageCode == 'ar' ? 'اختر الفرع' : 'Select branch',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: controller,
+                      keyboardType: TextInputType.phone,
+                      decoration: InputDecoration(
+                        labelText: appStore.selectedLanguageCode == 'ar' ? 'رقم الهاتف' : languages.lblPhoneNumber,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                  },
+                  child: Text(languages.lblCancel),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          if ((selectedBranch ?? 0) == 0) {
+                            toast(appStore.selectedLanguageCode == 'ar' ? 'يرجى اختيار الفرع.' : 'Please select a branch.');
+                            return;
+                          }
+                          if (controller.text.trim().isEmpty) {
+                            toast(appStore.selectedLanguageCode == 'ar' ? 'يرجى إدخال رقم الهاتف.' : 'Please enter phone number.');
+                            return;
+                          }
+                          setStateDialog(() {
+                            isSubmitting = true;
+                          });
+                          try {
+                            await submitFreeBookingRequest({
+                              'branch_id': selectedBranch,
+                              'phone': controller.text.trim(),
+                            });
+                            await userStore.setFreeBookingUsedAt(DateTime.now().toIso8601String());
+                            toast(appStore.selectedLanguageCode == 'ar'
+                                ? 'تم إرسال الطلب وسيتم التواصل معك قريباً'
+                                : 'Request sent. We will contact you soon.');
+                            Navigator.of(ctx).pop();
+                            setState(() {});
+                          } catch (e) {
+                            toast(e.toString());
+                          } finally {
+                            setStateDialog(() {
+                              isSubmitting = false;
+                            });
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+                  child: isSubmitting
+                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : Text(appStore.selectedLanguageCode == 'ar' ? 'إرسال' : languages.lblSubmit,
+                          style: boldTextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          });
+        },
+      );
+    } catch (e) {
+      appStore.setLoading(false);
+      toast(e.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -279,6 +477,8 @@ class _HomeScreenState extends State<HomeScreen>{
             ).expand(),
             Row(
               children: [
+                _buildBookingButton(),
+                12.width,
                 ValueListenableBuilder<int>(
                   valueListenable: cartCountNotifier,
                   builder: (context, count, _) {

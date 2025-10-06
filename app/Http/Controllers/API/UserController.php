@@ -87,7 +87,7 @@ class UserController extends Controller
         $id = $request->id;
 
         $user = User::with([
-            'userProfile',
+            'userProfile.specialist',
             'userFavouriteDiet.diet.media',
             'userFavouriteWorkout.workout.media',
             'userFavouriteProducts.product.media',
