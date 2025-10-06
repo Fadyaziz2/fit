@@ -703,5 +703,34 @@ class PermissionTableSeeder extends Seeder
             'title' => 'Banner Delete',
             'parent_id' => $bannerPermission->id,
         ]);
+
+        $successStoryPermission = Permission::create([
+            'name' => 'successstory',
+            'title' => 'Success Story',
+        ]);
+
+        Permission::create([
+            'name' => 'successstory-list',
+            'title' => 'Success Story List',
+            'parent_id' => $successStoryPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'successstory-add',
+            'title' => 'Success Story Add',
+            'parent_id' => $successStoryPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'successstory-edit',
+            'title' => 'Success Story Edit',
+            'parent_id' => $successStoryPermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'successstory-delete',
+            'title' => 'Success Story Delete',
+            'parent_id' => $successStoryPermission->id,
+        ]);
     }
 }

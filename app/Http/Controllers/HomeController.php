@@ -22,6 +22,7 @@ use App\Models\User;
 use App\Models\Product;
 use App\Models\Package;
 use App\Models\ProductCategory;
+use App\Models\SuccessStory;
 use App\Models\Ingredient;
 use App\Helpers\AuthHelper;
 use App\Models\AppSetting;
@@ -63,6 +64,7 @@ class HomeController extends Controller
         $data['diet'] = Diet::orderBy('id', 'desc')->take(10)->get();
         $data['post'] = Post::orderBy('id', 'desc')->take(10)->get();
         $data['banners'] = Banner::orderBy('id', 'desc')->take(10)->get();
+        $data['success_stories'] = SuccessStory::orderBy('id', 'desc')->take(10)->get();
         return view('dashboards.dashboard', compact('assets', 'data', 'auth_user'));
     }
 
@@ -164,11 +166,19 @@ class HomeController extends Controller
                 $data = Banner::find($request->id);
                 $message = __('message.msg_removed',[ 'name' => __('message.banner') ]);
                 break;
+            case 'success_story_before_image':
+                $data = SuccessStory::find($request->id);
+                $message = __('message.msg_removed',[ 'name' => __('message.before_image') ]);
+                break;
+            case 'success_story_after_image':
+                $data = SuccessStory::find($request->id);
+                $message = __('message.msg_removed',[ 'name' => __('message.after_image') ]);
+                break;
             default:
                 $data = AppSetting::find($request->id);
                 $message = __('message.msg_removed',[ 'name' => __('message.image') ]);
             break;
-            
+
         }
 
         if($data != null){

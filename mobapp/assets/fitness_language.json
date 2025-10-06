@@ -413,6 +413,24 @@
       },
       {
         "screenId": "8",
+        "keyword_id": 260,
+        "keyword_name": "lblSuccessStories",
+        "keyword_value": "Customer Success Stories"
+      },
+      {
+        "screenId": "8",
+        "keyword_id": 261,
+        "keyword_name": "lblBefore",
+        "keyword_value": "Before"
+      },
+      {
+        "screenId": "8",
+        "keyword_id": 262,
+        "keyword_name": "lblAfter",
+        "keyword_value": "After"
+      },
+      {
+        "screenId": "8",
         "keyword_id": 241,
         "keyword_name": "lblDay",
         "keyword_value": "Day"

@@ -166,6 +166,9 @@ class BaseLanguage {
   String get lblProductList=> getContentValueFromKey(99);
 
   String get lblSelectedProductsForYou => getContentValueFromKey(249);
+  String get lblSuccessStories => getContentValueFromKey(260);
+  String get lblBefore => getContentValueFromKey(261);
+  String get lblAfter => getContentValueFromKey(262);
 
   String get lblAddToCart => getContentValueFromKey(250);
 

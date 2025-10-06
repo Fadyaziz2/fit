@@ -35,6 +35,7 @@ import '../models/workout_detail_response.dart';
 import '../models/level_response.dart';
 import '../models/product_response.dart';
 import '../models/banner_model.dart';
+import '../models/success_story_model.dart';
 import '../network/rest_api.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/search_screen.dart';
@@ -46,6 +47,7 @@ import 'filter_workout_screen.dart';
 import 'notification_screen.dart';
 import '../components/product_component.dart';
 import '../components/product_banner_carousel.dart';
+import '../components/success_story_slider.dart';
 import '../extensions/no_data_widget.dart';
 
 bool? isFirstTimeGraph = false;
@@ -369,6 +371,7 @@ class _HomeScreenState extends State<HomeScreen>{
               DashboardResponse? mDashboardResponse = snapshot.data;
               List<ProductModel> featuredProducts = mDashboardResponse?.featuredProducts ?? <ProductModel>[];
               List<BannerModel> productBanners = mDashboardResponse?.productBanners ?? <BannerModel>[];
+              List<SuccessStoryModel> successStories = mDashboardResponse?.successStories ?? <SuccessStoryModel>[];
               List<BodyPartModel> bodyParts = mDashboardResponse?.bodypart ?? <BodyPartModel>[];
               List<EquipmentModel> equipments = mDashboardResponse?.equipment ?? <EquipmentModel>[];
               List<WorkoutDetailModel> workouts = mDashboardResponse?.workout ?? <WorkoutDetailModel>[];
@@ -376,12 +379,13 @@ class _HomeScreenState extends State<HomeScreen>{
 
               bool hasFeaturedProducts = featuredProducts.isNotEmpty;
               bool hasProductBanners = productBanners.isNotEmpty;
+              bool hasSuccessStories = successStories.isNotEmpty;
               bool hasBodyParts = bodyParts.isNotEmpty;
               bool hasEquipments = equipments.isNotEmpty;
               bool hasWorkouts = workouts.isNotEmpty;
               bool hasLevels = levels.isNotEmpty;
               bool hasAnyDashboardContent =
-                  hasFeaturedProducts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels || hasProductBanners;
+                  hasFeaturedProducts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels || hasProductBanners || hasSuccessStories;
 
               return SingleChildScrollView(
                 physics: BouncingScrollPhysics(),
@@ -426,6 +430,8 @@ class _HomeScreenState extends State<HomeScreen>{
                     16.height,
                     if (hasProductBanners)
                       ProductBannerCarousel(banners: productBanners).paddingBottom(16),
+                    if (hasSuccessStories)
+                      SuccessStorySlider(stories: successStories).paddingSymmetric(horizontal: 16, vertical: 8),
                     if (!hasAnyDashboardContent)
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
