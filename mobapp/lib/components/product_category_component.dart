@@ -25,15 +25,30 @@ class ProductCategoryComponent extends StatefulWidget {
 class _ProductCategoryComponentState extends State<ProductCategoryComponent> {
   @override
   Widget build(BuildContext context) {
+    final double itemSize = widget.isGrid ? (context.width() - 48) / 2 : 110;
+
     return Container(
-      decoration: boxDecorationWithRoundedCorners(borderRadius: radius(12), backgroundColor: appStore.isDarkMode ? context.cardColor : GreyLightColor),
-      width: widget.isGrid ? (context.width() - 48) / 2 : context.width() * 0.37,
+      width: widget.isGrid ? (context.width() - 48) / 2 : itemSize,
       margin: EdgeInsets.only(top: 4),
-      padding: EdgeInsets.all(2),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          cachedImage(widget.mProductCategoryModel!.productcategoryImage.validate(), fit: BoxFit.contain, height: 90),
-          8.height,
+          Container(
+            height: itemSize,
+            width: itemSize,
+            decoration: boxDecorationWithRoundedCorners(
+              boxShape: BoxShape.circle,
+              backgroundColor: appStore.isDarkMode ? context.cardColor : GreyLightColor,
+            ),
+            padding: EdgeInsets.all(12),
+            child: ClipOval(
+              child: cachedImage(
+                widget.mProductCategoryModel!.productcategoryImage.validate(),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          12.height,
           Text(
             widget.mProductCategoryModel!.title!.validate(),
             style: primaryTextStyle(size: 14),
@@ -41,7 +56,6 @@ class _ProductCategoryComponentState extends State<ProductCategoryComponent> {
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
           ).paddingSymmetric(horizontal: 8),
-          12.height,
         ],
       ),
     ).onTap(() {
