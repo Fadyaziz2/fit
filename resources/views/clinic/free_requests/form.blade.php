@@ -137,7 +137,7 @@
             const slotsContainer = document.getElementById('available-slots');
             const selectedTimeInput = document.getElementById('appointment_time_input');
             const selectedTimeLabel = document.getElementById('selected-slot-label');
-            const fetchUrl = "{{ route('clinic.free_requests.available_slots', [], false) }}";
+            const fetchUrl = "{{ route('clinic.free_requests.available_slots') }}";
 
             const texts = {
                 selectSpecialistAndDate: "{{ __('Select a specialist and date to view available slots.') }}",
