@@ -90,6 +90,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('cart-list', [ API\CartController::class, 'getList']);
     Route::post('cart-add', [ API\CartController::class, 'add']);
     Route::post('cart-remove', [ API\CartController::class, 'remove']);
+    Route::post('checkout', [ API\ProductOrderController::class, 'checkout']);
+    Route::get('order-history', [ API\ProductOrderController::class, 'orderHistory']);
 
     Route::get('package-list', [ API\PackageController::class, 'getList' ]);
 

@@ -1570,5 +1570,95 @@
         "keyword_value": "Join"
       }
     ]
+  },
+  {
+    "screenID": "40",
+    "ScreenName": "Checkout",
+    "keyword_data": [
+      {
+        "screenId": "40",
+        "keyword_id": 400,
+        "keyword_name": "lblCheckout",
+        "keyword_value": "Checkout"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 401,
+        "keyword_name": "lblOrderSummary",
+        "keyword_value": "Order Summary"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 402,
+        "keyword_name": "lblShippingAddress",
+        "keyword_value": "Shipping Address"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 403,
+        "keyword_name": "lblFullName",
+        "keyword_value": "Full Name"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 404,
+        "keyword_name": "lblAddress",
+        "keyword_value": "Address"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 405,
+        "keyword_name": "lblOrderNote",
+        "keyword_value": "Order Note"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 406,
+        "keyword_name": "lblPaymentMethod",
+        "keyword_value": "Payment Method"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 407,
+        "keyword_name": "lblCashOnDelivery",
+        "keyword_value": "Cash on Delivery"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 408,
+        "keyword_name": "lblPlaceOrder",
+        "keyword_value": "Place Order"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 409,
+        "keyword_name": "lblOrderPlacedSuccess",
+        "keyword_value": "Order placed successfully"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 410,
+        "keyword_name": "lblOrderHistory",
+        "keyword_value": "Order History"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 411,
+        "keyword_name": "lblNoOrdersFound",
+        "keyword_value": "No orders found"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 412,
+        "keyword_name": "lblOrderTotal",
+        "keyword_value": "Order Total"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 413,
+        "keyword_name": "lblComment",
+        "keyword_value": "Comment"
+      }
+    ]
   }
 ]

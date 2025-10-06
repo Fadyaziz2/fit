@@ -8,6 +8,8 @@ use App\Models\ProductOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Notifications\DatabaseNotification;
+
 
 class ProductOrderController extends Controller
 {
@@ -66,11 +68,30 @@ class ProductOrderController extends Controller
 
         $request->validate([
             'status' => 'required|string|in:' . implode(',', array_keys($this->availableStatuses())),
+            'status_comment' => 'nullable|string|max:1000',
         ]);
 
+        $status = $request->input('status');
+        $comment = $request->input('status_comment');
+
+        $originalStatus = $productOrder->status;
+        $originalComment = $productOrder->status_comment;
+
         $productOrder->update([
-            'status' => $request->input('status'),
+            'status' => $status,
+            'status_comment' => $comment,
         ]);
+
+        $productOrder->loadMissing(['product', 'user']);
+
+        if ($productOrder->user) {
+            $statusChanged = $originalStatus !== $status;
+            $commentChanged = $originalComment !== $comment && filled($comment);
+
+            if ($statusChanged || $commentChanged) {
+                $this->sendStatusNotification($productOrder);
+            }
+        }
 
         return redirect()
             ->route('product-orders.show', $productOrder)
@@ -83,11 +104,47 @@ class ProductOrderController extends Controller
     protected function availableStatuses(): array
     {
         return [
-            'pending' => __('message.pending'),
-            'processing' => __('message.processing'),
-            'completed' => __('message.completed'),
+            'placed' => __('message.placed'),
+            'confirmed' => __('message.confirmed'),
+            'shipped' => __('message.shipped'),
             'delivered' => __('message.delivered'),
             'cancelled' => __('message.cancelled'),
+            'returned' => __('message.returned'),
         ];
+    }
+
+    /**
+     * Notify the customer about the status update.
+     */
+    protected function sendStatusNotification(ProductOrder $productOrder): void
+    {
+        $user = $productOrder->user;
+
+        if (!$user) {
+            return;
+        }
+
+        $product = $productOrder->product;
+        $statusKey = 'message.' . $productOrder->status;
+        $statusLabel = __($statusKey);
+
+        if ($statusLabel === $statusKey) {
+            $statusLabel = ucfirst(str_replace('_', ' ', $productOrder->status));
+        }
+
+        $data = [
+            'type' => 'product_order_status',
+            'subject' => __('message.order_status_updated_subject'),
+            'message' => __('message.order_status_updated_message', [
+                'product' => $product->title ?? __('message.product'),
+                'status' => $statusLabel,
+            ]),
+            'order_id' => $productOrder->id,
+            'status' => $productOrder->status,
+            'status_label' => $statusLabel,
+            'comment' => $productOrder->status_comment,
+        ];
+
+        $user->notify(new DatabaseNotification($data));
     }
 }

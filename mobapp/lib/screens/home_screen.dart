@@ -84,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (isFirstTimeGraph == false) {
         graphGet();
       }
+      _loadNotificationCount();
     });
 
     super.initState();
@@ -95,6 +96,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   getUserDetailsApiCall() async {
     await getUSerDetail(context, userStore.userId).whenComplete(() {});
+  }
+
+  Future<void> _loadNotificationCount() async {
+    if (!userStore.isLoggedIn) return;
+
+    await notificationApi().then((value) {
+      notificationCountNotifier.value = value.allUnreadCount ?? 0;
+    }).catchError((e) {});
   }
 
   @override
@@ -683,25 +692,53 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
                 12.width,
-                Container(
-                  decoration: boxDecorationWithRoundedCorners(
-                      borderRadius: radius(16),
-                      border: Border.all(
-                          color: appStore.isDarkMode
-                              ? Colors.white
-                              : context.dividerColor.withOpacity(0.9),
-                          width: 0.6),
-                      backgroundColor: appStore.isDarkMode
-                          ? context.scaffoldBackgroundColor
-                          : Colors.white),
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  child: Image.asset(ic_notification,
-                      width: 24,
-                      height: 24,
-                      color: appStore.isDarkMode ? Colors.white : Colors.grey),
-                ).onTap(
-                  () {
-                    NotificationScreen().launch(context);
+                ValueListenableBuilder<int>(
+                  valueListenable: notificationCountNotifier,
+                  builder: (context, count, _) {
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          decoration: boxDecorationWithRoundedCorners(
+                              borderRadius: radius(16),
+                              border: Border.all(
+                                  color: appStore.isDarkMode
+                                      ? Colors.white
+                                      : context.dividerColor.withOpacity(0.9),
+                                  width: 0.6),
+                              backgroundColor: appStore.isDarkMode
+                                  ? context.scaffoldBackgroundColor
+                                  : Colors.white),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          child: Image.asset(ic_notification,
+                              width: 24,
+                              height: 24,
+                              color:
+                                  appStore.isDarkMode ? Colors.white : Colors.grey),
+                        ).onTap(() {
+                          NotificationScreen().launch(context);
+                        }),
+                        if (count > 0)
+                          Positioned(
+                            right: -6,
+                            top: -6,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: boxDecorationWithRoundedCorners(
+                                borderRadius: radius(10),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                              child: Text(
+                                count > 99 ? '99+' : count.toString(),
+                                style:
+                                    secondaryTextStyle(color: Colors.white, size: 10),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
                   },
                 ),
               ],

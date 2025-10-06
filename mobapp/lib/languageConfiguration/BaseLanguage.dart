@@ -219,6 +219,21 @@ class BaseLanguage {
 
   String get lblYourPlanValid=> getContentValueFromKey(81);
 
+  String get lblCheckout => getContentValueFromKey(400);
+  String get lblOrderSummary => getContentValueFromKey(401);
+  String get lblShippingAddress => getContentValueFromKey(402);
+  String get lblFullName => getContentValueFromKey(403);
+  String get lblAddress => getContentValueFromKey(404);
+  String get lblOrderNote => getContentValueFromKey(405);
+  String get lblPaymentMethod => getContentValueFromKey(406);
+  String get lblCashOnDelivery => getContentValueFromKey(407);
+  String get lblPlaceOrder => getContentValueFromKey(408);
+  String get lblOrderPlacedSuccess => getContentValueFromKey(409);
+  String get lblOrderHistory => getContentValueFromKey(410);
+  String get lblNoOrdersFound => getContentValueFromKey(411);
+  String get lblOrderTotal => getContentValueFromKey(412);
+  String get lblComment => getContentValueFromKey(413);
+
   String get lblTo=> getContentValueFromKey(83);
 
   String get lblSets=> getContentValueFromKey(218);

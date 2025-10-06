@@ -29,6 +29,7 @@ import '../utils/app_common.dart';
 import '../utils/app_images.dart';
 import 'about_app_screen.dart';
 import 'favourite_screen.dart';
+import 'order_history_screen.dart';
 import '../models/diet_response.dart';
 import '../models/product_response.dart';
 import '../models/workout_detail_response.dart';
@@ -342,6 +343,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Divider(height: 0, color: grayColor),
                             mOption(ic_setting, languages.lblSettings, () {
                               SettingScreen().launch(context, pageRouteAnimation: PageRouteAnimation.Fade);
+                            }),
+                            Divider(height: 0, color: grayColor),
+                            mOption(ic_store_outline, languages.lblOrderHistory, () {
+                              OrderHistoryScreen().launch(context);
                             }),
                             Divider(height: 0, color: grayColor),
                             mOption(ic_info, languages.lblAboutApp, () {

@@ -32,6 +32,7 @@ import '../models/notification_response.dart';
 import '../models/product_category_response.dart';
 import '../models/product_response.dart';
 import '../models/cart_response.dart';
+import '../models/order_response.dart';
 import '../models/social_login_response.dart';
 import '../models/subscribePlan_response.dart';
 import '../models/subscribe_package_response.dart';
@@ -304,6 +305,14 @@ Future<FitnessBaseResponse> removeFromCartApi(Map req) async {
 
 Future<CartResponse> getCartListApi() async {
   return CartResponse.fromJson(await handleResponse(await buildHttpResponse('cart-list', method: HttpMethod.GET)));
+}
+
+Future<CheckoutResponse> checkoutApi(Map req) async {
+  return CheckoutResponse.fromJson(await handleResponse(await buildHttpResponse('checkout', request: req, method: HttpMethod.POST)));
+}
+
+Future<OrderResponse> orderHistoryApi() async {
+  return OrderResponse.fromJson(await handleResponse(await buildHttpResponse('order-history', method: HttpMethod.GET)));
 }
 
 Future<UserResponse> getUserDataApi({int? id}) async {

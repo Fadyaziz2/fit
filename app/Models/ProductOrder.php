@@ -19,6 +19,25 @@ class ProductOrder extends Model
         'user_id',
         'quantity',
         'status',
+        'unit_price',
+        'total_price',
+        'payment_method',
+        'status_comment',
+        'customer_name',
+        'customer_phone',
+        'shipping_address',
+        'customer_note',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'product_id' => 'integer',
+        'user_id' => 'integer',
+        'quantity' => 'integer',
+        'unit_price' => 'float',
+        'total_price' => 'float',
     ];
 
     /**

@@ -269,5 +269,6 @@ Future<void> logout(BuildContext context, {Function? onLogout}) async {
   }
   userStore.setLogin(false);
   cartCountNotifier.value = 0;
+  notificationCountNotifier.value = 0;
   onLogout?.call();
 }
