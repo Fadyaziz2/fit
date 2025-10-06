@@ -199,6 +199,8 @@ class BaseLanguage {
 
   String get lblNotificationEmpty=> getContentValueFromKey(64);
 
+  String get lblQuantity=> getContentValueFromKey(251);
+
   String get lblQue1=> getContentValueFromKey(150);
 
   String get lblQue2=> getContentValueFromKey(151);

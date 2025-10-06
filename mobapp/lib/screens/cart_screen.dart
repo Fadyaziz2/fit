@@ -3,6 +3,7 @@ import '../extensions/decorations.dart';
 import '../extensions/extension_util/context_extensions.dart';
 import '../extensions/extension_util/int_extensions.dart';
 import '../extensions/extension_util/widget_extensions.dart';
+import '../extensions/extension_util/string_extensions.dart';
 import '../extensions/loader_widget.dart';
 import '../extensions/no_data_widget.dart';
 import '../extensions/text_styles.dart';
@@ -12,6 +13,7 @@ import '../models/cart_response.dart';
 import '../network/rest_api.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_common.dart';
+import '../extensions/colors.dart';
 
 class CartScreen extends StatefulWidget {
   static String tag = '/CartScreen';

@@ -39,6 +39,7 @@ class ProductModel {
   num? discountPercent;
   bool? discountActive;
   int? productcategoryId;
+  String? productcategoryTitle;
   String? featured;
   String? status;
   String? productImage;
@@ -59,6 +60,7 @@ class ProductModel {
         this.discountPercent,
         this.discountActive,
         this.productcategoryId,
+        this.productcategoryTitle,
         this.featured,
         this.status,
         this.productImage,
@@ -79,6 +81,11 @@ class ProductModel {
     discountPercent = json['discount_percent'] != null ? num.tryParse(json['discount_percent'].toString()) : null;
     discountActive = json['discount_active'] == true || json['discount_active'] == 1;
     productcategoryId = json['productcategory_id'];
+    if (json['productcategory_title'] != null) {
+      productcategoryTitle = json['productcategory_title'];
+    } else if (json['productcategory'] is Map<String, dynamic>) {
+      productcategoryTitle = (json['productcategory'] as Map<String, dynamic>)['title'];
+    }
     featured = json['featured'];
     status = json['status'];
     productImage = json['product_image'];
@@ -101,6 +108,7 @@ class ProductModel {
     data['discount_percent'] = this.discountPercent;
     data['discount_active'] = this.discountActive;
     data['productcategory_id'] = this.productcategoryId;
+    data['productcategory_title'] = this.productcategoryTitle;
     data['featured'] = this.featured;
     data['status'] = this.status;
     data['product_image'] = this.productImage;
