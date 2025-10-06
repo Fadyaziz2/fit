@@ -14,7 +14,7 @@ class BannerController extends Controller
         $pageTitle = __('message.list_form_title', ['form' => __('message.banner')]);
         $authUser = AuthHelper::authSession();
 
-        if (!$authUser->hasAnyPermission(['banner-list', 'banner'])) {
+        if (!$authUser->hasRole('admin') && !$authUser->hasAnyPermission(['banner-list', 'banner'])) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
@@ -29,7 +29,9 @@ class BannerController extends Controller
 
     public function create()
     {
-        if (!auth()->user()->hasAnyPermission(['banner-add', 'banner'])) {
+        $user = auth()->user();
+
+        if (!$user || (!$user->hasRole('admin') && !$user->hasAnyPermission(['banner-add', 'banner']))) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
@@ -40,7 +42,9 @@ class BannerController extends Controller
 
     public function store(BannerRequest $request)
     {
-        if (!auth()->user()->hasAnyPermission(['banner-add', 'banner'])) {
+        $user = auth()->user();
+
+        if (!$user || (!$user->hasRole('admin') && !$user->hasAnyPermission(['banner-add', 'banner']))) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
@@ -55,7 +59,9 @@ class BannerController extends Controller
 
     public function edit($id)
     {
-        if (!auth()->user()->hasAnyPermission(['banner-edit', 'banner'])) {
+        $user = auth()->user();
+
+        if (!$user || (!$user->hasRole('admin') && !$user->hasAnyPermission(['banner-edit', 'banner']))) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
@@ -68,7 +74,9 @@ class BannerController extends Controller
 
     public function update(BannerRequest $request, $id)
     {
-        if (!auth()->user()->hasAnyPermission(['banner-edit', 'banner'])) {
+        $user = auth()->user();
+
+        if (!$user || (!$user->hasRole('admin') && !$user->hasAnyPermission(['banner-edit', 'banner']))) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
@@ -91,7 +99,9 @@ class BannerController extends Controller
 
     public function destroy($id)
     {
-        if (!auth()->user()->hasAnyPermission(['banner-delete', 'banner'])) {
+        $user = auth()->user();
+
+        if (!$user || (!$user->hasRole('admin') && !$user->hasAnyPermission(['banner-delete', 'banner']))) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
