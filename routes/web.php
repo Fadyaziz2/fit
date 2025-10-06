@@ -189,6 +189,8 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
         Route::get('appointments/available-slots', [ClinicAppointmentController::class, 'availableSlots'])->name('appointments.available_slots');
         Route::post('appointments/manual', [ClinicAppointmentController::class, 'store'])->name('appointments.store');
         Route::post('appointments/{appointment}/convert', [ClinicAppointmentController::class, 'convertManualFree'])->name('appointments.convert');
+        Route::get('free-requests/available-slots', [ClinicFreeBookingRequestController::class, 'availableSlots'])
+            ->name('free_requests.available_slots');
         Route::resource('appointments', ClinicAppointmentController::class)->only(['index', 'edit', 'update']);
     });
     Route::resource('product-orders', ProductOrderController::class)->only(['index', 'show', 'update']);
