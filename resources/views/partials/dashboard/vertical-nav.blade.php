@@ -105,10 +105,10 @@
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
                 ->link->attr(['class' => activeRoute(route('clinic.schedules.create')) ? 'nav-link active' : 'nav-link']);
 
-            $menu->clinic->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.free_booking_request')]).'</span>', ['route' => 'clinic.free-requests.index'])
+            $menu->clinic->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.free_booking_request')]).'</span>', ['route' => 'clinic.free_requests.index'])
                 ->data('role', 'admin')
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
-                ->link->attr(['class' => activeRoute(route('clinic.free-requests.index')) || request()->is('clinic/free-requests/*/edit') ? 'nav-link active' : 'nav-link']);
+                ->link->attr(['class' => activeRoute(route('clinic.free_requests.index')) || request()->is('clinic/free-requests/*/edit') ? 'nav-link active' : 'nav-link']);
 
             $menu->clinic->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.appointment')]).'</span>', ['route' => 'clinic.appointments.index'])
                 ->data('role', 'admin')

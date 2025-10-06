@@ -179,7 +179,13 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
         Route::resource('branches', ClinicBranchController::class)->except(['show']);
         Route::resource('specialists', ClinicSpecialistController::class)->except(['show']);
         Route::resource('schedules', ClinicSpecialistScheduleController::class)->except(['show']);
-        Route::resource('free-requests', ClinicFreeBookingRequestController::class)->only(['index', 'edit', 'update']);
+        Route::resource('free-requests', ClinicFreeBookingRequestController::class)
+            ->only(['index', 'edit', 'update'])
+            ->names([
+                'index' => 'free_requests.index',
+                'edit' => 'free_requests.edit',
+                'update' => 'free_requests.update',
+            ]);
         Route::resource('appointments', ClinicAppointmentController::class)->only(['index', 'edit', 'update']);
     });
     Route::resource('product-orders', ProductOrderController::class)->only(['index', 'show', 'update']);
