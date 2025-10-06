@@ -21,6 +21,47 @@
                 }
             });
         }
+        const specialistDirectory = @json($specialists->mapWithKeys(function ($specialist) {
+            return [
+                (string) $specialist->id => [
+                    'name' => $specialist->name,
+                    'branch' => $specialist->branch?->name,
+                    'phone' => $specialist->phone,
+                    'email' => $specialist->email,
+                ],
+            ];
+        }));
+
+        function renderSpecialistDetails(specialistId) {
+            const container = $('#specialist-details');
+            if (!container.length) {
+                return;
+            }
+
+            const details = specialistDirectory[specialistId] || null;
+
+            if (!details) {
+                container.html('<p class="text-muted mb-0">{{ __('message.specialist_unassigned_hint') }}</p>');
+                return;
+            }
+
+            let content = '<h6 class="mb-2">' + $('<div>').text(details.name).html() + '</h6>';
+
+            if (details.branch) {
+                content += '<p class="mb-1"><strong>{{ __('message.branch') }}:</strong> ' + $('<div>').text(details.branch).html() + '</p>';
+            }
+
+            if (details.phone) {
+                content += '<p class="mb-1"><strong>{{ __('message.phone') }}:</strong> ' + $('<div>').text(details.phone).html() + '</p>';
+            }
+
+            if (details.email) {
+                content += '<p class="mb-0"><strong>{{ __('message.email') }}:</strong> ' + $('<div>').text(details.email).html() + '</p>';
+            }
+
+            container.html(content);
+        }
+
         $(document).ready(function () {
             getAssignList('diet');
             getAssignList('workout');
@@ -92,6 +133,15 @@
                     $(this).closest('.disease-item').remove();
                     toggleDiseaseEmptyState();
                 });
+            }
+
+            const specialistSelect = $('#specialist-id');
+            if (specialistSelect.length) {
+                specialistSelect.on('change', function () {
+                    renderSpecialistDetails($(this).val());
+                });
+
+                renderSpecialistDetails(specialistSelect.val());
             }
 
         });
@@ -602,6 +652,53 @@
         <div class="col-lg-12">
             {{ html()->form('POST', route('users.health.update', $data->id))->attribute('data-toggle', 'validator')->open() }}
                 <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div class="header-title">
+                                    <h4 class="card-title mb-0">{{ __('message.assigned_specialist') }}</h4>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                @php
+                                    $assignedSpecialistId = optional($data->userProfile)->specialist_id;
+                                    $assignedSpecialist = optional($data->userProfile?->specialist);
+                                @endphp
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="specialist-id">{{ __('message.specialist') }}</label>
+                                        <select name="specialist_id" id="specialist-id" class="form-select">
+                                            <option value="">{{ __('message.no_specialist_assigned') }}</option>
+                                            @foreach($specialists as $specialist)
+                                                <option value="{{ $specialist->id }}" {{ (string) $specialist->id === (string) $assignedSpecialistId ? 'selected' : '' }}>
+                                                    {{ $specialist->name }}@if($specialist->branch) ({{ $specialist->branch->name }}) @endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label d-block">{{ __('message.specialist_details') }}</label>
+                                        <div id="specialist-details" class="border rounded p-3 bg-light h-100">
+                                            @if($assignedSpecialist->id)
+                                                <h6 class="mb-2">{{ $assignedSpecialist->name }}</h6>
+                                                @if($assignedSpecialist->branch?->name)
+                                                    <p class="mb-1"><strong>{{ __('message.branch') }}:</strong> {{ $assignedSpecialist->branch->name }}</p>
+                                                @endif
+                                                @if($assignedSpecialist->phone)
+                                                    <p class="mb-1"><strong>{{ __('message.phone') }}:</strong> {{ $assignedSpecialist->phone }}</p>
+                                                @endif
+                                                @if($assignedSpecialist->email)
+                                                    <p class="mb-0"><strong>{{ __('message.email') }}:</strong> {{ $assignedSpecialist->email }}</p>
+                                                @endif
+                                            @else
+                                                <p class="text-muted mb-0">{{ __('message.specialist_unassigned_hint') }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-lg-6">
                         <div class="card mb-4">
                             <div class="card-header d-flex justify-content-between align-items-center">

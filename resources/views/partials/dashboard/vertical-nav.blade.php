@@ -55,10 +55,65 @@
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
                 ->link->attr(['class' => activeRoute(route('subadmin.index')) ? 'nav-link active' : 'nav-link']);
 
-            $menu->sub_admin->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.sub_admin')]).'</span>', ['route' => 'subadmin.create'])
+        $menu->sub_admin->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.sub_admin')]).'</span>', ['route' => 'subadmin.create'])
                 ->data('permission', [ 'subadmin-add', 'subadmin-edit'])
-                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')          
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
                 ->link->attr(['class' => activeRoute(route('subadmin.create')) || request()->is('subadmin/*/edit') ? 'nav-link active' : 'nav-link']);
+
+        $menu->add('<span class="item-name">'.__('message.clinic_management').'</span>', ['class' => ''])
+            ->prepend('<i class="icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9.5C3 8.11929 4.11929 7 5.5 7H18.5C19.8807 7 21 8.11929 21 9.5V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V9.5Z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M7 7V5.5C7 4.11929 8.11929 3 9.5 3H14.5C15.8807 3 17 4.11929 17 5.5V7" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M8 11H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M14 11H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M8 15H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M14 15H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg></i>')
+            ->nickname('clinic')
+            ->data('role', 'admin')
+            ->link->attr(['class' => 'nav-link'])
+            ->href('#clinic');
+
+            $menu->clinic->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.branch')]).'</span>', ['route' => 'clinic.branches.index'])
+                ->data('role', 'admin')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('clinic.branches.index')) || request()->is('clinic/branches/*/edit') ? 'nav-link active' : 'nav-link']);
+
+            $menu->clinic->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.branch')]).'</span>', ['route' => 'clinic.branches.create'])
+                ->data('role', 'admin')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('clinic.branches.create')) ? 'nav-link active' : 'nav-link']);
+
+            $menu->clinic->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.specialist')]).'</span>', ['route' => 'clinic.specialists.index'])
+                ->data('role', 'admin')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('clinic.specialists.index')) || request()->is('clinic/specialists/*/edit') ? 'nav-link active' : 'nav-link']);
+
+            $menu->clinic->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.specialist')]).'</span>', ['route' => 'clinic.specialists.create'])
+                ->data('role', 'admin')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('clinic.specialists.create')) ? 'nav-link active' : 'nav-link']);
+
+            $menu->clinic->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.specialist_schedule')]).'</span>', ['route' => 'clinic.schedules.index'])
+                ->data('role', 'admin')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('clinic.schedules.index')) || request()->is('clinic/schedules/*/edit') ? 'nav-link active' : 'nav-link']);
+
+            $menu->clinic->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.specialist_schedule')]).'</span>', ['route' => 'clinic.schedules.create'])
+                ->data('role', 'admin')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('clinic.schedules.create')) ? 'nav-link active' : 'nav-link']);
+
+            $menu->clinic->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.free_booking_request')]).'</span>', ['route' => 'clinic.free-requests.index'])
+                ->data('role', 'admin')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('clinic.free-requests.index')) || request()->is('clinic/free-requests/*/edit') ? 'nav-link active' : 'nav-link']);
+
+            $menu->clinic->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.appointment')]).'</span>', ['route' => 'clinic.appointments.index'])
+                ->data('role', 'admin')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('clinic.appointments.index')) || request()->is('clinic/appointments/*/edit') ? 'nav-link active' : 'nav-link']);
 
         $menu->add('<span class="item-name">'.__('message.equipment').'</span>', ['class' => ''])
             ->prepend('<i class="icon">
