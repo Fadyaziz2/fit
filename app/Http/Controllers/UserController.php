@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
 use App\Models\UserProductRecommendation;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use App\Models\Specialist;
 
 class UserController extends Controller
 {
@@ -105,7 +106,7 @@ class UserController extends Controller
         }
 
         $data = User::with([
-            'userProfile',
+            'userProfile.specialist.branch',
             'roles',
             'dislikedIngredients',
             'userDiseases',
@@ -135,6 +136,8 @@ class UserController extends Controller
 
         $cartItems = $data->cartItems;
 
+        $specialists = Specialist::with('branch')->orderBy('name')->get();
+
         return $dataTable->with('user_id',$id)->render('users.profile', compact(
             'data',
             'profileImage',
@@ -143,7 +146,8 @@ class UserController extends Controller
             'favouriteWorkouts',
             'favouriteDiets',
             'favouriteProducts',
-            'cartItems'
+            'cartItems',
+            'specialists'
         ));
     }
 
@@ -392,6 +396,7 @@ class UserController extends Controller
             'diseases' => ['nullable', 'array'],
             'diseases.*.name' => ['nullable', 'string', 'max:255'],
             'diseases.*.started_at' => ['nullable', 'date'],
+            'specialist_id' => ['nullable', 'integer', 'exists:specialists,id'],
             'notes' => ['nullable', 'string'],
         ], [], [
             'disliked_ingredients.*' => __('message.ingredient'),
@@ -452,6 +457,7 @@ class UserController extends Controller
             $notes = $validated['notes'] ?? null;
 
             $profile = $user->userProfile ?: $user->userProfile()->create([]);
+            $profile->specialist_id = $validated['specialist_id'] ?? null;
             $profile->notes = $notes;
             $profile->save();
         });
