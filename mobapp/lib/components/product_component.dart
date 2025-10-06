@@ -38,14 +38,17 @@ class ProductComponentState extends State<ProductComponent> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Stack(
-          children: [
-            Container(
-              decoration: boxDecorationWithRoundedCorners(borderRadius: radius(12), backgroundColor: GreyLightColor),
-              child: cachedImage(widget.mProductModel!.productImage.validate(), height: 155, fit: BoxFit.contain, width: (context.width() - 50) / 2)
-                  .cornerRadiusWithClipRRect(defaultRadius),
-            ),
+        AspectRatio(
+          aspectRatio: 1,
+          child: Stack(
+            children: [
+              Container(
+                decoration: boxDecorationWithRoundedCorners(borderRadius: radius(12), backgroundColor: GreyLightColor),
+                child: cachedImage(widget.mProductModel!.productImage.validate(), fit: BoxFit.contain, width: double.infinity)
+                    .cornerRadiusWithClipRRect(defaultRadius),
+              ),
             if (widget.showActions)
               Positioned(
                 top: 12,
@@ -78,20 +81,21 @@ class ProductComponentState extends State<ProductComponent> {
                   },
                 ),
               ),
-            if (widget.showActions && hasDiscount)
-              Positioned(
-                bottom: 12,
-                left: 12,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: boxDecorationWithRoundedCorners(
-                    borderRadius: radius(20),
-                    backgroundColor: primaryColor.withOpacity(0.9),
+              if (widget.showActions && hasDiscount)
+                Positioned(
+                  bottom: 12,
+                  left: 12,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: boxDecorationWithRoundedCorners(
+                      borderRadius: radius(20),
+                      backgroundColor: primaryColor.withOpacity(0.9),
+                    ),
+                    child: Text('-${discountPercent.toStringAsFixed(0)}%', style: boldTextStyle(color: Colors.white, size: 12)),
                   ),
-                  child: Text('-${discountPercent.toStringAsFixed(0)}%', style: boldTextStyle(color: Colors.white, size: 12)),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         PriceWidget(

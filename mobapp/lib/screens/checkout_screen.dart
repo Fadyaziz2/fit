@@ -65,7 +65,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _placeOrder() async {
-    if (!_formKey.currentState.validate()) {
+    if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
@@ -149,7 +149,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   AppTextField(
                     controller: _nameController,
                     textFieldType: TextFieldType.NAME,
-                    decoration: inputDecoration(context,
+                    decoration: defaultInputDecoration(context,
                         hint: languages.lblFullName, labelText: languages.lblFullName),
                     validator: (value) {
                       if (value.validate().isEmpty) {
@@ -162,7 +162,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   AppTextField(
                     controller: _phoneController,
                     textFieldType: TextFieldType.PHONE,
-                    decoration: inputDecoration(context,
+                    decoration: defaultInputDecoration(context,
                         hint: languages.lblPhoneNumber, labelText: languages.lblPhoneNumber),
                     validator: (value) {
                       if (value.validate().isEmpty) {
@@ -177,7 +177,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     textFieldType: TextFieldType.MULTILINE,
                     minLines: 3,
                     maxLines: 5,
-                    decoration: inputDecoration(context,
+                    decoration: defaultInputDecoration(context,
                         hint: languages.lblAddress, labelText: languages.lblAddress),
                     validator: (value) {
                       if (value.validate().isEmpty) {
@@ -192,7 +192,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     textFieldType: TextFieldType.MULTILINE,
                     minLines: 2,
                     maxLines: 4,
-                    decoration: inputDecoration(context,
+                    decoration: defaultInputDecoration(context,
                         hint: languages.lblOrderNote,
                         labelText: languages.lblOrderNote),
                   ),
