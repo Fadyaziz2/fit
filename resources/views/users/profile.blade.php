@@ -25,7 +25,7 @@
             return [
                 (string) $specialist->id => [
                     'name' => $specialist->name,
-                    'branch' => $specialist->branch?->name,
+                    'branch' => optional($specialist->branch)->name,
                     'phone' => $specialist->phone,
                     'email' => $specialist->email,
                 ],
