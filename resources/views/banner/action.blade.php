@@ -3,7 +3,7 @@
 ?>
 
 <div class="d-flex align-items-center">
-    @if($auth_user->hasAnyPermission(['banner-edit', 'banner']))
+    @if($auth_user && ($auth_user->can('banner-edit') || $auth_user->can('banner')))
         <a class="btn btn-sm btn-icon btn-success me-2" href="{{ route('banner.edit', $id) }}" data-bs-toggle="tooltip"
            title="{{ __('message.update_form_title',['form' => __('message.banner') ]) }}">
             <span class="btn-inner">
@@ -15,10 +15,12 @@
             </span>
         </a>
     @endif
-    @if($auth_user->hasAnyPermission(['banner-delete', 'banner']))
-        {{ html()->form('POST', route('banner.destroy', $id))->attribute('data--submit', 'banner-delete'.$id)->attribute('data--confirmation', 'true')->attribute('data-title', __('message.delete_form_title', [ 'form'=> __('message.banner') ]))->attribute('data-message', __('message.delete_msg'))->open() }}
-        {{ html()->hidden('_method')->value('DELETE') }}
+    @if($auth_user && ($auth_user->can('banner-delete') || $auth_user->can('banner')))
+        {{ html()->form('POST', route('banner.destroy', $id))->attribute('data--submit', 'banner-delete'.$id)->open() }}
+        {{ html()->hidden('_method', 'DELETE') }}
             <a class="btn btn-sm btn-icon btn-danger" href="javascript:void(0)" data-bs-toggle="tooltip" data--submit="banner-delete{{$id}}"
+               data--confirmation="true" data-title="{{ __('message.delete_form_title',['form' => __('message.banner') ]) }}"
+               data-message="{{ __('message.delete_msg') }}"
                title="{{ __('message.delete_form_title',['form' => __('message.banner') ]) }}">
                 <span class="btn-inner">
                     <svg width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
