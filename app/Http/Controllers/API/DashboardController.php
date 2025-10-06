@@ -35,8 +35,8 @@ class DashboardController extends Controller
         $workout = Workout::where('status','active')->orderBy('id','desc')->paginate(10);
         $exercise = Exercise::where('status','active')->orderBy('id','desc')->paginate(10);
         $featured_diet = Diet::where('status','active')->where('is_featured', 'yes')->orderBy('id', 'desc')->paginate(10);
-        $featured_products = Product::where('status', 'active')
-            ->where('featured', 'yes')
+        $productQuery = Product::query()
+            ->where('status', 'active')
             ->when($userId, function ($q) use ($userId) {
                 $q->with([
                     'favouriteProducts' => function ($query) use ($userId) {
@@ -46,10 +46,20 @@ class DashboardController extends Controller
                         $query->where('user_id', $userId);
                     },
                 ]);
-            })
+            });
+
+        $featured_products = (clone $productQuery)
+            ->where('featured', 'yes')
             ->orderBy('id', 'desc')
             ->take(20)
             ->get();
+
+        if ($featured_products->isEmpty()) {
+            $featured_products = (clone $productQuery)
+                ->orderBy('id', 'desc')
+                ->take(20)
+                ->get();
+        }
 
         $response = [
             'bodypart'      => BodyPartResource::collection($bodypart),
