@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -330,6 +331,9 @@ class _HomeScreenState extends State<HomeScreen>{
       decoration: boxDecorationWithRoundedCorners(
         borderRadius: radius(16),
         backgroundColor: primaryColor,
+        boxShadow: [
+          BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 18, offset: const Offset(0, 8)),
+        ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
@@ -553,8 +557,6 @@ class _HomeScreenState extends State<HomeScreen>{
             ).expand(),
             Row(
               children: [
-                _buildBookingButton(),
-                12.width,
                 ValueListenableBuilder<int>(
                   valueListenable: cartCountNotifier,
                   builder: (context, count, _) {
@@ -639,273 +641,290 @@ class _HomeScreenState extends State<HomeScreen>{
           ]);
           setState(() {});
         },
-        child: FutureBuilder(
-          future: getDashboardApi(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              DashboardResponse? mDashboardResponse = snapshot.data;
-              List<ProductModel> featuredProducts = mDashboardResponse?.featuredProducts ?? <ProductModel>[];
-              List<BannerModel> productBanners = mDashboardResponse?.productBanners ?? <BannerModel>[];
-              List<SuccessStoryModel> successStories = mDashboardResponse?.successStories ?? <SuccessStoryModel>[];
-              List<BodyPartModel> bodyParts = mDashboardResponse?.bodypart ?? <BodyPartModel>[];
-              List<EquipmentModel> equipments = mDashboardResponse?.equipment ?? <EquipmentModel>[];
-              List<WorkoutDetailModel> workouts = mDashboardResponse?.workout ?? <WorkoutDetailModel>[];
-              List<LevelModel> levels = mDashboardResponse?.level ?? <LevelModel>[];
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            FutureBuilder(
+              future: getDashboardApi(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  DashboardResponse? mDashboardResponse = snapshot.data;
+                  List<ProductModel> featuredProducts = mDashboardResponse?.featuredProducts ?? <ProductModel>[];
+                  List<BannerModel> productBanners = mDashboardResponse?.productBanners ?? <BannerModel>[];
+                  List<SuccessStoryModel> successStories = mDashboardResponse?.successStories ?? <SuccessStoryModel>[];
+                  List<BodyPartModel> bodyParts = mDashboardResponse?.bodypart ?? <BodyPartModel>[];
+                  List<EquipmentModel> equipments = mDashboardResponse?.equipment ?? <EquipmentModel>[];
+                  List<WorkoutDetailModel> workouts = mDashboardResponse?.workout ?? <WorkoutDetailModel>[];
+                  List<LevelModel> levels = mDashboardResponse?.level ?? <LevelModel>[];
 
-              bool hasFeaturedProducts = featuredProducts.isNotEmpty;
-              bool hasProductBanners = productBanners.isNotEmpty;
-              bool hasSuccessStories = successStories.isNotEmpty;
-              bool hasBodyParts = bodyParts.isNotEmpty;
-              bool hasEquipments = equipments.isNotEmpty;
-              bool hasWorkouts = workouts.isNotEmpty;
-              bool hasLevels = levels.isNotEmpty;
-              bool hasProductCategories = _productCategories.isNotEmpty;
-              bool hasExclusiveDiscounts = _exclusiveDiscountProducts.isNotEmpty;
-              bool hasAnyDashboardContent =
-                  hasFeaturedProducts || hasProductCategories || hasExclusiveDiscounts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels || hasProductBanners || hasSuccessStories;
+                  bool hasFeaturedProducts = featuredProducts.isNotEmpty;
+                  bool hasProductBanners = productBanners.isNotEmpty;
+                  bool hasSuccessStories = successStories.isNotEmpty;
+                  bool hasBodyParts = bodyParts.isNotEmpty;
+                  bool hasEquipments = equipments.isNotEmpty;
+                  bool hasWorkouts = workouts.isNotEmpty;
+                  bool hasLevels = levels.isNotEmpty;
+                  bool hasProductCategories = _productCategories.isNotEmpty;
+                  bool hasExclusiveDiscounts = _exclusiveDiscountProducts.isNotEmpty;
+                  bool hasAnyDashboardContent =
+                      hasFeaturedProducts || hasProductCategories || hasExclusiveDiscounts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels || hasProductBanners || hasSuccessStories;
 
-              return SingleChildScrollView(
-                physics: BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Column(
-                      children: [
-                        5.height,
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width,
-                          height: 50,
-                          child: Marquee(
-                            text: 'Enter your height, weight, gender and age to access advanced features.',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
-                            scrollAxis: Axis.horizontal,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            blankSpace: 20.0,
-                            velocity: 50.0,
-                            pauseAfterRound: const Duration(seconds: 1),
-                          ),
-                        ).onTap(
-                          () {
-                            EditProfileScreen().launch(context);
-                          },
-                        )
-                      ],
-                    ).visible(userStore.weight.isEmptyOrNull),
-                    16.height.visible(!userStore.weight.isEmptyOrNull),
-                    AppTextField(
-                      controller: mSearchCont,
-                      textFieldType: TextFieldType.OTHER,
-                      isValidationRequired: false,
-                      autoFocus: false,
-                      suffix: _getClearButton(),
-                      decoration: defaultInputDecoration(context, label: languages.lblSearch, isFocusTExtField: true),
-                      onTap: () {
-                        hideKeyboard(context);
-                        SearchScreen().launch(context);
-                      },
-                    ).paddingSymmetric(horizontal: 16),
-                    16.height,
-                    if (hasProductBanners)
-                      ProductBannerCarousel(banners: productBanners).paddingBottom(16),
-                    if (!hasAnyDashboardContent)
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-                        child: NoDataWidget(
-                          image: no_data_found,
-                          title: languages.lblResultNoFound,
-                        ),
-                      ),
-                    if (hasFeaturedProducts)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          mHeading(languages.lblSelectedProductsForYou, onCall: () {
-                            ProductScreen().launch(context);
-                          }),
-                          SizedBox(
-                            height: 250,
-                            child: ListView.separated(
-                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              scrollDirection: Axis.horizontal,
-                              physics: BouncingScrollPhysics(),
-                              itemCount: featuredProducts.length,
-                              separatorBuilder: (context, index) => 16.width,
-                              itemBuilder: (context, index) {
-                                ProductModel product = featuredProducts[index];
-                                return SizedBox(
-                                  width: context.width() * 0.58,
-                                  child: ProductComponent(
-                                    mProductModel: product,
-                                    showActions: true,
-                                    onAddToCart: (prod) => _addProductToCart(prod),
-                                    onToggleFavourite: (prod) => _toggleProductFavourite(prod),
-                                    onCall: () {
-                                      setState(() {});
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          16.height,
-                        ],
-                      ),
-                    if (hasProductCategories)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          mHeading(languages.lblProductCategory, onCall: () {
-                            ViewProductCategoryScreen().launch(context);
-                          }),
-                          SizedBox(
-                            height: 136,
-                            child: ListView.separated(
-                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              scrollDirection: Axis.horizontal,
-                              physics: BouncingScrollPhysics(),
-                              itemCount: _productCategories.length,
-                              separatorBuilder: (_, __) => 16.width,
-                              itemBuilder: (context, index) {
-                                return _buildCategoryItem(_productCategories[index]);
-                              },
-                            ),
-                          ),
-                          16.height,
-                        ],
-                      ),
-                    if (hasExclusiveDiscounts)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          mHeading(languages.lblExclusiveDiscounts, onCall: () {
-                            ViewAllProductScreen(
-                              title: languages.lblExclusiveDiscounts,
-                              showDiscountOnly: true,
-                            ).launch(context);
-                          }),
-                          SizedBox(
-                            height: 250,
-                            child: ListView.separated(
-                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              scrollDirection: Axis.horizontal,
-                              physics: BouncingScrollPhysics(),
-                              itemCount: _exclusiveDiscountProducts.length,
-                              separatorBuilder: (context, index) => 16.width,
-                              itemBuilder: (context, index) {
-                                ProductModel product = _exclusiveDiscountProducts[index];
-                                return SizedBox(
-                                  width: context.width() * 0.58,
-                                  child: ProductComponent(
-                                    mProductModel: product,
-                                    showActions: true,
-                                    onAddToCart: (prod) => _addProductToCart(prod),
-                                    onToggleFavourite: (prod) => _toggleProductFavourite(prod),
-                                    onCall: () {
-                                      setState(() {});
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          16.height,
-                        ],
-                      ),
-                    if (hasBodyParts)
-                      Column(
+                  return SingleChildScrollView(
+                    physics: BouncingScrollPhysics(),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        mHeading(languages.lblBodyPartExercise, onCall: () {
-                          ViewBodyPartScreen().launch(context);
-                        }),
-                        HorizontalList(
-                          physics: BouncingScrollPhysics(),
-                          controller: mScrollController,
-                          itemCount: bodyParts.length,
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          spacing: 16,
-                          itemBuilder: (context, index) {
-                            return BodyPartComponent(bodyPartModel: bodyParts[index]);
-                          },
-                        ),
-                      ],
-                      ),
-                    if (hasEquipments)
-                      Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        10.height,
-                        mHeading(languages.lblEquipmentsExercise, onCall: () {
-                          ViewEquipmentScreen().launch(context);
-                        }),
-                        HorizontalList(
-                          physics: BouncingScrollPhysics(),
-                          itemCount: equipments.length,
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          spacing: 16,
-                          itemBuilder: (context, index) {
-                            return EquipmentComponent(mEquipmentModel: equipments[index]);
-                          },
-                        ),
-                      ],
-                      ),
-                    if (hasWorkouts)
-                      Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        10.height,
-                        mHeading(languages.lblWorkouts, onCall: () {
-                          FilterWorkoutScreen().launch(context).then((value) {
-                            setState(() {});
-                          });
-                        }),
-                        HorizontalList(
-                          physics: BouncingScrollPhysics(),
-                          itemCount: workouts.length,
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          spacing: 16,
-                          itemBuilder: (context, index) {
-                            return WorkoutComponent(
-                              mWorkoutModel: workouts[index],
-                              onCall: () {
-                                appStore.setLoading(true);
-                                setState(() {});
-                                appStore.setLoading(false);
+                        Column(
+                          children: [
+                            5.height,
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width,
+                              height: 50,
+                              child: Marquee(
+                                text: 'Enter your height, weight, gender and age to access advanced features.',
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                                scrollAxis: Axis.horizontal,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                blankSpace: 20.0,
+                                velocity: 50.0,
+                                pauseAfterRound: const Duration(seconds: 1),
+                              ),
+                            ).onTap(
+                              () {
+                                EditProfileScreen().launch(context);
                               },
-                            );
+                            )
+                          ],
+                        ).visible(userStore.weight.isEmptyOrNull),
+                        16.height.visible(!userStore.weight.isEmptyOrNull),
+                        AppTextField(
+                          controller: mSearchCont,
+                          textFieldType: TextFieldType.OTHER,
+                          isValidationRequired: false,
+                          autoFocus: false,
+                          suffix: _getClearButton(),
+                          decoration: defaultInputDecoration(context, label: languages.lblSearch, isFocusTExtField: true),
+                          onTap: () {
+                            hideKeyboard(context);
+                            SearchScreen().launch(context);
                           },
-                        ),
-                      ],
-                      ),
-                    if (hasLevels)
-                      Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        10.height,
-                        mHeading(languages.lblLevels, onCall: () {
-                          ViewLevelScreen().launch(context);
-                        }),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          itemCount: levels.length,
-                          itemBuilder: (context, index) {
-                            return LevelComponent(mLevelModel: levels[index]);
-                          },
-                        ),
+                        ).paddingSymmetric(horizontal: 16),
                         16.height,
+                        if (hasProductBanners)
+                          ProductBannerCarousel(banners: productBanners).paddingBottom(16),
+                        if (!hasAnyDashboardContent)
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                            child: NoDataWidget(
+                              image: no_data_found,
+                              title: languages.lblResultNoFound,
+                            ),
+                          ),
+                        if (hasFeaturedProducts)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              mHeading(languages.lblSelectedProductsForYou, onCall: () {
+                                ProductScreen().launch(context);
+                              }),
+                              SizedBox(
+                                height: 250,
+                                child: ListView.separated(
+                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  scrollDirection: Axis.horizontal,
+                                  physics: BouncingScrollPhysics(),
+                                  itemCount: featuredProducts.length,
+                                  separatorBuilder: (context, index) => 16.width,
+                                  itemBuilder: (context, index) {
+                                    ProductModel product = featuredProducts[index];
+                                    return SizedBox(
+                                      width: context.width() * 0.58,
+                                      child: ProductComponent(
+                                        mProductModel: product,
+                                        showActions: true,
+                                        onAddToCart: (prod) => _addProductToCart(prod),
+                                        onToggleFavourite: (prod) => _toggleProductFavourite(prod),
+                                        onCall: () {
+                                          setState(() {});
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              16.height,
+                            ],
+                          ),
+                        if (hasProductCategories)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              mHeading(languages.lblProductCategory, onCall: () {
+                                ViewProductCategoryScreen().launch(context);
+                              }),
+                              SizedBox(
+                                height: 136,
+                                child: ListView.separated(
+                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  scrollDirection: Axis.horizontal,
+                                  physics: BouncingScrollPhysics(),
+                                  itemCount: _productCategories.length,
+                                  separatorBuilder: (_, __) => 16.width,
+                                  itemBuilder: (context, index) {
+                                    return _buildCategoryItem(_productCategories[index]);
+                                  },
+                                ),
+                              ),
+                              16.height,
+                            ],
+                          ),
+                        if (hasExclusiveDiscounts)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              mHeading(languages.lblExclusiveDiscounts, onCall: () {
+                                ViewAllProductScreen(
+                                  title: languages.lblExclusiveDiscounts,
+                                  showDiscountOnly: true,
+                                ).launch(context);
+                              }),
+                              SizedBox(
+                                height: 250,
+                                child: ListView.separated(
+                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  scrollDirection: Axis.horizontal,
+                                  physics: BouncingScrollPhysics(),
+                                  itemCount: _exclusiveDiscountProducts.length,
+                                  separatorBuilder: (context, index) => 16.width,
+                                  itemBuilder: (context, index) {
+                                    ProductModel product = _exclusiveDiscountProducts[index];
+                                    return SizedBox(
+                                      width: context.width() * 0.58,
+                                      child: ProductComponent(
+                                        mProductModel: product,
+                                        showActions: true,
+                                        onAddToCart: (prod) => _addProductToCart(prod),
+                                        onToggleFavourite: (prod) => _toggleProductFavourite(prod),
+                                        onCall: () {
+                                          setState(() {});
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              16.height,
+                            ],
+                          ),
+                        if (hasBodyParts)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              mHeading(languages.lblBodyPartExercise, onCall: () {
+                                ViewBodyPartScreen().launch(context);
+                              }),
+                              HorizontalList(
+                                physics: BouncingScrollPhysics(),
+                                controller: mScrollController,
+                                itemCount: bodyParts.length,
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                spacing: 16,
+                                itemBuilder: (context, index) {
+                                  return BodyPartComponent(bodyPartModel: bodyParts[index]);
+                                },
+                              ),
+                            ],
+                          ),
+                        if (hasEquipments)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              10.height,
+                              mHeading(languages.lblEquipmentsExercise, onCall: () {
+                                ViewEquipmentScreen().launch(context);
+                              }),
+                              HorizontalList(
+                                physics: BouncingScrollPhysics(),
+                                itemCount: equipments.length,
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                spacing: 16,
+                                itemBuilder: (context, index) {
+                                  return EquipmentComponent(mEquipmentModel: equipments[index]);
+                                },
+                              ),
+                            ],
+                          ),
+                        if (hasWorkouts)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              10.height,
+                              mHeading(languages.lblWorkouts, onCall: () {
+                                FilterWorkoutScreen().launch(context).then((value) {
+                                  setState(() {});
+                                });
+                              }),
+                              HorizontalList(
+                                physics: BouncingScrollPhysics(),
+                                itemCount: workouts.length,
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                spacing: 16,
+                                itemBuilder: (context, index) {
+                                  return WorkoutComponent(
+                                    mWorkoutModel: workouts[index],
+                                    onCall: () {
+                                      appStore.setLoading(true);
+                                      setState(() {});
+                                      appStore.setLoading(false);
+                                    },
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        if (hasLevels)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              10.height,
+                              mHeading(languages.lblLevels, onCall: () {
+                                ViewLevelScreen().launch(context);
+                              }),
+                              ListView.builder(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                itemCount: levels.length,
+                                itemBuilder: (context, index) {
+                                  return LevelComponent(mLevelModel: levels[index]);
+                                },
+                              ),
+                              16.height,
+                            ],
+                          ),
+                        if (hasSuccessStories)
+                          SuccessStorySlider(stories: successStories)
+                              .paddingSymmetric(horizontal: 16, vertical: 24),
                       ],
-                      ),
-                    if (hasSuccessStories)
-                      SuccessStorySlider(stories: successStories)
-                          .paddingSymmetric(horizontal: 16, vertical: 24),
-                  ],
+                    ),
+                  );
+                }
+                return snapWidgetHelper(snapshot,
+                    loadingWidget: Container(height: mq.height, width: mq.width, color: Colors.transparent, child: Loader()));
+              },
+            ),
+            SafeArea(
+              top: false,
+              right: false,
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 24, bottom: 30),
+                  child: _buildBookingButton(),
                 ),
-              );
-            }
-            return snapWidgetHelper(snapshot, loadingWidget: Container(height: mq.height, width: mq.width, color: Colors.transparent, child: Loader()));
-          },
+              ),
+            ),
+          ],
         ),
       ),
     );
