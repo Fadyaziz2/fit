@@ -116,19 +116,23 @@ List<Locale> getSupportedLocales() {
 String getContentValueFromKey(int keywordId) {
   String defaultKeyValue = defaultKeyNotFoundValue;
   bool isFoundKey = false;
-  if (selectedServerLanguageData != null) {
+
+  if (selectedServerLanguageData != null &&
+      selectedServerLanguageData!.contentData != null) {
     for (int index = 0;
-    index < selectedServerLanguageData!.contentData!.length;
-    index++) {
+        index < selectedServerLanguageData!.contentData!.length;
+        index++) {
       if (selectedServerLanguageData!.contentData![index].keywordId ==
           keywordId) {
         defaultKeyValue =
-        selectedServerLanguageData!.contentData![index].keywordValue!;
+            selectedServerLanguageData!.contentData![index].keywordValue!;
         isFoundKey = true;
         break;
       }
     }
-  } else {
+  }
+
+  if (!isFoundKey) {
     for (int index = 0; index < defaultLanguageDataKeys.length; index++) {
       if (defaultLanguageDataKeys[index].keywordId == keywordId) {
         defaultKeyValue = defaultLanguageDataKeys[index].keywordValue!;
@@ -137,6 +141,7 @@ String getContentValueFromKey(int keywordId) {
       }
     }
   }
+
   if (!isFoundKey) {
     defaultKeyValue = defaultKeyValue + "($keywordId)";
   }
