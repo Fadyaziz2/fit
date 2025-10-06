@@ -34,12 +34,15 @@ import '../models/equipment_response.dart';
 import '../models/workout_detail_response.dart';
 import '../models/level_response.dart';
 import '../models/product_response.dart';
+import '../models/product_category_response.dart';
 import '../models/banner_model.dart';
 import '../models/success_story_model.dart';
 import '../network/rest_api.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/product_screen.dart';
+import '../screens/view_product_category_screen.dart';
+import '../screens/view_all_product_screen.dart';
 import '../screens/cart_screen.dart';
 import '../utils/app_common.dart';
 import '../utils/app_images.dart';
@@ -62,6 +65,10 @@ class _HomeScreenState extends State<HomeScreen>{
   TextEditingController mSearchCont = TextEditingController();
   String? mSearchValue = "";
   bool _showClearButton = false;
+  List<ProductCategoryModel> _productCategories = [];
+  List<ProductModel> _exclusiveDiscountProducts = [];
+  bool _isLoadingCategories = false;
+  bool _isLoadingDiscounts = false;
 
   @override
   void initState() {
@@ -75,6 +82,8 @@ class _HomeScreenState extends State<HomeScreen>{
 
     super.initState();
 
+    _fetchProductCategories();
+    _fetchDiscountedProducts();
   }
 
 
@@ -209,6 +218,73 @@ class _HomeScreenState extends State<HomeScreen>{
     }).whenComplete(() {
       appStore.setLoading(false);
     });
+  }
+
+  Future<void> _fetchProductCategories() async {
+    if (_isLoadingCategories) return;
+    _isLoadingCategories = true;
+    try {
+      final response = await getProductCategoryApi();
+      final categories = response.data ?? [];
+      if (!mounted) {
+        _isLoadingCategories = false;
+        return;
+      }
+      setState(() {
+        _productCategories = categories;
+        _isLoadingCategories = false;
+      });
+    } catch (e) {
+      print(e);
+      if (!mounted) {
+        _isLoadingCategories = false;
+        return;
+      }
+      setState(() {
+        _isLoadingCategories = false;
+      });
+    }
+  }
+
+  bool _isProductDiscounted(ProductModel product) {
+    final bool hasActiveFlag = product.discountActive == true;
+    final bool hasDiscountPrice = (product.discountPrice ?? 0) > 0;
+    final bool hasDiscountPercent = (product.discountPercent ?? 0) > 0;
+    final bool hasLowerFinalPrice =
+        product.price != null && product.finalPrice != null && product.finalPrice! < product.price!;
+    return hasActiveFlag || hasDiscountPrice || hasDiscountPercent || hasLowerFinalPrice;
+  }
+
+  Future<void> _fetchDiscountedProducts() async {
+    if (_isLoadingDiscounts) return;
+    _isLoadingDiscounts = true;
+    try {
+      final response = await getProductApi();
+      final products = response.data ?? [];
+      final Map<int?, ProductModel> uniqueProducts = {};
+      for (final product in products) {
+        if (_isProductDiscounted(product)) {
+          uniqueProducts[product.id] = product;
+        }
+      }
+      if (!mounted) {
+        _isLoadingDiscounts = false;
+        return;
+      }
+      setState(() {
+        _exclusiveDiscountProducts = uniqueProducts.values.toList();
+        _isLoadingDiscounts = false;
+      });
+    } catch (e) {
+      print(e);
+      if (!mounted) {
+        _isLoadingDiscounts = false;
+        return;
+      }
+      setState(() {
+        _isLoadingDiscounts = false;
+      });
+    }
   }
 
   /* Future<void> deleteUserGraphs(String? id) async {
@@ -356,13 +432,12 @@ class _HomeScreenState extends State<HomeScreen>{
       ),
       body: RefreshIndicator(
         backgroundColor: context.scaffoldBackgroundColor,
-        onRefresh: () {
-          return Future.delayed(
-            Duration(seconds: 1),
-            () {
-              setState(() {});
-            },
-          );
+        onRefresh: () async {
+          await Future.wait([
+            _fetchProductCategories(),
+            _fetchDiscountedProducts(),
+          ]);
+          setState(() {});
         },
         child: FutureBuilder(
           future: getDashboardApi(),
@@ -384,8 +459,10 @@ class _HomeScreenState extends State<HomeScreen>{
               bool hasEquipments = equipments.isNotEmpty;
               bool hasWorkouts = workouts.isNotEmpty;
               bool hasLevels = levels.isNotEmpty;
+              bool hasProductCategories = _productCategories.isNotEmpty;
+              bool hasExclusiveDiscounts = _exclusiveDiscountProducts.isNotEmpty;
               bool hasAnyDashboardContent =
-                  hasFeaturedProducts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels || hasProductBanners || hasSuccessStories;
+                  hasFeaturedProducts || hasProductCategories || hasExclusiveDiscounts || hasBodyParts || hasEquipments || hasWorkouts || hasLevels || hasProductBanners || hasSuccessStories;
 
               return SingleChildScrollView(
                 physics: BouncingScrollPhysics(),
@@ -455,6 +532,67 @@ class _HomeScreenState extends State<HomeScreen>{
                               separatorBuilder: (context, index) => 16.width,
                               itemBuilder: (context, index) {
                                 ProductModel product = featuredProducts[index];
+                                return SizedBox(
+                                  width: context.width() * 0.58,
+                                  child: ProductComponent(
+                                    mProductModel: product,
+                                    showActions: true,
+                                    onAddToCart: (prod) => _addProductToCart(prod),
+                                    onToggleFavourite: (prod) => _toggleProductFavourite(prod),
+                                    onCall: () {
+                                      setState(() {});
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          16.height,
+                        ],
+                      ),
+                    if (hasProductCategories)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          mHeading(languages.lblProductCategory, onCall: () {
+                            ViewProductCategoryScreen().launch(context);
+                          }),
+                          SizedBox(
+                            height: 136,
+                            child: ListView.separated(
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              scrollDirection: Axis.horizontal,
+                              physics: BouncingScrollPhysics(),
+                              itemCount: _productCategories.length,
+                              separatorBuilder: (_, __) => 16.width,
+                              itemBuilder: (context, index) {
+                                return _buildCategoryItem(_productCategories[index]);
+                              },
+                            ),
+                          ),
+                          16.height,
+                        ],
+                      ),
+                    if (hasExclusiveDiscounts)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          mHeading(languages.lblExclusiveDiscounts, onCall: () {
+                            ViewAllProductScreen(
+                              title: languages.lblExclusiveDiscounts,
+                              showDiscountOnly: true,
+                            ).launch(context);
+                          }),
+                          SizedBox(
+                            height: 250,
+                            child: ListView.separated(
+                              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              scrollDirection: Axis.horizontal,
+                              physics: BouncingScrollPhysics(),
+                              itemCount: _exclusiveDiscountProducts.length,
+                              separatorBuilder: (context, index) => 16.width,
+                              itemBuilder: (context, index) {
+                                ProductModel product = _exclusiveDiscountProducts[index];
                                 return SizedBox(
                                   width: context.width() * 0.58,
                                   child: ProductComponent(
@@ -585,6 +723,8 @@ class _HomeScreenState extends State<HomeScreen>{
     List<LevelModel> levels = dashboardResponse?.level ?? <LevelModel>[];
 
     bool hasFeaturedProducts = featuredProducts.isNotEmpty;
+    bool hasProductCategories = _productCategories.isNotEmpty;
+    bool hasExclusiveDiscounts = _exclusiveDiscountProducts.isNotEmpty;
     bool hasBodyParts = bodyParts.isNotEmpty;
     bool hasEquipments = equipments.isNotEmpty;
     bool hasWorkouts = workouts.isNotEmpty;
@@ -627,6 +767,10 @@ class _HomeScreenState extends State<HomeScreen>{
           ],
         ),
       );
+    if (hasProductCategories)
+      sections.add(_buildProductCategorySection(context));
+    if (hasExclusiveDiscounts)
+      sections.add(_buildExclusiveDiscountSection(context));
     if (hasBodyParts)
       sections.add(
         Column(
@@ -738,6 +882,113 @@ class _HomeScreenState extends State<HomeScreen>{
       );
 
     return sections;
+  }
+
+  Widget _buildCategoryItem(ProductCategoryModel category) {
+    return SizedBox(
+      width: 92,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: appStore.isDarkMode ? context.cardColor : GreyLightColor,
+            ),
+            alignment: Alignment.center,
+            child: ClipOval(
+              child: cachedImage(
+                category.productcategoryImage.validate(),
+                height: 74,
+                width: 74,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          8.height,
+          Text(
+            category.title.validate(),
+            style: primaryTextStyle(size: 13),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    ).onTap(() {
+      ViewAllProductScreen(
+        isCategory: true,
+        title: category.title.validate(),
+        id: category.id.validate(),
+      ).launch(context);
+    });
+  }
+
+  Widget _buildProductCategorySection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        mHeading(languages.lblProductCategory, onCall: () {
+          ViewProductCategoryScreen().launch(context);
+        }),
+        SizedBox(
+          height: 136,
+          child: ListView.separated(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            scrollDirection: Axis.horizontal,
+            physics: BouncingScrollPhysics(),
+            itemCount: _productCategories.length,
+            separatorBuilder: (_, __) => 16.width,
+            itemBuilder: (context, index) {
+              return _buildCategoryItem(_productCategories[index]);
+            },
+          ),
+        ),
+        16.height,
+      ],
+    );
+  }
+
+  Widget _buildExclusiveDiscountSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        mHeading(languages.lblExclusiveDiscounts, onCall: () {
+          ViewAllProductScreen(
+            title: languages.lblExclusiveDiscounts,
+            showDiscountOnly: true,
+          ).launch(context);
+        }),
+        SizedBox(
+          height: 250,
+          child: ListView.separated(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            scrollDirection: Axis.horizontal,
+            physics: BouncingScrollPhysics(),
+            itemCount: _exclusiveDiscountProducts.length,
+            separatorBuilder: (context, index) => 16.width,
+            itemBuilder: (context, index) {
+              ProductModel product = _exclusiveDiscountProducts[index];
+              return SizedBox(
+                width: context.width() * 0.58,
+                child: ProductComponent(
+                  mProductModel: product,
+                  showActions: true,
+                  onAddToCart: (prod) => _addProductToCart(prod),
+                  onToggleFavourite: (prod) => _toggleProductFavourite(prod),
+                  onCall: () {
+                    setState(() {});
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        16.height,
+      ],
+    );
   }
 
   Widget _getClearButton() {
