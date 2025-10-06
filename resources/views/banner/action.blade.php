@@ -3,7 +3,7 @@
 ?>
 
 <div class="d-flex align-items-center">
-    @if($auth_user && ($auth_user->can('banner-edit') || $auth_user->can('banner')))
+    @if($auth_user && ($auth_user->hasRole('admin') || $auth_user->can('banner-edit') || $auth_user->can('banner')))
         <a class="btn btn-sm btn-icon btn-success me-2" href="{{ route('banner.edit', $id) }}" data-bs-toggle="tooltip"
            title="{{ __('message.update_form_title',['form' => __('message.banner') ]) }}">
             <span class="btn-inner">
@@ -15,7 +15,7 @@
             </span>
         </a>
     @endif
-    @if($auth_user && ($auth_user->can('banner-delete') || $auth_user->can('banner')))
+    @if($auth_user && ($auth_user->hasRole('admin') || $auth_user->can('banner-delete') || $auth_user->can('banner')))
         {{ html()->form('POST', route('banner.destroy', $id))->attribute('data--submit', 'banner-delete'.$id)->open() }}
         {{ html()->hidden('_method', 'DELETE') }}
             <a class="btn btn-sm btn-icon btn-danger" href="javascript:void(0)" data-bs-toggle="tooltip" data--submit="banner-delete{{$id}}"
