@@ -1,0 +1,128 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\FreeBookingRequest;
+use App\Models\Specialist;
+use App\Models\SpecialistAppointment;
+use App\Models\SpecialistSchedule;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+
+class ClinicFreeBookingRequestController extends Controller
+{
+    protected function authorizeAccess()
+    {
+        if (auth()->user()?->user_type !== 'admin') {
+            abort(403, __('message.permission_denied_for_account'));
+        }
+    }
+
+    public function index()
+    {
+        $this->authorizeAccess();
+
+        $pageTitle = __('message.list_form_title', ['form' => __('message.free_booking_request')]);
+        $requests = FreeBookingRequest::with(['user', 'branch', 'specialist'])
+            ->orderByDesc('created_at')
+            ->paginate(20);
+
+        return view('clinic.free_requests.index', compact('pageTitle', 'requests'));
+    }
+
+    public function edit(FreeBookingRequest $freeRequest)
+    {
+        $this->authorizeAccess();
+
+        $pageTitle = __('message.update_form_title', ['form' => __('message.free_booking_request')]);
+        $specialists = Specialist::with('branch')->orderBy('name')->get();
+
+        $freeRequest->load('appointment');
+
+        return view('clinic.free_requests.form', compact('pageTitle', 'freeRequest', 'specialists'));
+    }
+
+    public function update(Request $request, FreeBookingRequest $freeRequest)
+    {
+        $this->authorizeAccess();
+
+        $data = $request->validate([
+            'status' => 'required|in:pending,converted,cancelled',
+            'specialist_id' => 'nullable|exists:specialists,id',
+            'appointment_date' => 'nullable|date_format:Y-m-d',
+            'appointment_time' => 'nullable|date_format:H:i',
+            'admin_notes' => 'nullable|string',
+        ]);
+
+        $previousSpecialistId = $freeRequest->specialist_id;
+
+        if ($data['status'] === 'converted') {
+            $request->validate([
+                'specialist_id' => 'required|exists:specialists,id',
+                'appointment_date' => 'required|date_format:Y-m-d',
+                'appointment_time' => 'required|date_format:H:i',
+            ]);
+
+            $date = Carbon::createFromFormat('Y-m-d', $request->appointment_date);
+            $time = Carbon::createFromFormat('H:i', $request->appointment_time)->format('H:i:s');
+
+            $scheduleExists = SpecialistSchedule::where('specialist_id', $request->specialist_id)
+                ->where('day_of_week', $date->dayOfWeek)
+                ->where('start_time', '<=', $time)
+                ->where('end_time', '>', $time)
+                ->exists();
+
+            if (! $scheduleExists) {
+                return back()->withErrors(__('message.slot_not_available'))->withInput();
+            }
+
+            $alreadyBooked = SpecialistAppointment::where('specialist_id', $request->specialist_id)
+                ->where('appointment_date', $date->toDateString())
+                ->where('appointment_time', $time)
+                ->whereIn('status', ['pending', 'confirmed', 'completed'])
+                ->exists();
+
+            if ($alreadyBooked) {
+                return back()->withErrors(__('message.slot_already_booked'))->withInput();
+            }
+
+            $appointment = SpecialistAppointment::create([
+                'user_id' => $freeRequest->user_id,
+                'specialist_id' => $request->specialist_id,
+                'branch_id' => $freeRequest->branch_id,
+                'appointment_date' => $date->toDateString(),
+                'appointment_time' => $time,
+                'status' => 'pending',
+                'type' => 'free',
+                'notes' => $request->admin_notes,
+            ]);
+
+            $freeRequest->appointment_id = $appointment->id;
+            $freeRequest->specialist_id = $request->specialist_id;
+
+            $userProfile = optional($freeRequest->user)->userProfile;
+            if ($userProfile) {
+                $userProfile->specialist_id = $request->specialist_id;
+                $userProfile->save();
+            }
+        } else {
+            if ($freeRequest->appointment) {
+                $freeRequest->appointment->delete();
+            }
+            $freeRequest->appointment_id = null;
+            $freeRequest->specialist_id = null;
+
+            $userProfile = optional($freeRequest->user)->userProfile;
+            if ($userProfile && $userProfile->specialist_id === $previousSpecialistId) {
+                $userProfile->specialist_id = null;
+                $userProfile->save();
+            }
+        }
+
+        $freeRequest->status = $data['status'];
+        $freeRequest->admin_notes = $request->admin_notes;
+        $freeRequest->save();
+
+        return redirect()->route('clinic.free_requests.index')->withSuccess(__('message.update_form', ['form' => __('message.free_booking_request')]));
+    }
+}

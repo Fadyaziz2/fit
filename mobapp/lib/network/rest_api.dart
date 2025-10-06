@@ -41,6 +41,7 @@ import '../models/workout_response.dart';
 import '../models/workout_type_response.dart';
 import '../utils/app_config.dart';
 import '../utils/app_constants.dart';
+import '../models/clinic_models.dart';
 import 'network_utils.dart';
 
 Future<LoginResponse> logInApi(request) async {
@@ -100,6 +101,33 @@ Future<FitnessBaseResponse> forgotPwdApi(Map req) async {
 
 Future<FitnessBaseResponse> deleteUserAccountApi() async {
   return FitnessBaseResponse.fromJson(await handleResponse(await buildHttpResponse('delete-user-account', method: HttpMethod.POST)));
+}
+
+Future<List<ClinicBranch>> fetchClinicBranches() async {
+  final response = await handleResponse(await buildHttpResponse('clinic/branches', method: HttpMethod.GET));
+  final list = (response['data'] as List? ?? []);
+  return list.map((e) => ClinicBranch.fromJson(e)).toList();
+}
+
+Future<ClinicAppointmentsResponse> fetchClinicAppointments() async {
+  final response = await handleResponse(await buildHttpResponse('clinic/appointments', method: HttpMethod.GET));
+  return ClinicAppointmentsResponse.fromJson(response);
+}
+
+Future<List<ClinicSlot>> fetchClinicAvailability({required int specialistId, required String date}) async {
+  final response = await handleResponse(await buildHttpResponse('clinic/availability?specialist_id=$specialistId&date=$date', method: HttpMethod.GET));
+  final slots = (response['slots'] as List? ?? []);
+  return slots.map((e) => ClinicSlot.fromJson(e)).toList();
+}
+
+Future<ClinicAppointmentSummary> bookClinicAppointment(Map<String, dynamic> req) async {
+  final response = await handleResponse(await buildHttpResponse('clinic/appointments', request: req, method: HttpMethod.POST));
+  return ClinicAppointmentSummary.fromJson(response['appointment'] ?? {});
+}
+
+Future<FitnessBaseResponse> submitFreeBookingRequest(Map<String, dynamic> req) async {
+  final response = await handleResponse(await buildHttpResponse('clinic/free-booking', request: req, method: HttpMethod.POST));
+  return FitnessBaseResponse.fromJson(response);
 }
 
 Future<LoginResponse> registerApi(Map req) async {

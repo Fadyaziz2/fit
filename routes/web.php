@@ -34,6 +34,11 @@ use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductOrderController;
 use App\Http\Controllers\SuccessStoryController;
+use App\Http\Controllers\ClinicBranchController;
+use App\Http\Controllers\ClinicSpecialistController;
+use App\Http\Controllers\ClinicSpecialistScheduleController;
+use App\Http\Controllers\ClinicFreeBookingRequestController;
+use App\Http\Controllers\ClinicAppointmentController;
 
 use App\Http\Controllers\PushNotificationController;
 
@@ -168,6 +173,13 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     Route::resource('product',ProductController::class);
     Route::resource('banner', BannerController::class);
     Route::resource('successstory', SuccessStoryController::class);
+    Route::prefix('clinic')->name('clinic.')->group(function () {
+        Route::resource('branches', ClinicBranchController::class)->except(['show']);
+        Route::resource('specialists', ClinicSpecialistController::class)->except(['show']);
+        Route::resource('schedules', ClinicSpecialistScheduleController::class)->except(['show']);
+        Route::resource('free-requests', ClinicFreeBookingRequestController::class)->only(['index', 'edit', 'update']);
+        Route::resource('appointments', ClinicAppointmentController::class)->only(['index', 'edit', 'update']);
+    });
     Route::resource('product-orders', ProductOrderController::class)->only(['index', 'show', 'update']);
     Route::resource('productcategory',ProductCategoryController::class);
 

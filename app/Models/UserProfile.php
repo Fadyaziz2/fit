@@ -9,15 +9,33 @@ class UserProfile extends Model
 {
     use HasFactory;
 
-    protected $fillable = [ 'user_id', 'age', 'height', 'height_unit', 'weight', 'weight_unit', 'address', 'notes' ];
+    protected $fillable = [
+        'user_id',
+        'age',
+        'height',
+        'height_unit',
+        'weight',
+        'weight_unit',
+        'address',
+        'notes',
+        'specialist_id',
+        'free_booking_used_at',
+    ];
 
     protected $casts = [
         'user_id'   => 'integer',
+        'specialist_id' => 'integer',
+        'free_booking_used_at' => 'datetime',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function specialist()
+    {
+        return $this->belongsTo(Specialist::class);
     }
 
     public function getBmiAttribute()

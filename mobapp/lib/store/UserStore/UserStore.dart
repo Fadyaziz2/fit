@@ -81,6 +81,15 @@ abstract class UserStoreBase with Store {
   SubscriptionDetail? subscriptionDetail;
 
   @observable
+  int? assignedSpecialistId;
+
+  @observable
+  String freeBookingUsedAt = '';
+
+  @observable
+  int? assignedSpecialistBranchId;
+
+  @observable
   String termsCondition = '';
 
   @observable
@@ -165,6 +174,24 @@ abstract class UserStoreBase with Store {
   Future<void> setSubscription(String val, {bool isInitialization = false}) async {
     subscription = val;
     if (!isInitialization) await setValue(subscriptions, val);
+  }
+
+  @action
+  Future<void> setAssignedSpecialistId(int? val, {bool isInitialization = false}) async {
+    assignedSpecialistId = val;
+    if (!isInitialization) await setValue(ASSIGNED_SPECIALIST_ID, val ?? 0);
+  }
+
+  @action
+  Future<void> setFreeBookingUsedAt(String? val, {bool isInitialization = false}) async {
+    freeBookingUsedAt = val ?? '';
+    if (!isInitialization) await setValue(FREE_BOOKING_USED_AT, freeBookingUsedAt);
+  }
+
+  @action
+  Future<void> setAssignedSpecialistBranchId(int? val, {bool isInitialization = false}) async {
+    assignedSpecialistBranchId = val;
+    if (!isInitialization) await setValue(ASSIGNED_SPECIALIST_BRANCH_ID, val ?? 0);
   }
 
   @action
@@ -495,5 +522,8 @@ abstract class UserStoreBase with Store {
     weight = '';
     weightUnit = '';
     heightUnit = '';
+    assignedSpecialistId = null;
+    freeBookingUsedAt = '';
+    assignedSpecialistBranchId = null;
   }
 }

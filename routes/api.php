@@ -119,4 +119,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::post('save-score', [ API\GameDataController::class, 'saveScore']);
     Route::get('get-score', [ API\GameDataController::class, 'getScore']);
+
+    Route::get('clinic/branches', [ API\BookingController::class, 'branches']);
+    Route::get('clinic/appointments', [ API\BookingController::class, 'myBookings']);
+    Route::get('clinic/availability', [ API\BookingController::class, 'availableSlots']);
+    Route::post('clinic/appointments', [ API\BookingController::class, 'book']);
+    Route::post('clinic/free-booking', [ API\BookingController::class, 'requestFree']);
 });
