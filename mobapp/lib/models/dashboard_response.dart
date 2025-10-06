@@ -6,6 +6,13 @@ import 'exercise_response.dart';
 import 'level_response.dart';
 import 'product_response.dart';
 
+String? _stringFromJson(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+  return value.toString();
+}
+
 class DashboardResponse {
   List<BodyPartModel>? bodypart;
   List<LevelModel>? level;
@@ -153,23 +160,23 @@ class Diet {
 
   Diet.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    title = json['title'];
-    calories = json['calories'];
-    carbs = json['carbs'];
-    protein = json['protein'];
-    fat = json['fat'];
-    servings = json['servings'];
-    totalTime = json['total_time'];
-    isFeatured = json['is_featured'];
-    status = json['status'];
-    ingredients = json['ingredients'];
-    description = json['description'];
-    dietImage = json['diet_image'];
+    title = _stringFromJson(json['title']);
+    calories = _stringFromJson(json['calories']);
+    carbs = _stringFromJson(json['carbs']);
+    protein = _stringFromJson(json['protein']);
+    fat = _stringFromJson(json['fat']);
+    servings = _stringFromJson(json['servings']);
+    totalTime = _stringFromJson(json['total_time']);
+    isFeatured = _stringFromJson(json['is_featured']);
+    status = _stringFromJson(json['status']);
+    ingredients = _stringFromJson(json['ingredients']);
+    description = _stringFromJson(json['description']);
+    dietImage = _stringFromJson(json['diet_image']);
     isPremium = json['is_premium'];
     categorydietId = json['categorydiet_id'];
-    categorydietTitle = json['categorydiet_title'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    categorydietTitle = _stringFromJson(json['categorydiet_title']);
+    createdAt = _stringFromJson(json['created_at']);
+    updatedAt = _stringFromJson(json['updated_at']);
     isFavourite = json['is_favourite'];
   }
 

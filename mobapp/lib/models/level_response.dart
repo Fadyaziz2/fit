@@ -1,5 +1,12 @@
 import 'pagination_model.dart';
 
+String? _stringFromJson(dynamic value) {
+  if (value == null) {
+    return null;
+  }
+  return value.toString();
+}
+
 class LevelResponse {
   Pagination? pagination;
   List<LevelModel>? data;
@@ -51,12 +58,12 @@ class LevelModel {
 
   LevelModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    title = json['title'];
+    title = _stringFromJson(json['title']);
     rate = json['rate'];
-    status = json['status'];
-    levelImage = json['level_image'];
-    createdAt = json['created_at'];
-    updatedAt = json['updated_at'];
+    status = _stringFromJson(json['status']);
+    levelImage = _stringFromJson(json['level_image']);
+    createdAt = _stringFromJson(json['created_at']);
+    updatedAt = _stringFromJson(json['updated_at']);
   }
 
   Map<String, dynamic> toJson() {
