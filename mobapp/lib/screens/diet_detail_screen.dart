@@ -9,6 +9,7 @@ import '../../extensions/extension_util/string_extensions.dart';
 import '../../extensions/extension_util/widget_extensions.dart';
 import '../../models/diet_response.dart';
 import '../components/HtmlWidget.dart';
+import '../components/meal_plan_view.dart';
 import '../extensions/constants.dart';
 import '../extensions/decorations.dart';
 import '../extensions/system_utils.dart';
@@ -253,7 +254,7 @@ class _DietDetailScreenState extends State<DietDetailScreen> {
   }
 
   Widget ingredients() {
-    return HtmlWidget(postContent: widget.dietModel!.ingredients.toString()).paddingSymmetric(horizontal: 8);
+    return MealPlanView(days: widget.dietModel!.mealPlan ?? [], padding: EdgeInsets.symmetric(horizontal: 16));
   }
 
   Widget instruction() {

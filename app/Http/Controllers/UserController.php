@@ -23,6 +23,7 @@ use InvalidArgumentException;
 use App\Models\UserProductRecommendation;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Models\Specialist;
+use App\Support\MealPlan;
 
 class UserController extends Controller
 {
@@ -471,26 +472,8 @@ class UserController extends Controller
 
     protected function buildDietPlanStructure(Diet $diet): array
     {
-        $planData = $diet->ingredients ?? [];
-
-        $planArray = [];
-
-        if (is_array($planData)) {
-            foreach ($planData as $dayIndex => $meals) {
-                $dayKey = (int) $dayIndex;
-                $planArray[$dayKey] = [];
-
-                if (!is_array($meals)) {
-                    continue;
-                }
-
-                foreach ($meals as $meal) {
-                    $planArray[$dayKey][] = $this->normalizeMealSelection($meal);
-                }
-            }
-        }
-
-        ksort($planArray);
+        $planArray = MealPlan::normalizePlan($diet->ingredients ?? [], false, true);
+        $planArray = MealPlan::reindexPlan($planArray);
 
         $existingDays = count($planArray);
         $daysCount = (int) ($diet->days ?? 0);
@@ -521,7 +504,7 @@ class UserController extends Controller
             }
 
             $normalizedPlan[$day] = array_map(function ($meal) {
-                return $this->normalizeMealSelection($meal);
+                return MealPlan::normalizeMeal($meal);
             }, $dayMeals);
         }
 
@@ -685,28 +668,24 @@ class UserController extends Controller
             return [];
         }
 
-        $normalized = [];
-
-        foreach ($plan as $dayIndex => $dayMeals) {
-            if (!is_array($dayMeals)) {
-                if ($strict && $dayMeals !== null && $dayMeals !== '') {
-                    throw new InvalidArgumentException('Invalid meal selection.');
-                }
-
-                continue;
+        try {
+            $normalized = MealPlan::normalizePlan($plan, $strict, true);
+        } catch (InvalidArgumentException $exception) {
+            if ($strict) {
+                throw $exception;
             }
 
-            $dayKey = (int) $dayIndex;
-
-            foreach ($dayMeals as $mealIndex => $meal) {
-                $mealKey = (int) $mealIndex;
-                $normalized[$dayKey][$mealKey] = $this->normalizeMealSelection($meal, $strict);
-            }
+            return [];
         }
 
         ksort($normalized);
 
         foreach ($normalized as $dayKey => $dayMeals) {
+            if (!is_array($dayMeals)) {
+                unset($normalized[$dayKey]);
+                continue;
+            }
+
             ksort($dayMeals);
             $normalized[$dayKey] = $dayMeals;
         }
@@ -716,49 +695,7 @@ class UserController extends Controller
 
     protected function normalizeMealSelection($value, bool $strict = false): array
     {
-        if (is_array($value)) {
-            $normalized = [];
-
-            foreach ($value as $item) {
-                if ($item === null || $item === '') {
-                    continue;
-                }
-
-                if (!is_numeric($item)) {
-                    if ($strict) {
-                        throw new InvalidArgumentException('Invalid meal ingredient.');
-                    }
-
-                    continue;
-                }
-
-                $id = (int) $item;
-
-                if ($id <= 0 || in_array($id, $normalized, true)) {
-                    continue;
-                }
-
-                $normalized[] = $id;
-            }
-
-            return $normalized;
-        }
-
-        if ($value === null || $value === '') {
-            return [];
-        }
-
-        if (!is_numeric($value)) {
-            if ($strict) {
-                throw new InvalidArgumentException('Invalid meal ingredient.');
-            }
-
-            return [];
-        }
-
-        $id = (int) $value;
-
-        return $id > 0 ? [$id] : [];
+        return MealPlan::normalizeMeal($value, $strict);
     }
 
     public function getAssignWorkoutList(Request $request)
