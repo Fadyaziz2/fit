@@ -12,6 +12,7 @@ import '../extensions/text_styles.dart';
 import '../extensions/widgets.dart';
 import '../main.dart';
 import '../models/cart_response.dart';
+import '../models/base_response.dart';
 import '../network/rest_api.dart';
 import '../screens/checkout_screen.dart';
 import '../utils/app_colors.dart';
@@ -81,6 +82,30 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
+  Future<void> _changeItemQuantity(int? productId, {required bool increase}) async {
+    if (productId == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    Future<FitnessBaseResponse> request;
+
+    if (increase) {
+      request = addToCartApi({'product_id': productId});
+    } else {
+      request = removeFromCartApi({'product_id': productId, 'quantity': 1});
+    }
+
+    await request.then((value) {
+      toast(value.message);
+    }).catchError((e) {
+      toast(e.toString());
+    }).whenComplete(() async {
+      await _loadCart();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartItems = _cartResponse?.data ?? [];
@@ -123,6 +148,10 @@ class _CartScreenState extends State<CartScreen> {
                       return _CartItemTile(
                         item: item,
                         onRemove: () => _removeItem(item.product?.id),
+                        onIncreaseQuantity: () =>
+                            _changeItemQuantity(item.product?.id, increase: true),
+                        onDecreaseQuantity: () =>
+                            _changeItemQuantity(item.product?.id, increase: false),
                       );
                     },
                   ),
@@ -201,8 +230,15 @@ class _CartScreenState extends State<CartScreen> {
 class _CartItemTile extends StatelessWidget {
   final CartItemModel item;
   final VoidCallback onRemove;
+  final VoidCallback onIncreaseQuantity;
+  final VoidCallback onDecreaseQuantity;
 
-  const _CartItemTile({required this.item, required this.onRemove});
+  const _CartItemTile({
+    required this.item,
+    required this.onRemove,
+    required this.onIncreaseQuantity,
+    required this.onDecreaseQuantity,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -243,10 +279,10 @@ class _CartItemTile extends StatelessWidget {
                   spacing: 12,
                   runSpacing: 8,
                   children: [
-                    _InfoChip(
-                      icon: Icons.shopping_bag_outlined,
-                      label:
-                          '${languages.lblQuantity}: ${item.quantity.validate()}',
+                    _QuantityStepper(
+                      quantity: item.quantity.validate(value: 1),
+                      onIncrease: onIncreaseQuantity,
+                      onDecrease: onDecreaseQuantity,
                     ),
                     _InfoChip(
                       icon: Icons.attach_money,
@@ -296,6 +332,89 @@ class _InfoChip extends StatelessWidget {
           6.width,
           Text(label, style: secondaryTextStyle(size: 12)),
         ],
+      ),
+    );
+  }
+}
+
+class _QuantityStepper extends StatelessWidget {
+  final int quantity;
+  final VoidCallback onIncrease;
+  final VoidCallback onDecrease;
+
+  const _QuantityStepper({
+    required this.quantity,
+    required this.onIncrease,
+    required this.onDecrease,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool canDecrease = quantity > 1;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(languages.lblQuantity, style: secondaryTextStyle(size: 12)),
+        4.height,
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: context.cardColor,
+            borderRadius: radius(20),
+            border: Border.all(color: context.dividerColor.withOpacity(0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _QuantityButton(
+                icon: Icons.remove,
+                onTap: canDecrease ? onDecrease : null,
+              ),
+              12.width,
+              Text('$quantity', style: boldTextStyle(size: 14)),
+              12.width,
+              _QuantityButton(
+                icon: Icons.add,
+                onTap: onIncrease,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuantityButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _QuantityButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDisabled = onTap == null;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: radius(12),
+      child: Container(
+        padding: EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isDisabled
+              ? context.dividerColor.withOpacity(0.1)
+              : primaryColor.withOpacity(0.12),
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: isDisabled
+              ? context.iconColor.withOpacity(0.3)
+              : primaryColor,
+        ),
       ),
     );
   }
