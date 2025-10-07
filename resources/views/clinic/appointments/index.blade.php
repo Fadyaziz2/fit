@@ -225,12 +225,49 @@
 
 @push('scripts')
     <script>
-        (function($) {
+        (function ($) {
             'use strict';
 
             const manualModal = document.getElementById('manualAppointmentModal');
             const convertModal = document.getElementById('convertManualModal');
+            const manualForm = document.getElementById('manual-appointment-form');
             const appointmentUrl = "{{ route('clinic.appointments.available_slots') }}";
+
+            const manualUser = manualForm ? manualForm.querySelector('#manual-user') : null;
+            const manualName = manualForm ? manualForm.querySelector('#manual-name') : null;
+            const manualPhone = manualForm ? manualForm.querySelector('#manual-phone') : null;
+            const manualBranch = manualForm ? manualForm.querySelector('#manual-branch') : null;
+            const specialistSelect = manualForm ? manualForm.querySelector('#manual-specialist') : null;
+            const dateInput = manualForm ? manualForm.querySelector('#manual-date') : null;
+            const timeSelect = manualForm ? manualForm.querySelector('#manual-time') : null;
+            const helper = manualForm ? manualForm.querySelector('#manual-time-helper') : null;
+
+            const messages = {
+                placeholder: "{{ __('message.select_name', ['select' => __('message.start_time')]) }}",
+                loading: "{{ __('message.loading') }}",
+                noSlots: "{{ __('message.no_slots_available') }}",
+                noSchedule: "{{ __('message.no_schedule_for_day') }}",
+                error: "{{ __('message.error_fetching_slots') }}",
+                workingHours: "{{ __('message.working_hours_for_day', ['range' => '__RANGE__']) }}",
+            };
+
+            function resetManualFreeFields() {
+                if (manualName) {
+                    manualName.value = '';
+                    manualName.removeAttribute('required');
+                }
+
+                if (manualPhone) {
+                    manualPhone.value = '';
+                    manualPhone.removeAttribute('required');
+                }
+
+                if (manualBranch) {
+                    manualBranch.value = '';
+                    manualBranch.removeAttribute('required');
+                    manualBranch.setAttribute('disabled', 'disabled');
+                }
+            }
 
             function toggleManualSections(type) {
                 const isManualFree = type === 'manual_free';
@@ -275,19 +312,27 @@
                         manualBranch.value = '';
                     }
                 }
+
+                filterSpecialists();
             }
 
             function filterSpecialists() {
-                const branchId = document.getElementById('manual-branch').value;
-                const specialistSelect = document.getElementById('manual-specialist');
+                if (!manualForm || !specialistSelect) {
+                    return;
+                }
 
-                Array.from(specialistSelect.options).forEach(option => {
+                const typeInput = manualForm.querySelector('input[name="type"]:checked');
+                const branchId = typeInput && typeInput.value === 'manual_free' && manualBranch ? manualBranch.value : '';
+
+                Array.from(specialistSelect.options).forEach(function (option) {
                     if (!option.value) {
                         option.hidden = false;
                         return;
                     }
-                    const optionBranch = option.getAttribute('data-branch');
-                    option.hidden = branchId && optionBranch !== branchId;
+
+                    const matchesBranch = !branchId || option.getAttribute('data-branch') === branchId;
+                    option.hidden = !matchesBranch;
+
                     if (option.hidden && option.selected) {
                         specialistSelect.value = '';
                         $('#manual-specialist').trigger('change');
@@ -295,16 +340,22 @@
                 });
             }
 
-            const timeSelect = document.getElementById('manual-time');
-            const helper = document.getElementById('manual-time-helper');
-            const messages = {
-                placeholder: "{{ __('message.select_name', ['select' => __('message.start_time')]) }}",
-                loading: "{{ __('message.loading') }}",
-                noSlots: "{{ __('message.no_slots_available') }}",
-                noSchedule: "{{ __('message.no_schedule_for_day') }}",
-                error: "{{ __('message.error_fetching_slots') }}",
-                workingHours: "{{ __('message.working_hours_for_day', ['range' => '__RANGE__']) }}",
-            };
+            function setTimeMessage(message, helperText) {
+                if (helperText === undefined) {
+                    helperText = '';
+                }
+
+                if (!timeSelect) {
+                    return;
+                }
+
+                timeSelect.innerHTML = '<option value="">' + message + '</option>';
+                timeSelect.disabled = message === messages.loading;
+
+                if (helper) {
+                    helper.textContent = helperText;
+                }
+            }
 
             function formatWorkingRanges(ranges) {
                 if (!Array.isArray(ranges) || !ranges.length) {
@@ -312,13 +363,16 @@
                 }
 
                 const formatted = ranges
-                    .map(range => {
+                    .map(function (range) {
                         if (!range || !range.start || !range.end) {
                             return null;
                         }
-                        return `${range.start} - ${range.end}`;
+
+                        return range.start + ' - ' + range.end;
                     })
-                    .filter(Boolean);
+                    .filter(function (value) {
+                        return Boolean(value);
+                    });
 
                 if (!formatted.length) {
                     return '';
@@ -327,23 +381,54 @@
                 return messages.workingHours.replace('__RANGE__', formatted.join(' | '));
             }
 
-            function setTimeMessage(message, helperText = '') {
-                if (!timeSelect) {
-                    return;
+            function slotIsAvailable(slot) {
+                if (!slot || typeof slot !== 'object') {
+                    return true;
                 }
 
-                timeSelect.innerHTML = `<option value="">${message}</option>`;
-                if (helper) {
-                    helper.textContent = helperText;
+                const marker = slot.available !== undefined ? slot.available
+                    : (slot.is_available !== undefined ? slot.is_available : slot.isAvailable);
+
+                if (marker === undefined || marker === null) {
+                    return true;
                 }
+
+                if (typeof marker === 'string') {
+                    return ['1', 'true', 'yes'].indexOf(marker.toLowerCase()) !== -1;
+                }
+
+                return Boolean(marker);
             }
 
-            function setTimeOptions(slots, helperText = '') {
+            function optionTime(slot) {
+                if (!slot) {
+                    return '';
+                }
+
+                if (typeof slot === 'string') {
+                    return slot;
+                }
+
+                return slot.time || slot.start_time || slot.startTime || '';
+            }
+
+            function populateSlots(slots, helperText) {
+                if (helperText === undefined) {
+                    helperText = '';
+                }
+
                 if (!timeSelect) {
                     return;
                 }
 
-                timeSelect.innerHTML = `<option value="">${messages.placeholder}</option>`;
+                timeSelect.disabled = false;
+                timeSelect.innerHTML = '<option value="">' + messages.placeholder + '</option>';
+
+                slots.forEach(function (slot) {
+                    const value = optionTime(slot);
+                    if (!value) {
+                        return;
+                    }
 
                 slots.forEach(function(slot) {
                     if (!slot) {
@@ -379,8 +464,16 @@
                 }
             }
 
-            function resetTimeSelect(message = messages.placeholder, helperText = '') {
-                setTimeMessage(message, helperText);
+            function normaliseSlots(rawSlots) {
+                if (!rawSlots) {
+                    return [];
+                }
+
+                if (Array.isArray(rawSlots)) {
+                    return rawSlots;
+                }
+
+                return Object.values(rawSlots);
             }
 
             function isSlotAvailable(slot) {
@@ -413,13 +506,15 @@
                 const specialistId = specialistSelect ? specialistSelect.value : '';
                 const date = dateInput ? dateInput.value : '';
 
-                if (!specialistId || !date) {
-                    resetTimeSelect("{{ __('message.select_name', ['select' => __('message.start_time')]) }}");
+                const specialistId = specialistSelect.value;
+                const appointmentDate = dateInput.value;
+
+                if (!specialistId || !appointmentDate) {
+                    setTimeMessage(messages.placeholder);
                     return;
                 }
 
-                $('#manual-time').prop('disabled', true);
-                $('#manual-time-helper').text(messages.loading);
+                setTimeMessage(messages.loading);
 
                 $.get(appointmentUrl, { specialist_id: specialistId, date: date })
                     .done(function(response) {
@@ -451,50 +546,17 @@
 
                         setTimeOptions(availableSlots, helperText);
                     })
-                    .fail(function() {
+                    .fail(function () {
                         setTimeMessage(messages.error);
-                    })
-                    .always(function() {
-                        $('#manual-time').prop('disabled', false);
                     });
             }
 
-            if (manualModal) {
-                manualModal.addEventListener('shown.bs.modal', function() {
-                    $('#manual-user').trigger('change');
-                    toggleManualSections(document.querySelector('input[name="type"]:checked').value);
-                    resetTimeSelect("{{ __('message.select_name', ['select' => __('message.start_time')]) }}");
-                });
-            }
+            if (manualForm) {
+                $(manualForm).on('submit', function (event) {
+                    const typeInput = manualForm.querySelector('input[name="type"]:checked');
+                    const selectedType = typeInput ? typeInput.value : 'regular';
 
-            document.querySelectorAll('input[name="type"]').forEach(function(input) {
-                input.addEventListener('change', function() {
-                    toggleManualSections(this.value);
-                    fetchSlots();
-                });
-            });
-
-            $('#manual-branch').on('change', function() {
-                filterSpecialists();
-                resetTimeSelect();
-                fetchSlots();
-            });
-
-            $('#manual-specialist').on('change', function() {
-                fetchSlots();
-            });
-
-            $('#manual-date').on('change', function() {
-                fetchSlots();
-            });
-
-            $('#manual-time').on('change', function() {
-                document.getElementById('manual-time-helper').textContent = '';
-            });
-
-            $('#manual-appointment-form').on('submit', function(event) {
-                if (document.querySelector('input[name="type"]:checked').value === 'manual_free') {
-                    if (!$('#manual-branch').val()) {
+                    if (selectedType === 'manual_free' && manualBranch && !manualBranch.value) {
                         event.preventDefault();
                         Swal.fire({
                             icon: 'error',
@@ -504,12 +566,80 @@
                         });
                         return false;
                     }
-                }
-                return true;
-            });
 
-            document.querySelectorAll('.convert-manual-free').forEach(function(button) {
-                button.addEventListener('click', function() {
+                    return true;
+                });
+
+                manualForm.querySelectorAll('input[name="type"]').forEach(function (input) {
+                    input.addEventListener('change', function (event) {
+                        toggleManualSections(event.target.value);
+                        setTimeMessage(messages.placeholder);
+                        fetchSlots();
+                    });
+                });
+            }
+
+            if (manualBranch) {
+                $(manualBranch).on('change', function () {
+                    filterSpecialists();
+                    setTimeMessage(messages.placeholder);
+                    fetchSlots();
+                });
+            }
+
+            if (specialistSelect) {
+                $(specialistSelect).on('change', function () {
+                    setTimeMessage(messages.placeholder);
+                    fetchSlots();
+                });
+            }
+
+            if (dateInput) {
+                $(dateInput).on('change', fetchSlots);
+            }
+
+            if (timeSelect) {
+                $(timeSelect).on('change', function () {
+                    if (helper) {
+                        helper.textContent = '';
+                    }
+                });
+            }
+
+            if (manualModal) {
+                manualModal.addEventListener('shown.bs.modal', function () {
+                    const typeInput = manualForm ? manualForm.querySelector('input[name="type"]:checked') : null;
+                    const selectedType = typeInput ? typeInput.value : 'regular';
+                    toggleManualSections(selectedType);
+                    filterSpecialists();
+                    setTimeMessage(messages.placeholder);
+                });
+
+                manualModal.addEventListener('hidden.bs.modal', function () {
+                    if (manualForm) {
+                        manualForm.reset();
+                    }
+
+                    if (manualUser) {
+                        $(manualUser).val('').trigger('change');
+                        $(manualUser).prop('disabled', false);
+                        const select2Container = $(manualUser).next('.select2-container, .select2');
+                        if (select2Container.length) {
+                            select2Container.removeClass('d-none');
+                        }
+                    }
+
+                    resetManualFreeFields();
+                    setTimeMessage(messages.placeholder);
+
+                    if (helper) {
+                        helper.textContent = '';
+                    }
+                });
+            }
+
+            document.querySelectorAll('.convert-manual-free').forEach(function (button) {
+                button.addEventListener('click', function () {
                     const appointmentId = this.dataset.appointmentId;
                     const action = `{{ route('clinic.appointments.convert', ['appointment' => '__id__']) }}`.replace('__id__', appointmentId);
 
@@ -523,7 +653,7 @@
             });
 
             if (convertModal) {
-                convertModal.addEventListener('hidden.bs.modal', function() {
+                convertModal.addEventListener('hidden.bs.modal', function () {
                     document.getElementById('convert-manual-form').reset();
                 });
             }
