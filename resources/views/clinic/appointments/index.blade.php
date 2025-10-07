@@ -115,7 +115,7 @@
                             </div>
                             <div class="col-md-6 manual-regular-section">
                                 <label class="form-label">{{ __('message.user') }} <span class="text-danger">*</span></label>
-                                <select name="user_id" id="manual-user" class="form-select select2js" data-placeholder="{{ __('message.select_name', ['select' => __('message.user')]) }}">
+                                <select name="user_id" id="manual-user" class="form-select select2js" data-placeholder="{{ __('message.select_name', ['select' => __('message.user')]) }}" data-dropdown-parent="#manualAppointmentModal">
                                     <option value="">{{ __('message.select_name', ['select' => __('message.user')]) }}</option>
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}">{{ $user->display_name ?? $user->email }}</option>
@@ -266,11 +266,70 @@
                 });
             }
 
-            function resetTimeSelect(message) {
-                const timeSelect = document.getElementById('manual-time');
-                const helper = document.getElementById('manual-time-helper');
+            const timeSelect = document.getElementById('manual-time');
+            const helper = document.getElementById('manual-time-helper');
+            const messages = {
+                placeholder: "{{ __('message.select_name', ['select' => __('message.start_time')]) }}",
+                loading: "{{ __('message.loading') }}",
+                noSlots: "{{ __('message.no_slots_available') }}",
+                noSchedule: "{{ __('message.no_schedule_for_day') }}",
+                error: "{{ __('message.error_fetching_slots') }}",
+                workingHours: "{{ __('message.working_hours_for_day', ['range' => '__RANGE__']) }}",
+            };
+
+            function formatWorkingRanges(ranges) {
+                if (!Array.isArray(ranges) || !ranges.length) {
+                    return '';
+                }
+
+                const formatted = ranges
+                    .map(range => {
+                        if (!range || !range.start || !range.end) {
+                            return null;
+                        }
+                        return `${range.start} - ${range.end}`;
+                    })
+                    .filter(Boolean);
+
+                if (!formatted.length) {
+                    return '';
+                }
+
+                return messages.workingHours.replace('__RANGE__', formatted.join(' | '));
+            }
+
+            function setTimeMessage(message, helperText = '') {
+                if (!timeSelect) {
+                    return;
+                }
+
                 timeSelect.innerHTML = `<option value="">${message}</option>`;
-                helper.textContent = '';
+                if (helper) {
+                    helper.textContent = helperText;
+                }
+            }
+
+            function setTimeOptions(slots, helperText = '') {
+                if (!timeSelect) {
+                    return;
+                }
+
+                timeSelect.innerHTML = `<option value="">${messages.placeholder}</option>`;
+
+                slots.forEach(function(slot) {
+                    const option = document.createElement('option');
+                    option.value = slot.time;
+                    option.textContent = slot.time;
+                    timeSelect.appendChild(option);
+                });
+
+                if (helper) {
+                    helper.textContent = helperText;
+                }
+            }
+
+            function resetTimeSelect(message = messages.placeholder, helperText = '') {
+                setTimeMessage(message, helperText);
             }
 
             function fetchSlots() {
@@ -283,30 +342,33 @@
                 }
 
                 $('#manual-time').prop('disabled', true);
-                $('#manual-time-helper').text('{{ __('message.loading') }}');
+                $('#manual-time-helper').text(messages.loading);
 
                 $.get(appointmentUrl, { specialist_id: specialistId, date: date })
                     .done(function(response) {
-                        const availableSlots = response.slots.filter(slot => slot.available);
-                        const select = document.getElementById('manual-time');
-                        select.innerHTML = '';
+                        const slots = response && Array.isArray(response.slots) ? response.slots : [];
+                        const availableSlots = slots.filter(function(slot) {
+                            return slot && slot.available;
+                        });
+                        const meta = response && response.meta ? response.meta : {};
+                        const totalSlots = typeof meta.total_slots === 'number' && !isNaN(meta.total_slots) ? meta.total_slots : slots.length;
+                        const availableCount = typeof meta.available_slots === 'number' && !isNaN(meta.available_slots) ? meta.available_slots : availableSlots.length;
+                        const helperText = formatWorkingRanges(meta.working_ranges || []);
 
-                        if (!availableSlots.length) {
-                            resetTimeSelect("{{ __('message.no_slots_available') }}");
+                        if (!totalSlots) {
+                            setTimeMessage(messages.noSchedule, helperText);
                             return;
                         }
 
-                        select.innerHTML = `<option value="">{{ __('message.select_name', ['select' => __('message.start_time')]) }}</option>`;
-                        availableSlots.forEach(slot => {
-                            const option = document.createElement('option');
-                            option.value = slot.time;
-                            option.textContent = slot.time;
-                            select.appendChild(option);
-                        });
-                        document.getElementById('manual-time-helper').textContent = '';
+                        if (!availableCount) {
+                            setTimeMessage(messages.noSlots, helperText);
+                            return;
+                        }
+
+                        setTimeOptions(availableSlots, helperText);
                     })
                     .fail(function() {
-                        resetTimeSelect("{{ __('message.error_fetching_slots') }}");
+                        setTimeMessage(messages.error);
                     })
                     .always(function() {
                         $('#manual-time').prop('disabled', false);
@@ -330,6 +392,7 @@
 
             $('#manual-branch').on('change', function() {
                 filterSpecialists();
+                resetTimeSelect();
                 fetchSlots();
             });
 

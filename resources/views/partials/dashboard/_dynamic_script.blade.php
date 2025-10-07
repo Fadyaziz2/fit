@@ -3,8 +3,24 @@
     'use strict';
     
     $(document).ready(function() {
-        $('.select2js').select2({
-            width: '100%',
+        $('.select2js').each(function() {
+            const $select = $(this);
+            const options = { width: '100%' };
+            const parentSelector = $select.data('dropdownParent');
+
+            if (parentSelector) {
+                const $parent = $(parentSelector);
+                if ($parent.length) {
+                    options.dropdownParent = $parent;
+                }
+            } else {
+                const $modalParent = $select.closest('.modal');
+                if ($modalParent.length) {
+                    options.dropdownParent = $modalParent;
+                }
+            }
+
+            $select.select2(options);
         });
         $.ajaxSetup({
             headers: {

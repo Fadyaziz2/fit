@@ -82,11 +82,28 @@ class ClinicAppointmentController extends Controller
 
         $specialist = Specialist::with('schedules')->findOrFail($data['specialist_id']);
         $date = Carbon::createFromFormat('Y-m-d', $data['date']);
-        $day = $date->dayOfWeek;
+        $weekStart = Carbon::create()->startOfWeek();
+
+        $schedules = $specialist->schedules
+            ->filter(function ($schedule) use ($date, $weekStart) {
+                $storedDay = (int) $schedule->day_of_week;
+                $normalizedDay = $weekStart->copy()->addDays($storedDay)->dayOfWeek;
+
+                return $normalizedDay === $date->dayOfWeek;
+            })
+            ->sortBy('start_time');
 
         $slots = [];
+        $totalSlots = 0;
+        $availableSlots = 0;
+        $workingRanges = [];
+        $now = Carbon::now();
 
-        foreach ($specialist->schedules->where('day_of_week', $day) as $schedule) {
+        foreach ($schedules as $schedule) {
+            if ($schedule->slot_duration <= 0) {
+                continue;
+            }
+
             $start = Carbon::parse($schedule->start_time);
             $end = Carbon::parse($schedule->end_time);
 
@@ -94,32 +111,71 @@ class ClinicAppointmentController extends Controller
                 continue;
             }
 
+            $workingRanges[] = [
+                'start' => $start->format('H:i'),
+                'end' => $end->format('H:i'),
+            ];
+
             $current = $start->copy();
+
             while ($current->lt($end)) {
                 $slotEnd = $current->copy()->addMinutes($schedule->slot_duration);
+
                 if ($slotEnd->gt($end)) {
                     break;
                 }
 
+                if ($date->isToday() && $slotEnd->lte($now)) {
+                    $current = $slotEnd;
+                    continue;
+                }
+
                 $slotTime = $current->format('H:i:s');
-                $exists = SpecialistAppointment::where('specialist_id', $specialist->id)
+                $isBooked = SpecialistAppointment::where('specialist_id', $specialist->id)
                     ->where('appointment_date', $date->toDateString())
                     ->where('appointment_time', $slotTime)
                     ->whereIn('status', ['pending', 'confirmed', 'completed'])
                     ->exists();
 
+                $available = ! $isBooked;
+
                 $slots[] = [
                     'time' => $current->format('H:i'),
-                    'available' => ! $exists,
+                    'available' => $available,
+                    'is_available' => $available,
                 ];
+
+                $totalSlots++;
+
+                if ($available) {
+                    $availableSlots++;
+                }
 
                 $current = $slotEnd;
             }
         }
 
+        $slots = collect($slots)
+            ->unique('time')
+            ->sortBy('time')
+            ->values()
+            ->all();
+
+        $workingRanges = collect($workingRanges)
+            ->unique(function ($range) {
+                return $range['start'] . '-' . $range['end'];
+            })
+            ->values()
+            ->all();
+
         return response()->json([
             'date' => $date->toDateString(),
             'slots' => $slots,
+            'meta' => [
+                'total_slots' => $totalSlots,
+                'available_slots' => $availableSlots,
+                'working_ranges' => $workingRanges,
+            ],
         ]);
     }
 
