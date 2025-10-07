@@ -18,13 +18,16 @@ import '../../extensions/extension_util/context_extensions.dart';
 import '../../extensions/extension_util/int_extensions.dart';
 import '../../extensions/extension_util/widget_extensions.dart';
 import '../../extensions/extension_util/string_extensions.dart';
+import '../extensions/app_button.dart';
 import '../extensions/common.dart';
+import '../extensions/constants.dart';
 import '../../screens/progress_detail_screen.dart';
 import '../components/horizontal_bar_chart.dart';
 import '../extensions/decorations.dart';
 import '../extensions/text_styles.dart';
 import '../extensions/widgets.dart';
 import '../network/rest_api.dart';
+import '../extensions/colors.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_constants.dart';
 import '../models/diet_response.dart';
@@ -311,59 +314,63 @@ class ProgressScreenState extends State<ProgressScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: SafeArea(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(languages.lblAddCondition, style: boldTextStyle(size: 18)),
-                  12.height,
-                  AppTextField(
-                    controller: nameController,
-                    decoration: inputDecoration(context, labelText: languages.lblConditionName),
-                    textFieldType: TextFieldType.NAME,
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: SafeArea(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(languages.lblAddCondition, style: boldTextStyle(size: 18)),
+                      12.height,
+                      AppTextField(
+                        controller: nameController,
+                        decoration: inputDecoration(context, labelText: languages.lblConditionName),
+                        textFieldType: TextFieldType.NAME,
+                      ),
+                      12.height,
+                      AppButton(
+                        text: selectedDate != null
+                            ? DateFormat.yMMMd(appStore.selectedLanguageCode).format(selectedDate!)
+                            : languages.lblConditionStartDate,
+                        color: context.cardColor,
+                        textStyle: primaryTextStyle(color: textPrimaryColorGlobal),
+                        onTap: () async {
+                          final now = DateTime.now();
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate ?? now,
+                            firstDate: DateTime(now.year - 80),
+                            lastDate: now,
+                          );
+                          if (picked != null) {
+                            setModalState(() {
+                              selectedDate = picked;
+                            });
+                          }
+                        },
+                      ),
+                      16.height,
+                      AppButton(
+                        text: languages.lblSave,
+                        width: context.width(),
+                        onTap: () {
+                          Navigator.pop(context, {
+                            'name': nameController.text.trim(),
+                            'date': selectedDate,
+                          });
+                        },
+                      ),
+                    ],
                   ),
-                  12.height,
-                  AppButton(
-                    text: selectedDate != null
-                        ? DateFormat.yMMMd(appStore.selectedLanguageCode).format(selectedDate)
-                        : languages.lblConditionStartDate,
-                    color: context.cardColor,
-                    textStyle: primaryTextStyle(color: textPrimaryColorGlobal),
-                    onTap: () async {
-                      final now = DateTime.now();
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate ?? now,
-                        firstDate: DateTime(now.year - 80),
-                        lastDate: now,
-                      );
-                      if (picked != null) {
-                        setModalState(() {
-                          selectedDate = picked;
-                        });
-                      }
-                    },
-                  ),
-                  16.height,
-                  AppButton(
-                    text: languages.lblSave,
-                    width: context.width(),
-                    onTap: () {
-                      Navigator.pop(context, {
-                        'name': nameController.text.trim(),
-                        'date': selectedDate,
-                      });
-                    },
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
