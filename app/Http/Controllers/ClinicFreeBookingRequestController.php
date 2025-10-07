@@ -145,8 +145,15 @@ class ClinicFreeBookingRequestController extends Controller
         $specialist = Specialist::with('schedules')->findOrFail($request->specialist_id);
         $date = Carbon::parse($request->date);
 
+        $weekStart = Carbon::create()->startOfWeek();
+
         $schedules = $specialist->schedules
-            ->where('day_of_week', $date->dayOfWeek)
+            ->filter(function ($schedule) use ($date, $weekStart) {
+                $storedDay = (int) $schedule->day_of_week;
+                $normalizedDay = $weekStart->copy()->addDays($storedDay)->dayOfWeek;
+
+                return $normalizedDay === $date->dayOfWeek;
+            })
             ->sortBy('start_time');
 
         $slots = [];
