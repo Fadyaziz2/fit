@@ -36,7 +36,7 @@ class ClinicFreeBookingRequestController extends Controller
         $this->authorizeAccess();
 
         $pageTitle = __('message.update_form_title', ['form' => __('message.free_booking_request')]);
-        $specialists = Specialist::with('branch')->orderBy('name')->get();
+        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
 
         $freeRequest->load('appointment');
 
@@ -64,6 +64,7 @@ class ClinicFreeBookingRequestController extends Controller
                 'appointment_time' => 'required|date_format:H:i',
             ]);
 
+            $specialist = Specialist::with('branches')->findOrFail($request->specialist_id);
             $date = Carbon::createFromFormat('Y-m-d', $request->appointment_date);
             $time = Carbon::createFromFormat('H:i', $request->appointment_time)->format('H:i:s');
 
@@ -75,6 +76,10 @@ class ClinicFreeBookingRequestController extends Controller
 
             if (! $scheduleExists) {
                 return back()->withErrors(__('message.slot_not_available'))->withInput();
+            }
+
+            if ($freeRequest->branch_id && ! $specialist->branches->pluck('id')->contains($freeRequest->branch_id)) {
+                return back()->withErrors(__('message.specialist_not_in_branch'))->withInput();
             }
 
             $alreadyBookedQuery = SpecialistAppointment::where('specialist_id', $request->specialist_id)

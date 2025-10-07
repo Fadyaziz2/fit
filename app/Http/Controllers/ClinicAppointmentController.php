@@ -50,7 +50,7 @@ class ClinicAppointmentController extends Controller
             ->get();
 
         $branches = Branch::orderBy('name')->get();
-        $specialists = Specialist::with('branch')->orderBy('name')->get();
+        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
         $packages = Package::where('status', 'active')->orderBy('name')->get();
 
         return view('clinic.appointments.index', compact('pageTitle', 'appointments', 'users', 'branches', 'specialists', 'packages'));
@@ -196,12 +196,13 @@ class ClinicAppointmentController extends Controller
             'user_id' => 'required_if:type,regular|nullable|exists:users,id',
             'manual_name' => 'required_if:type,manual_free|nullable|string|max:255',
             'manual_phone' => 'required_if:type,manual_free|nullable|string|max:20',
+            'manual_branch' => 'required_if:type,manual_free|nullable|exists:branches,id',
             'specialist_id' => 'required|exists:specialists,id',
             'appointment_date' => 'required|date_format:Y-m-d',
             'appointment_time' => 'required|date_format:H:i',
         ]);
 
-        $specialist = Specialist::with('branch')->findOrFail($data['specialist_id']);
+        $specialist = Specialist::with(['branch', 'branches'])->findOrFail($data['specialist_id']);
         $date = Carbon::createFromFormat('Y-m-d', $data['appointment_date']);
         $time = Carbon::createFromFormat('H:i', $data['appointment_time'])->format('H:i:s');
 
@@ -227,15 +228,28 @@ class ClinicAppointmentController extends Controller
 
         $userId = $data['user_id'] ?? null;
 
+        $branchId = null;
+
         if ($data['type'] === 'manual_free') {
             $user = $this->createManualUser($data['manual_name'], $data['manual_phone']);
             $userId = $user->id;
+            $branchId = (int) $data['manual_branch'];
+
+            if (! $specialist->branches->pluck('id')->contains($branchId)) {
+                return back()->withErrors(__('message.specialist_not_in_branch'))->withInput();
+            }
+        }
+
+        $branchId = $branchId ?? (int) $specialist->branch_id;
+
+        if (! $branchId) {
+            return back()->withErrors(__('message.specialist_not_in_branch'))->withInput();
         }
 
         SpecialistAppointment::create([
             'user_id' => $userId,
             'specialist_id' => $specialist->id,
-            'branch_id' => $specialist->branch_id,
+            'branch_id' => $branchId,
             'appointment_date' => $date->toDateString(),
             'appointment_time' => $time,
             'status' => 'pending',

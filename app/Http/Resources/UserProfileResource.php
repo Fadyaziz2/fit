@@ -33,6 +33,12 @@ class UserProfileResource extends JsonResource
                     'phone' => $this->specialist?->phone,
                     'specialty' => $this->specialist?->specialty,
                     'branch_id' => $this->specialist?->branch_id,
+                    'branches' => $this->specialist?->branches->map(function ($branch) {
+                        return [
+                            'id' => $branch->id,
+                            'name' => $branch->name,
+                        ];
+                    })->values(),
                 ];
             }),
             'bmi'           => $this->bmi,

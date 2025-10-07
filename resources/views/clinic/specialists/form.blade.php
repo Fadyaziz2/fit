@@ -28,14 +28,21 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">{{ __('message.branch') }} <span class="text-danger">*</span></label>
-                                    <select name="branch_id" class="form-select" required>
-                                        <option value="">{{ __('message.select_name', ['select' => __('message.branch')]) }}</option>
+                                    @php
+                                        $branchSelection = old('branch_ids', $specialist?->branches?->pluck('id')->toArray() ?? []);
+                                        $selectedBranches = is_array($branchSelection) ? array_map('strval', $branchSelection) : [];
+                                    @endphp
+                                    <select name="branch_ids[]" class="form-select" multiple required data-placeholder="{{ __('message.select_name', ['select' => __('message.branch')]) }}">
                                         @foreach($branches as $id => $name)
-                                            <option value="{{ $id }}" {{ (string) $id === (string) old('branch_id', $specialist->branch_id ?? '') ? 'selected' : '' }}>{{ $name }}</option>
+                                            <option value="{{ $id }}" {{ in_array((string) $id, $selectedBranches, true) ? 'selected' : '' }}>{{ $name }}</option>
                                         @endforeach
                                     </select>
-                                    @error('branch_id')
-                                        <small class="text-danger">{{ $message }}</small>
+                                    <small class="text-muted">{{ __('message.specialist_branch_hint') }}</small>
+                                    @error('branch_ids')
+                                        <small class="text-danger d-block">{{ $message }}</small>
+                                    @enderror
+                                    @error('branch_ids.*')
+                                        <small class="text-danger d-block">{{ $message }}</small>
                                     @enderror
                                 </div>
                                 <div class="col-md-6">

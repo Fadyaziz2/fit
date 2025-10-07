@@ -29,7 +29,7 @@ class BookingController extends Controller
     {
         $user = $request->user();
 
-        $bookings = SpecialistAppointment::with(['specialist.branch'])
+        $bookings = SpecialistAppointment::with(['branch', 'specialist.branch', 'specialist.branches'])
             ->where('user_id', $user->id)
             ->orderByDesc('appointment_date')
             ->orderByDesc('appointment_time')
@@ -148,6 +148,12 @@ class BookingController extends Controller
             return json_message_response(__('message.slot_already_booked'), 409);
         }
 
+        $specialist = Specialist::with('branches')->findOrFail($request->specialist_id);
+
+        if (! $specialist->branches->pluck('id')->contains((int) $request->branch_id)) {
+            return json_message_response(__('message.specialist_not_in_branch'), 422);
+        }
+
         $appointment = SpecialistAppointment::create([
             'user_id' => $user->id,
             'specialist_id' => $request->specialist_id,
@@ -167,7 +173,7 @@ class BookingController extends Controller
 
         return json_custom_response([
             'message' => __('message.appointment_booked_successfully'),
-            'appointment' => new SpecialistAppointmentResource($appointment->fresh(['specialist.branch'])),
+            'appointment' => new SpecialistAppointmentResource($appointment->fresh(['branch', 'specialist.branch', 'specialist.branches'])),
         ]);
     }
 

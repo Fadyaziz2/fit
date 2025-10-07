@@ -58,7 +58,11 @@
                                             <td>{{ $appointment->id }}</td>
                                             <td>{{ $appointment->user?->display_name ?? $appointment->user?->email }}</td>
                                             <td>{{ $appointment->specialist?->name ?? '-' }}</td>
-                                            <td>{{ $appointment->specialist?->branch?->name ?? '-' }}</td>
+                                            @php
+                                                $specialistBranches = $appointment->specialist?->branches?->pluck('name')->filter()->implode(', ');
+                                                $branchLabel = $appointment->branch?->name ?? ($specialistBranches !== '' ? $specialistBranches : null);
+                                            @endphp
+                                            <td>{{ $branchLabel ?? '-' }}</td>
                                             <td>{{ $appointment->appointment_date }}</td>
                                             <td>{{ substr($appointment->appointment_time, 0, 5) }}</td>
                                             <td>
@@ -135,7 +139,11 @@
                                 <select name="specialist_id" id="manual-regular-specialist" class="form-select" data-placeholder="{{ __('message.select_name', ['select' => __('message.specialist')]) }}">
                                     <option value="">{{ __('message.select_name', ['select' => __('message.specialist')]) }}</option>
                                     @foreach($specialists as $specialist)
-                                        <option value="{{ $specialist->id }}" data-branch="{{ $specialist->branch_id }}">{{ $specialist->name }} - {{ $specialist->branch?->name }}</option>
+                                        @php
+                                            $branchNames = $specialist->branches->pluck('name')->filter()->implode(', ');
+                                            $branchIds = $specialist->branches->pluck('id')->implode(',');
+                                        @endphp
+                                        <option value="{{ $specialist->id }}" data-branches="{{ $branchIds }}">{{ $specialist->name }}@if($branchNames) - {{ $branchNames }}@endif</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -195,7 +203,11 @@
                                 <select name="specialist_id" id="manual-free-specialist" class="form-select" data-placeholder="{{ __('message.select_name', ['select' => __('message.specialist')]) }}" disabled>
                                     <option value="">{{ __('message.select_name', ['select' => __('message.specialist')]) }}</option>
                                     @foreach($specialists as $specialist)
-                                        <option value="{{ $specialist->id }}" data-branch="{{ $specialist->branch_id }}">{{ $specialist->name }} - {{ $specialist->branch?->name }}</option>
+                                        @php
+                                            $branchNames = $specialist->branches->pluck('name')->filter()->implode(', ');
+                                            $branchIds = $specialist->branches->pluck('id')->implode(',');
+                                        @endphp
+                                        <option value="{{ $specialist->id }}" data-branches="{{ $branchIds }}">{{ $specialist->name }}@if($branchNames) - {{ $branchNames }}@endif</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -501,6 +513,15 @@
                 });
             }
 
+            function getOptionBranches(option) {
+                const attribute = option.getAttribute('data-branches') || '';
+                return attribute.split(',').map(function (value) {
+                    return value.trim();
+                }).filter(function (value) {
+                    return value !== '';
+                });
+            }
+
             function handleManualFreeBranchChange() {
                 if (!manualFree.branch || !manualFree.specialist) {
                     return;
@@ -515,7 +536,8 @@
                         return;
                     }
 
-                    const matchesBranch = !branchId || option.getAttribute('data-branch') === branchId;
+                    const branches = getOptionBranches(option);
+                    const matchesBranch = !branchId || branches.includes(branchId);
                     option.hidden = !matchesBranch;
 
                     if (matchesBranch) {

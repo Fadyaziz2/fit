@@ -163,6 +163,8 @@ return [
     'no_schedule_for_day' => 'No working hours have been configured for the selected day.',
     'working_hours_for_day' => 'Working hours: :range',
     'manual_branch_required' => 'Please select a branch before choosing the specialist.',
+    'specialist_branch_hint' => 'Select all branches where the specialist is available.',
+    'specialist_not_in_branch' => 'The selected specialist is not assigned to the chosen branch.',
     'full_name' => 'Full name',
     'confirm_password' => 'Confirm password',
     'free_booking_already_used' => 'Free booking has already been used.',

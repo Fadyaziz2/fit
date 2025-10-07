@@ -24,8 +24,11 @@
                                     <select name="specialist_id" class="form-select" required>
                                         <option value="">{{ __('message.select_name', ['select' => __('message.specialist')]) }}</option>
                                         @foreach($specialists as $specialist)
+                                            @php
+                                                $branchNames = $specialist->branches->pluck('name')->filter()->implode(', ');
+                                            @endphp
                                             <option value="{{ $specialist->id }}" {{ (string) $specialist->id === (string) old('specialist_id', $schedule->specialist_id ?? '') ? 'selected' : '' }}>
-                                                {{ $specialist->name }} @if($specialist->branch) ({{ $specialist->branch->name }}) @endif
+                                                {{ $specialist->name }}@if($branchNames) ({{ $branchNames }})@endif
                                             </option>
                                         @endforeach
                                     </select>

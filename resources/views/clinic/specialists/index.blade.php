@@ -35,7 +35,10 @@
                                             <td>{{ $specialist->id }}</td>
                                             <td>{{ $specialist->name }}</td>
                                             <td>{{ $specialist->specialty ?? '-' }}</td>
-                                            <td>{{ $specialist->branch?->name ?? '-' }}</td>
+                                            @php
+                                                $branchNames = $specialist->branches->pluck('name')->filter()->implode(', ');
+                                            @endphp
+                                            <td>{{ $branchNames !== '' ? $branchNames : '-' }}</td>
                                             <td>{{ $specialist->phone ?? '-' }}</td>
                                             <td>{{ $specialist->email ?? '-' }}</td>
                                             <td>
