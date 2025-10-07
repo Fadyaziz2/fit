@@ -61,7 +61,7 @@ Future<void> main() async {
  await Firebase.initializeApp().then((value) {
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
   });
-  initJsonFile();
+  await initJsonFile();
 
 
   setLogInValue();
