@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:nb_utils/nb_utils.dart';
 
+import '../extensions/decorations.dart';
+import '../extensions/text_styles.dart';
 import '../main.dart';
 import '../models/diet_response.dart';
-import '../extensions/widgets.dart';
+import '../utils/app_common.dart';
+import '../extensions/extension_util/context_extensions.dart';
+import '../extensions/extension_util/int_extensions.dart';
+import '../extensions/extension_util/string_extensions.dart';
+import '../extensions/extension_util/widget_extensions.dart';
 
 class MealPlanView extends StatelessWidget {
   final List<MealPlanDay> days;
@@ -27,7 +32,7 @@ class MealPlanView extends StatelessWidget {
     );
 
     if (padding != null) {
-      content = content.padding(padding!);
+      content = Padding(padding: padding!, child: content);
     }
 
     return content;
