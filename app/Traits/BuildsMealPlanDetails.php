@@ -6,10 +6,27 @@ use App\Models\Ingredient;
 
 trait BuildsMealPlanDetails
 {
-    protected function buildMealPlanDetails(array $plan): array
+    protected function buildMealPlanDetails(array $plan, array $serveTimes = []): array
     {
         if (empty($plan)) {
             return [];
+        }
+
+        $normalizedServeTimes = [];
+
+        foreach ($serveTimes as $index => $time) {
+            if ($time instanceof \DateTimeInterface) {
+                $normalizedServeTimes[(int) $index] = $time->format('H:i');
+                continue;
+            }
+
+            if (is_string($time) || (is_numeric($time) && !is_bool($time))) {
+                $value = trim((string) $time);
+
+                if ($value !== '') {
+                    $normalizedServeTimes[(int) $index] = $value;
+                }
+            }
         }
 
         $ingredientIds = [];
@@ -136,6 +153,7 @@ trait BuildsMealPlanDetails
 
                 $meals[] = [
                     'meal_number' => (int) $mealIndex + 1,
+                    'time' => $normalizedServeTimes[$mealIndex] ?? null,
                     'ingredients' => $mealDetails,
                     'totals' => $this->formatTotals($mealTotals),
                 ];

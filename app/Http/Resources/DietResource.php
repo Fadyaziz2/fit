@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Support\MealPlan;
 use App\Traits\BuildsMealPlanDetails;
+use App\Models\AssignDiet;
 
 class DietResource extends JsonResource
 {
@@ -22,23 +23,46 @@ class DietResource extends JsonResource
         $basePlan = MealPlan::normalizePlan($this->ingredients ?? [], false, true);
         $mergedPlan = MealPlan::reindexPlan($basePlan);
         $customPlan = [];
+        $serveTimes = [];
 
         if ($user_id) {
-            $assignment = $this->whenLoaded('userAssignDiet')
-                ? $this->userAssignDiet->firstWhere('user_id', $user_id)
-                : null;
+            $assignment = null;
+
+            if ($this->relationLoaded('userAssignDiet')) {
+                $assignment = $this->userAssignDiet->firstWhere('user_id', $user_id);
+            }
 
             if (!$assignment) {
-                $assignment = $this->userAssignDiet()
+                $assignment = AssignDiet::where('diet_id', $this->id)
                     ->where('user_id', $user_id)
                     ->first();
             }
 
-            if ($assignment && is_array($assignment->custom_plan)) {
-                $normalizedCustomPlan = MealPlan::normalizePlan($assignment->custom_plan, true, true);
-                $customPlan = MealPlan::reindexPlan($normalizedCustomPlan);
-                $mergedPlan = MealPlan::mergeNormalizedPlans($basePlan, $normalizedCustomPlan);
+            if ($assignment) {
+                if (is_array($assignment->serve_times)) {
+                    foreach ($assignment->serve_times as $time) {
+                        if ($time instanceof \DateTimeInterface) {
+                            $serveTimes[] = $time->format('H:i');
+                            continue;
+                        }
+
+                        if (is_string($time) || (is_numeric($time) && !is_bool($time))) {
+                            $formattedTime = trim((string) $time);
+
+                            if ($formattedTime !== '') {
+                                $serveTimes[] = $formattedTime;
+                            }
+                        }
+                    }
+                }
+
+                if (is_array($assignment->custom_plan)) {
+                    $normalizedCustomPlan = MealPlan::normalizePlan($assignment->custom_plan, true, true);
+                    $customPlan = MealPlan::reindexPlan($normalizedCustomPlan);
+                    $mergedPlan = MealPlan::mergeNormalizedPlans($basePlan, $normalizedCustomPlan);
+                }
             }
+
         }
 
         return [
@@ -56,7 +80,8 @@ class DietResource extends JsonResource
             'ingredients'      => $mergedPlan,
             'custom_plan'      => $customPlan,
             'has_custom_plan'  => !empty($customPlan),
-            'meal_plan'        => $this->buildMealPlanDetails($mergedPlan),
+            'meal_plan'        => $this->buildMealPlanDetails($mergedPlan, $serveTimes),
+            'serve_times'      => array_values($serveTimes),
             'description'      => $this->description,
             'diet_image'       => getSingleMedia($this, 'diet_image',null),
             'is_premium'       => $this->is_premium,
