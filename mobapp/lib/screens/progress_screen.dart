@@ -330,7 +330,7 @@ class ProgressScreenState extends State<ProgressScreen> {
                       12.height,
                       AppTextField(
                         controller: nameController,
-                        decoration: inputDecoration(context, labelText: languages.lblConditionName),
+                        decoration: defaultInputDecoration(context, label: languages.lblConditionName),
                         textFieldType: TextFieldType.NAME,
                       ),
                       12.height,

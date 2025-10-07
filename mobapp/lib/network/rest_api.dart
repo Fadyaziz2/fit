@@ -354,7 +354,7 @@ Future<List<UserAttachment>> uploadUserAttachmentsApi(List<File> files) async {
   request.headers.addAll(buildHeaderTokens());
 
   for (final file in files) {
-    request.files.add(await MultipartFile.fromPath('attachments[]', file.path));
+    request.files.add(await http.MultipartFile.fromPath('attachments[]', file.path));
   }
 
   final response = await http.Response.fromStream(await request.send());
