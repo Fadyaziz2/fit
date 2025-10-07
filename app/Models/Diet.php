@@ -60,12 +60,13 @@ class Diet extends Model implements HasMedia
         return $query;
     }
 
-    public function scopeMyAssignDiet($query, $user_id =null)
+    public function scopeMyAssignDiet($query, $user_id = null)
     {
-        $user = auth()->user();
-        if($user->hasRole(['user'])){
-            $query = $query->whereHas('userAssignDiet', function ($q) use($user) {
-                $q->where('user_id', $user->id);
+        $userId = $user_id ?? optional(auth()->user())->id;
+
+        if ($userId) {
+            $query = $query->whereHas('userAssignDiet', function ($q) use ($userId) {
+                $q->where('user_id', $userId);
             });
         }
 
