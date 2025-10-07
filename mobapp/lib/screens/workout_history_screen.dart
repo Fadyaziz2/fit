@@ -278,7 +278,7 @@ class WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
         context: context,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add, color: primaryColor),
             tooltip: appStore.selectedLanguageCode == 'ar'
                 ? 'إضافة تمرين يدوي'
                 : 'Add Manual Workout',
