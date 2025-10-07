@@ -38,13 +38,16 @@ class AssignUserController extends Controller
 
         $assign_diet = $assign_diet->orderBy('id', 'desc')->paginate($per_page);
 
-        $items = DietResource::collection($assign_diet);
+        $data = collect($assign_diet->items())
+            ->map(fn ($diet) => (new DietResource($diet))->toArray($request))
+            ->values()
+            ->all();
 
         $response = [
-            'pagination'    => json_pagination_response($items),
-            'data'          => $items,
+            'pagination'    => json_pagination_response($assign_diet),
+            'data'          => $data,
         ];
-        
+
         return json_custom_response($response);
     }
 
@@ -65,14 +68,17 @@ class AssignUserController extends Controller
 
         $assign_workout = $assign_workout->orderBy('id', 'desc')->paginate($per_page);
 
-        $items = WorkoutResource::collection($assign_workout);
+        $data = collect($assign_workout->items())
+            ->map(fn ($workout) => (new WorkoutResource($workout))->toArray($request))
+            ->values()
+            ->all();
 
         $response = [
-            'pagination'    => json_pagination_response($items),
-            'data'          => $items,
+            'pagination'    => json_pagination_response($assign_workout),
+            'data'          => $data,
         ];
-        
+
         return json_custom_response($response);
-    } 
-      
+    }
+
 }
