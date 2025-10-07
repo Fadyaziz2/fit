@@ -69,6 +69,8 @@ class MealPlanView extends StatelessWidget {
     final mealTitle = appStore.selectedLanguageCode == 'ar'
         ? 'الوجبة ${meal.mealNumber}'
         : 'Meal ${meal.mealNumber}';
+    final mealTimeLabel = appStore.selectedLanguageCode == 'ar' ? 'الوقت' : 'Time';
+    final hasMealTime = meal.time.validate().isNotEmpty;
 
     return Container(
       margin: EdgeInsets.only(bottom: 16),
@@ -77,14 +79,18 @@ class MealPlanView extends StatelessWidget {
         borderRadius: radius(12),
       ),
       padding: EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(mealTitle, style: boldTextStyle()),
-          12.height,
-          Column(
-            children: meal.ingredients.map((ingredient) => _buildIngredientTile(context, ingredient)).toList(),
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(mealTitle, style: boldTextStyle()),
+            if (hasMealTime) ...[
+              6.height,
+              Text('$mealTimeLabel: ${meal.time.validate()}', style: secondaryTextStyle()),
+            ],
+            12.height,
+            Column(
+              children: meal.ingredients.map((ingredient) => _buildIngredientTile(context, ingredient)).toList(),
+            ),
           12.height,
           _buildTotalsRow(context, meal.totals, showLabel: true),
         ],

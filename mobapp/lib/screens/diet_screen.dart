@@ -12,6 +12,7 @@ import '../../components/featured_diet_component.dart';
 import '../../extensions/extension_util/widget_extensions.dart';
 import '../../screens/view_all_diet.dart';
 import '../components/diet_category_component.dart';
+import '../components/meal_plan_view.dart';
 import '../extensions/app_text_field.dart';
 import '../extensions/decorations.dart';
 import '../extensions/horizontal_list.dart';
@@ -35,6 +36,7 @@ class _DietScreenState extends State<DietScreen> with WidgetsBindingObserver {
   List<DietModel>? mFeaturedDietList = [];
   List<DietModel>? mOtherDietList = [];
   List<DietModel>? mDietList = [];
+  List<DietModel>? mAssignedDietList = [];
 
   TextEditingController mSearch = TextEditingController();
   String? mSearchValue = "";
@@ -44,6 +46,7 @@ class _DietScreenState extends State<DietScreen> with WidgetsBindingObserver {
 
   bool isLastPage = false;
   bool _showClearButton = false;
+  bool mIsAssignedDietLoading = false;
 
   @override
   void initState() {
@@ -72,12 +75,28 @@ class _DietScreenState extends State<DietScreen> with WidgetsBindingObserver {
   }
 
   init() async {
+    getAssignedDietData();
     getDietData();
     mSearch.addListener(() {
       setState(() {
         _showClearButton = mSearch.text.length > 0;
       });
     });
+  }
+
+  Future<void> getAssignedDietData() async {
+    mIsAssignedDietLoading = true;
+    setState(() {});
+
+    try {
+      final response = await getDietApi(null, false, isAssign: true);
+      mAssignedDietList = response.data ?? [];
+    } catch (e) {
+      mAssignedDietList = [];
+    } finally {
+      mIsAssignedDietLoading = false;
+      setState(() {});
+    }
   }
 
   getDietData() async {
@@ -163,6 +182,116 @@ class _DietScreenState extends State<DietScreen> with WidgetsBindingObserver {
   }
 
 
+  Widget _buildAssignedDietSection() {
+    final assignedTitle = appStore.selectedLanguageCode == 'ar' ? 'الدايت المخصص لك' : 'Assigned diet';
+    final noDietText = appStore.selectedLanguageCode == 'ar' ? 'لم يتم تعيين دايت حتى الآن.' : 'No diet has been assigned yet.';
+
+    if (mIsAssignedDietLoading) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(assignedTitle, style: boldTextStyle(size: 18)),
+          16.height,
+          Loader(),
+        ],
+      ).paddingSymmetric(horizontal: 16, vertical: 16);
+    }
+
+    final diets = mAssignedDietList ?? [];
+
+    if (diets.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(assignedTitle, style: boldTextStyle(size: 18)),
+          12.height,
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: context.cardColor,
+              borderRadius: radius(16),
+              boxShadow: defaultBoxShadow(spreadRadius: 0, blurRadius: 8),
+            ),
+            child: Text(noDietText, style: secondaryTextStyle()),
+          ),
+        ],
+      ).paddingSymmetric(horizontal: 16, vertical: 16);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(assignedTitle, style: boldTextStyle(size: 18)),
+        12.height,
+        Column(
+          children: diets
+              .map((diet) => _buildAssignedDietCard(diet).paddingOnly(bottom: 16))
+              .toList(),
+        ),
+      ],
+    ).paddingOnly(left: 16, right: 16, top: 16);
+  }
+
+  Widget _buildAssignedDietCard(DietModel diet) {
+    final hasImage = diet.dietImage.validate().isNotEmpty;
+    final customPlanLabel = appStore.selectedLanguageCode == 'ar' ? 'خطة مخصصة' : 'Custom plan';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: radius(16),
+        boxShadow: defaultBoxShadow(spreadRadius: 0, blurRadius: 8),
+      ),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (hasImage)
+                ClipRRect(
+                  borderRadius: radius(12),
+                  child: cachedImage(
+                    diet.dietImage.validate(),
+                    height: 72,
+                    width: 72,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              if (hasImage) 12.width,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(diet.title.validate(), style: boldTextStyle(size: 16)),
+                    4.height,
+                    if (diet.calories.validate().isNotEmpty)
+                      Text('${languages.lblCalories}: ${diet.calories.validate()}', style: secondaryTextStyle()),
+                    if (diet.hasCustomPlan == true)
+                      Container(
+                        margin: EdgeInsets.only(top: 8),
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.1),
+                          borderRadius: radius(12),
+                        ),
+                        child: Text(customPlanLabel, style: primaryTextStyle(size: 12, color: primaryColor)),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          16.height,
+          MealPlanView(days: diet.mealPlan ?? [], padding: EdgeInsets.zero),
+        ],
+      ),
+    );
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -182,6 +311,7 @@ class _DietScreenState extends State<DietScreen> with WidgetsBindingObserver {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (mSearchValue.isEmptyOrNull) _buildAssignedDietSection(),
                 AppTextField(
                   controller: mSearch,
                   textFieldType: TextFieldType.OTHER,

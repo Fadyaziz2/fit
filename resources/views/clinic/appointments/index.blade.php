@@ -20,6 +20,23 @@
                         @if(session('success'))
                             <div class="alert alert-success">{{ session('success') }}</div>
                         @endif
+                        <form method="GET" class="row g-2 align-items-end mb-4">
+                            <div class="col-sm-6 col-md-4 col-lg-3">
+                                <label class="form-label" for="filter-type">{{ __('message.type') }}</label>
+                                <select class="form-select" id="filter-type" name="type">
+                                    <option value="">{{ __('message.all_types') }}</option>
+                                    <option value="regular" @selected(request('type') === 'regular')>{{ __('message.regular_appointment') }}</option>
+                                    <option value="free" @selected(request('type') === 'free')>{{ __('message.free_appointment') }}</option>
+                                    <option value="manual_free" @selected(request('type') === 'manual_free')>{{ __('message.manual_free_appointment') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <button type="submit" class="btn btn-primary w-100">{{ __('message.apply_filter') }}</button>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <a href="{{ route('clinic.appointments.index') }}" class="btn btn-outline-secondary w-100">{{ __('message.reset_filter') }}</a>
+                            </div>
+                        </form>
                         <div class="table-responsive">
                             <table class="table table-striped">
                                 <thead>

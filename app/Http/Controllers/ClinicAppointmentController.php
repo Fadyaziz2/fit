@@ -27,15 +27,23 @@ class ClinicAppointmentController extends Controller
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorizeAccess();
 
+        $request->validate([
+            'type' => 'nullable|in:regular,free,manual_free',
+        ]);
+
         $pageTitle = __('message.list_form_title', ['form' => __('message.appointment')]);
-        $appointments = SpecialistAppointment::with(['user', 'branch', 'specialist.branch', 'specialist.branches'])
+        $appointments = SpecialistAppointment::with(['user', 'specialist.branch'])
+            ->when($request->filled('type'), function ($query) use ($request) {
+                $query->where('type', $request->input('type'));
+            })
             ->orderByDesc('appointment_date')
             ->orderByDesc('appointment_time')
-            ->paginate(20);
+            ->paginate(20)
+            ->appends($request->only('type'));
 
         $users = User::where('user_type', 'user')
             ->orderBy('display_name')
