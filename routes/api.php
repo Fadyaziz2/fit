@@ -80,6 +80,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     
     Route::post('store-user-exercise', [ API\ExerciseController::class, 'storeUserExercise' ]);
     Route::get('get-user-exercise', [ API\ExerciseController::class, 'getUserExercise' ]);
+    Route::post('store-user-manual-exercise', [ API\ExerciseController::class, 'storeUserManualExercise' ]);
+    Route::get('get-user-manual-exercise', [ API\ExerciseController::class, 'getUserManualExercise' ]);
     
     Route::get('product-list', [ API\ProductController::class, 'getlist']);
     Route::get('productcategory-list', [ API\ProductCategoryController::class, 'getlist']);

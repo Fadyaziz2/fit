@@ -231,10 +231,49 @@
                                                         </div>
                                                 </div>
                                         </div>
-                                @endif
-                                @if($auth_user->can('exercise-list'))
-                                        <div class="col-md-6">
-                                                <div class="card" data-aos="fade-up" data-aos-delay="800">
+@endif
+@if($auth_user->can('user-list'))
+        <div class="col-md-6">
+                <div class="card" data-aos="fade-up" data-aos-delay="800">
+                        <div class="card-header d-flex justify-content-between flex-wrap">
+                                <div class="header-title">
+                                        <h4 class="card-title">{{ __('message.manual_workout_history') }}</h4>
+                                </div>
+                        </div>
+                        <div class="card-body p-0">
+                                <div class="table-responsive mt-4 dashboard_table_list">
+                                        <table class="table table-striped mb-0" role="grid">
+                                                <thead>
+                                                        <tr>
+                                                                <th>{{ __('message.activity') }}</th>
+                                                                <th>{{ __('message.duration') }}</th>
+                                                                <th>{{ __('message.performed_on') }}</th>
+                                                                <th>{{ __('message.user') }}</th>
+                                                        </tr>
+                                                </thead>
+                                                <tbody>
+                                                        @forelse($data['manual_exercises'] ?? [] as $manual)
+                                                                <tr>
+                                                                        <td>{{ $manual->activity }}</td>
+                                                                        <td>{{ number_format($manual->duration, 2) }}</td>
+                                                                        <td>{{ optional($manual->performed_on)->format('Y-m-d') }}</td>
+                                                                        <td>{{ trim((optional($manual->user)->first_name ?? '') . ' ' . (optional($manual->user)->last_name ?? '')) ?: (optional($manual->user)->email ?? '-') }}</td>
+                                                                </tr>
+                                                        @empty
+                                                                <tr>
+                                                                        <td colspan="4">{{ __('message.not_found_entry', ['name' => __('message.manual_workout')]) }}</td>
+                                                                </tr>
+                                                        @endforelse
+                                                </tbody>
+                                        </table>
+                                </div>
+                        </div>
+                </div>
+        </div>
+@endif
+@if($auth_user->can('exercise-list'))
+        <div class="col-md-6">
+                <div class="card" data-aos="fade-up" data-aos-delay="800">
                                                         <div class="card-header d-flex justify-content-between flex-wrap">
 								<div class="header-title">
 									<h4 class="card-title">{{ __('message.list_form_title',['form' => __('message.exercise')] ) }}</h4>

@@ -25,6 +25,8 @@ use App\Models\Banner;
 use App\Http\Resources\BannerResource;
 use App\Models\SuccessStory;
 use App\Http\Resources\SuccessStoryResource;
+use App\Models\UserManualExercise;
+use App\Http\Resources\UserManualExerciseResource;
 class DashboardController extends Controller
 {
     public function dashboardDetail(Request $request)
@@ -68,6 +70,15 @@ class DashboardController extends Controller
         $banners = Banner::active()->orderBy('display_order')->orderByDesc('created_at')->get();
         $successStories = SuccessStory::active()->orderBy('display_order')->orderByDesc('created_at')->get();
 
+        $manualExercises = collect();
+        if ($userId) {
+            $manualExercises = UserManualExercise::where('user_id', $userId)
+                ->orderByDesc('performed_on')
+                ->orderByDesc('id')
+                ->take(10)
+                ->get();
+        }
+
         $response = [
             'bodypart'      => BodyPartResource::collection($bodypart),
             'level'         => LevelResource::collection($level),
@@ -80,6 +91,7 @@ class DashboardController extends Controller
             'featured_products' => ProductResource::collection($featured_products),
             'product_banners' => BannerResource::collection($banners),
             'success_stories' => SuccessStoryResource::collection($successStories),
+            'manual_exercises' => UserManualExerciseResource::collection($manualExercises),
         ];
         $response['subscription'] = SettingData('subscription', 'subscription_system') ?? '1';
         $response['AdsBannerDetail'] = SettingData('AdsBannerDetail') ?? [];

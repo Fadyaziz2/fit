@@ -23,6 +23,7 @@ use App\Models\Product;
 use App\Models\Package;
 use App\Models\ProductCategory;
 use App\Models\SuccessStory;
+use App\Models\UserManualExercise;
 use App\Models\Ingredient;
 use App\Helpers\AuthHelper;
 use App\Models\AppSetting;
@@ -65,6 +66,11 @@ class HomeController extends Controller
         $data['post'] = Post::orderBy('id', 'desc')->take(10)->get();
         $data['banners'] = Banner::orderBy('id', 'desc')->take(10)->get();
         $data['success_stories'] = SuccessStory::orderBy('id', 'desc')->take(10)->get();
+        $data['manual_exercises'] = UserManualExercise::with('user')
+            ->orderByDesc('performed_on')
+            ->orderByDesc('id')
+            ->take(10)
+            ->get();
         return view('dashboards.dashboard', compact('assets', 'data', 'auth_user'));
     }
 
