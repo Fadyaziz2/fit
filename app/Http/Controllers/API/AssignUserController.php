@@ -16,31 +16,14 @@ class AssignUserController extends Controller
 {
     public function getAssignDiet(Request $request)
     {
-        $userId = optional($request->user())->id ?? auth()->id();
+        $userId = auth()->id();
 
-        if (!$userId) {
-            return json_custom_response([
-                'message' => __('auth.unauthenticated'),
-                'pagination' => [
-                    'total_items' => 0,
-                    'per_page' => 0,
-                    'currentPage' => 1,
-                    'totalPages' => 0,
-                ],
-                'data' => [],
-            ], 401);
-        }
-
-        $assign_diet = Diet::query()
-            ->select('diets.*')
-            ->join('assign_diets', function ($join) use ($userId) {
-                $join->on('assign_diets.diet_id', '=', 'diets.id')
-                    ->where('assign_diets.user_id', '=', $userId);
-            })
+        $assign_diet = Diet::myAssignDiet($userId)
             ->with(['userAssignDiet' => function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            }])
-            ->orderByDesc('assign_diets.created_at');
+                if ($userId) {
+                    $query->where('user_id', $userId);
+                }
+            }]);
         
         $per_page = config('constant.PER_PAGE_LIMIT');
         if( $request->has('per_page') && !empty($request->per_page)){
