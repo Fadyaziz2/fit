@@ -249,54 +249,31 @@
                     section.classList.toggle('d-none', isManualFree);
                 });
 
-                if (manualUser) {
-                    const $manualUser = $(manualUser);
-                    if (isManualFree) {
-                        $manualUser.val('').prop('disabled', true).trigger('change');
-                    } else {
-                        $manualUser.prop('disabled', false).trigger('change');
+                if (type === 'manual_free') {
+                    if (manualUser) {
+                        $(manualUser).val('').prop('disabled', true).trigger('change');
                     }
-
-                    const select2Container = $manualUser.next('.select2-container, .select2');
-                    if (select2Container.length) {
-                        select2Container.toggleClass('d-none', isManualFree);
-                    }
-                }
-
-                if (manualName) {
-                    if (isManualFree) {
+                    if (manualName) {
                         manualName.setAttribute('required', 'required');
-                        manualName.required = true;
-                    } else {
+                    }
+                    if (manualPhone) {
+                        manualPhone.setAttribute('required', 'required');
+                    }
+                } else {
+                    if (manualUser) {
+                        $(manualUser).prop('disabled', false).trigger('change');
+                    }
+                    if (manualName) {
                         manualName.value = '';
                         manualName.removeAttribute('required');
-                        manualName.required = false;
                     }
-                }
-
-                if (manualPhone) {
-                    if (isManualFree) {
-                        manualPhone.setAttribute('required', 'required');
-                        manualPhone.required = true;
-                    } else {
+                    if (manualPhone) {
                         manualPhone.value = '';
                         manualPhone.removeAttribute('required');
-                        manualPhone.required = false;
                     }
-                }
-
-                if (manualBranch) {
-                    if (isManualFree) {
-                        manualBranch.removeAttribute('disabled');
-                        manualBranch.setAttribute('required', 'required');
-                        manualBranch.required = true;
-                    } else {
+                    if (manualBranch) {
                         manualBranch.value = '';
-                        manualBranch.setAttribute('disabled', 'disabled');
-                        manualBranch.removeAttribute('required');
-                        manualBranch.required = false;
                     }
-                    filterSpecialists();
                 }
             }
 
@@ -406,20 +383,6 @@
                 setTimeMessage(message, helperText);
             }
 
-            function normaliseSlots(rawSlots) {
-                if (!rawSlots) {
-                    return [];
-                }
-
-                if (Array.isArray(rawSlots)) {
-                    return rawSlots;
-                }
-
-                return Object.keys(rawSlots).map(function(key) {
-                    return rawSlots[key];
-                });
-            }
-
             function isSlotAvailable(slot) {
                 if (!slot) {
                     return false;
@@ -468,6 +431,13 @@
                             ? response.meta.working_ranges
                             : [];
                         const helperText = formatWorkingRanges(workingRanges);
+                        const hasAvailabilityFlags = slots.some(function(slot) {
+                            return slot && (slot.hasOwnProperty('available') || slot.hasOwnProperty('is_available') || slot.hasOwnProperty('isAvailable'));
+                        });
+                        const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
+                            ? response.meta.working_ranges
+                            : [];
+                        const helperText = formatWorkingRanges(workingRanges);
 
                         if (!slots.length) {
                             resetTimeSelect(messages.noSchedule, helperText);
@@ -475,12 +445,7 @@
                         }
 
                         if (!availableSlots.length) {
-                            setTimeOptions(slots, helperText ? `${helperText} — ${messages.noSlots}` : messages.noSlots);
-                            setTimeout(function() {
-                                if (helper && !helper.textContent) {
-                                    helper.textContent = messages.noSlots;
-                                }
-                            }, 0);
+                            resetTimeSelect(messages.noSlots, helperText);
                             return;
                         }
 
