@@ -549,6 +549,16 @@ class UserController extends Controller
                 ->all()
             : [];
 
+        $ingredientOptions = $ingredients
+            ->map(function (Ingredient $ingredient) use ($dislikedIngredientIds) {
+                return [
+                    'id' => (int) $ingredient->id,
+                    'title' => $ingredient->title,
+                    'disliked' => in_array($ingredient->id, $dislikedIngredientIds, true),
+                ];
+            })
+            ->values();
+
         $customPlan = $assignment->custom_plan ?? [];
 
         $view = view('users.edit_assign_diet', [
@@ -560,6 +570,7 @@ class UserController extends Controller
             'ingredients' => $ingredients,
             'ingredientsMap' => $ingredientsMap,
             'dislikedIngredientIds' => $dislikedIngredientIds,
+            'ingredientOptions' => $ingredientOptions,
         ])->render();
 
         return response()->json(['data' => $view, 'status' => true]);

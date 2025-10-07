@@ -235,13 +235,7 @@
         {{ html()->form()->close() }}
     @endif
 <script>
-    window.dietMealIngredientOptions = @json($ingredients->map(function ($ingredient) use ($dislikedIngredientIds) {
-        return [
-            'id' => (int) $ingredient->id,
-            'title' => $ingredient->title,
-            'disliked' => in_array($ingredient->id, $dislikedIngredientIds, true),
-        ];
-    })->values());
+    window.dietMealIngredientOptions = @json($ingredientOptions ?? []);
     window.dietMealIngredientPlaceholder = @json(__('message.select_name', ['select' => __('message.ingredient')]));
     window.dietMealIngredientQuantityLabel = @json(__('message.quantity'));
     window.dietMealIngredientRemoveLabel = @json(__('message.remove'));
