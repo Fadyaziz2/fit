@@ -24,7 +24,6 @@
 @include('partials.dashboard._scripts')
 @include('partials.dashboard._dynamic_script')
 @include('partials.dashboard._app_toast')
-@stack('scripts')
 <div class="modal fade" id="formModal">
 <div class="modal-dialog">
     <div class="modal-content">

@@ -12,6 +12,7 @@
 </head>
 <body class="" >
 @include('partials.dashboard._body')
+@stack('scripts')
 </body>
 
 </html>
