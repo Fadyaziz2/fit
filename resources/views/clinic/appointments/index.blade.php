@@ -350,22 +350,22 @@
                         const availableSlots = slots.filter(function(slot) {
                             return slot && slot.available;
                         });
-                        const meta = response && response.meta ? response.meta : {};
-                        const totalSlots = typeof meta.total_slots === 'number' && !isNaN(meta.total_slots) ? meta.total_slots : slots.length;
-                        const availableCount = typeof meta.available_slots === 'number' && !isNaN(meta.available_slots) ? meta.available_slots : availableSlots.length;
-                        const helperText = formatWorkingRanges(meta.working_ranges || []);
+                        const select = document.getElementById('manual-time');
+                        select.innerHTML = '';
 
-                        if (!totalSlots) {
-                            setTimeMessage(messages.noSchedule, helperText);
+                        if (!availableSlots.length) {
+                            resetTimeSelect(slots.length ? "{{ __('message.no_slots_available') }}" : "{{ __('message.error_fetching_slots') }}");
                             return;
                         }
 
-                        if (!availableCount) {
-                            setTimeMessage(messages.noSlots, helperText);
-                            return;
-                        }
-
-                        setTimeOptions(availableSlots, helperText);
+                        select.innerHTML = `<option value="">{{ __('message.select_name', ['select' => __('message.start_time')]) }}</option>`;
+                        availableSlots.forEach(function(slot) {
+                            const option = document.createElement('option');
+                            option.value = slot.time;
+                            option.textContent = slot.time;
+                            select.appendChild(option);
+                        });
+                        document.getElementById('manual-time-helper').textContent = '';
                     })
                     .fail(function() {
                         setTimeMessage(messages.error);
