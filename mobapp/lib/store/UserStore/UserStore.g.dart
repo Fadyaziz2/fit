@@ -324,6 +324,70 @@ mixin _$UserStore on UserStoreBase, Store {
     });
   }
 
+  late final _$dislikedIngredientsAtom =
+      Atom(name: 'UserStoreBase.dislikedIngredients', context: context);
+
+  @override
+  ObservableList<IngredientModel> get dislikedIngredients {
+    _$dislikedIngredientsAtom.reportRead();
+    return super.dislikedIngredients;
+  }
+
+  @override
+  set dislikedIngredients(ObservableList<IngredientModel> value) {
+    _$dislikedIngredientsAtom.reportWrite(value, super.dislikedIngredients, () {
+      super.dislikedIngredients = value;
+    });
+  }
+
+  late final _$healthConditionsAtom =
+      Atom(name: 'UserStoreBase.healthConditions', context: context);
+
+  @override
+  ObservableList<HealthConditionModel> get healthConditions {
+    _$healthConditionsAtom.reportRead();
+    return super.healthConditions;
+  }
+
+  @override
+  set healthConditions(ObservableList<HealthConditionModel> value) {
+    _$healthConditionsAtom.reportWrite(value, super.healthConditions, () {
+      super.healthConditions = value;
+    });
+  }
+
+  late final _$attachmentsAtom =
+      Atom(name: 'UserStoreBase.attachments', context: context);
+
+  @override
+  ObservableList<UserAttachment> get attachments {
+    _$attachmentsAtom.reportRead();
+    return super.attachments;
+  }
+
+  @override
+  set attachments(ObservableList<UserAttachment> value) {
+    _$attachmentsAtom.reportWrite(value, super.attachments, () {
+      super.attachments = value;
+    });
+  }
+
+  late final _$healthNotesAtom =
+      Atom(name: 'UserStoreBase.healthNotes', context: context);
+
+  @override
+  String get healthNotes {
+    _$healthNotesAtom.reportRead();
+    return super.healthNotes;
+  }
+
+  @override
+  set healthNotes(String value) {
+    _$healthNotesAtom.reportWrite(value, super.healthNotes, () {
+      super.healthNotes = value;
+    });
+  }
+
   late final _$isSubscribeAtom = Atom(name: 'UserStoreBase.isSubscribe', context: context);
 
   @override

@@ -13,8 +13,12 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Traits\SubscriptionTrait;
 use App\Http\Resources\UserDetailResource;
+use App\Http\Resources\IngredientResource;
+use App\Models\Ingredient;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class UserController extends Controller
 {
@@ -93,6 +97,8 @@ class UserController extends Controller
             'userFavouriteProducts.product.media',
             'cartItems.product.media',
             'cartItems.product.productcategory',
+            'dislikedIngredients.media',
+            'userDiseases',
         ])->where('id',$id)->where('user_type', 'user')->first();
         
         if(empty($user)) {
@@ -436,11 +442,20 @@ class UserController extends Controller
     {
         $user = auth()->user();
 
-        $user = User::where('id',$user->id)->where('user_type', 'user')->first();
-        
+        $user = User::with([
+            'userProfile.specialist',
+            'userFavouriteDiet.diet.media',
+            'userFavouriteWorkout.workout.media',
+            'userFavouriteProducts.product.media',
+            'cartItems.product.media',
+            'cartItems.product.productcategory',
+            'dislikedIngredients.media',
+            'userDiseases',
+        ])->where('id',$user->id)->where('user_type', 'user')->first();
+
         if(empty($user)) {
             $message = __('message.not_found_entry', ['name' => __('message.user') ]);
-            return json_message_response($message,400);   
+            return json_message_response($message,400);
         }
 
         $user_detail = new UserDetailResource($user);
@@ -448,7 +463,166 @@ class UserController extends Controller
             'data' => $user_detail,
             'subscription_detail' => $this->subscriptionPlanDetail($user->id),
         ];
-        
+
         return json_custom_response($response);
+    }
+
+    public function updateHealthProfile(Request $request)
+    {
+        $authUser = auth()->user();
+
+        $user = User::with(['userProfile', 'dislikedIngredients', 'userDiseases'])->findOrFail($authUser->id);
+
+        $validator = Validator::make($request->all(), [
+            'disliked_ingredients' => ['nullable', 'array'],
+            'disliked_ingredients.*' => ['integer', 'exists:ingredients,id'],
+            'diseases' => ['nullable', 'array'],
+            'diseases.*.name' => ['nullable', 'string', 'max:255'],
+            'diseases.*.started_at' => ['nullable', 'date'],
+            'specialist_id' => ['nullable', 'integer', 'exists:specialists,id'],
+            'notes' => ['nullable', 'string'],
+        ], [], [
+            'disliked_ingredients.*' => __('message.ingredient'),
+            'diseases.*.name' => __('message.disease_name'),
+            'diseases.*.started_at' => __('message.disease_start_date'),
+        ]);
+
+        $validator->after(function ($validator) use ($request) {
+            $diseases = $request->input('diseases', []);
+
+            foreach ($diseases as $index => $disease) {
+                $name = isset($disease['name']) ? trim((string) $disease['name']) : '';
+                $date = $disease['started_at'] ?? null;
+
+                if ($name === '' && ($date === null || $date === '')) {
+                    continue;
+                }
+
+                if ($name === '' || $date === null || $date === '') {
+                    $validator->errors()->add("diseases.$index", __('message.disease_name_and_date_required'));
+                }
+            }
+        });
+
+        $validated = $validator->validate();
+
+        DB::transaction(function () use ($user, $validated) {
+            $dislikedIds = collect($validated['disliked_ingredients'] ?? [])
+                ->filter(fn ($value) => $value !== null && $value !== '')
+                ->map(fn ($value) => (int) $value)
+                ->unique()
+                ->values()
+                ->all();
+
+            $user->dislikedIngredients()->sync($dislikedIds);
+
+            $user->userDiseases()->delete();
+
+            $diseasePayload = [];
+            foreach ($validated['diseases'] ?? [] as $disease) {
+                $name = isset($disease['name']) ? trim((string) $disease['name']) : '';
+                $date = $disease['started_at'] ?? null;
+
+                if ($name === '' || $date === null || $date === '') {
+                    continue;
+                }
+
+                $diseasePayload[] = [
+                    'name' => $name,
+                    'started_at' => $date,
+                ];
+            }
+
+            if (! empty($diseasePayload)) {
+                $user->userDiseases()->createMany($diseasePayload);
+            }
+
+            $profile = $user->userProfile ?: $user->userProfile()->create([]);
+            $profile->specialist_id = $validated['specialist_id'] ?? null;
+            $profile->notes = $validated['notes'] ?? null;
+            $profile->save();
+        });
+
+        $user->refresh()->load([
+            'userProfile.specialist',
+            'userFavouriteDiet.diet.media',
+            'userFavouriteWorkout.workout.media',
+            'userFavouriteProducts.product.media',
+            'cartItems.product.media',
+            'cartItems.product.productcategory',
+            'dislikedIngredients.media',
+            'userDiseases',
+        ]);
+
+        $response = [
+            'status' => true,
+            'message' => __('message.health_profile_updated'),
+            'data' => new UserDetailResource($user),
+        ];
+
+        return json_custom_response($response);
+    }
+
+    public function uploadAttachments(Request $request)
+    {
+        $authUser = auth()->user();
+        $user = User::findOrFail($authUser->id);
+
+        $validator = Validator::make($request->all(), [
+            'attachments' => ['required', 'array'],
+            'attachments.*' => ['file', 'mimes:jpeg,png,jpg,gif,webp,pdf', 'max:51200'],
+        ], [], [
+            'attachments' => __('message.attachments'),
+            'attachments.*' => __('message.attachments'),
+        ]);
+
+        $validator->validate();
+
+        foreach ($request->file('attachments', []) as $file) {
+            $user->addMedia($file)->preservingOriginal()->toMediaCollection('attachments');
+        }
+
+        $user->refresh();
+
+        return json_custom_response([
+            'status' => true,
+            'message' => __('message.attachments_uploaded'),
+            'attachments' => $this->formatAttachments($user),
+        ]);
+    }
+
+    public function destroyAttachment(Media $media)
+    {
+        $authUser = auth()->user();
+
+        abort_if(
+            $media->model_type !== $authUser->getMorphClass() ||
+            $media->model_id !== $authUser->getKey() ||
+            $media->collection_name !== 'attachments',
+            404
+        );
+
+        $media->delete();
+
+        $user = User::findOrFail($authUser->id);
+
+        return json_custom_response([
+            'status' => true,
+            'message' => __('message.attachment_deleted'),
+            'attachments' => $this->formatAttachments($user),
+        ]);
+    }
+
+    protected function formatAttachments(User $user): array
+    {
+        return $user->getMedia('attachments')->map(function (Media $media) {
+            return [
+                'id' => $media->id,
+                'name' => $media->file_name,
+                'url' => $media->getFullUrl(),
+                'mime_type' => $media->mime_type,
+                'size' => $media->size,
+            ];
+        })->values()->all();
     }
 }

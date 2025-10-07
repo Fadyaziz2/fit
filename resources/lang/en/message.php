@@ -91,6 +91,8 @@ return [
     'choose_file' => 'Choose :file',
     'image_png_jpg' => 'Image should be png/PNG, jpg/JPG, jpeg/JPG.',
     'attachments' => 'Attachments',
+    'attachments_uploaded' => 'Attachments uploaded successfully.',
+    'attachment_deleted' => 'Attachment removed successfully.',
     'categorydiet' => 'Category Diet',
     'workouttype' => 'Workout Type',
     'diet' => 'Diet',

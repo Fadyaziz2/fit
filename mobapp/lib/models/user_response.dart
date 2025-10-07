@@ -2,6 +2,9 @@ import 'cart_response.dart';
 import 'diet_response.dart';
 import 'product_response.dart';
 import 'workout_detail_response.dart';
+import 'ingredient_model.dart';
+import 'health_condition_model.dart';
+import 'user_attachment.dart';
 
 class UserResponse {
   Data? data;
@@ -52,6 +55,9 @@ class Data {
   List<CartItemModel>? cartItems;
   int? cartItemCount;
   num? cartTotalAmount;
+  List<IngredientModel>? dislikedIngredients;
+  List<HealthConditionModel>? healthConditions;
+  List<UserAttachment>? attachments;
 
   Data(
       {this.id,
@@ -71,12 +77,15 @@ class Data {
         this.updatedAt,
         this.userProfile,
         this.isSubscribe,
-        this.favouriteWorkouts,
-        this.favouriteDiets,
-        this.favouriteProducts,
-        this.cartItems,
-        this.cartItemCount,
-        this.cartTotalAmount});
+      this.favouriteWorkouts,
+      this.favouriteDiets,
+      this.favouriteProducts,
+      this.cartItems,
+      this.cartItemCount,
+        this.cartTotalAmount,
+        this.dislikedIngredients,
+        this.healthConditions,
+        this.attachments});
 
   Data.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -126,6 +135,24 @@ class Data {
     cartTotalAmount = json['cart_total_amount'] != null
         ? num.tryParse(json['cart_total_amount'].toString())
         : null;
+    if (json['disliked_ingredients'] != null) {
+      dislikedIngredients = <IngredientModel>[];
+      json['disliked_ingredients'].forEach((v) {
+        dislikedIngredients!.add(IngredientModel.fromJson(v));
+      });
+    }
+    if (json['health_conditions'] != null) {
+      healthConditions = <HealthConditionModel>[];
+      json['health_conditions'].forEach((v) {
+        healthConditions!.add(HealthConditionModel.fromJson(v));
+      });
+    }
+    if (json['attachments'] != null) {
+      attachments = <UserAttachment>[];
+      json['attachments'].forEach((v) {
+        attachments!.add(UserAttachment.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -166,6 +193,17 @@ class Data {
     }
     data['cart_item_count'] = this.cartItemCount;
     data['cart_total_amount'] = this.cartTotalAmount;
+    if (this.dislikedIngredients != null) {
+      data['disliked_ingredients'] =
+          this.dislikedIngredients!.map((v) => v.toJson()).toList();
+    }
+    if (this.healthConditions != null) {
+      data['health_conditions'] =
+          this.healthConditions!.map((v) => v.toJson()).toList();
+    }
+    if (this.attachments != null) {
+      data['attachments'] = this.attachments!.map((v) => v.toJson()).toList();
+    }
     return data;
   }
 }
@@ -178,6 +216,7 @@ class UserProfile {
   String? height;
   String? heightUnit;
   String? address;
+  String? notes;
   int? userId;
   int? specialistId;
   String? freeBookingUsedAt;
@@ -193,6 +232,7 @@ class UserProfile {
         this.height,
         this.heightUnit,
         this.address,
+        this.notes,
         this.userId,
         this.specialistId,
         this.freeBookingUsedAt,
@@ -208,6 +248,7 @@ class UserProfile {
     height = json['height'];
     heightUnit = json['height_unit'];
     address = json['address'];
+    notes = json['notes'];
     userId = json['user_id'];
     specialistId = json['specialist_id'];
     freeBookingUsedAt = json['free_booking_used_at'];
@@ -227,6 +268,7 @@ class UserProfile {
     data['height'] = this.height;
     data['height_unit'] = this.heightUnit;
     data['address'] = this.address;
+    data['notes'] = this.notes;
     data['user_id'] = this.userId;
     data['specialist_id'] = this.specialistId;
     data['free_booking_used_at'] = this.freeBookingUsedAt;
