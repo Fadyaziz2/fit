@@ -233,6 +233,7 @@
             const appointmentUrl = "{{ route('clinic.appointments.available_slots') }}";
 
             function toggleManualSections(type) {
+                const isManualFree = type === 'manual_free';
                 const freeSections = document.querySelectorAll('.manual-free-section');
                 const regularSections = document.querySelectorAll('.manual-regular-section');
                 const manualUser = document.getElementById('manual-user');
@@ -240,8 +241,13 @@
                 const manualPhone = document.getElementById('manual-phone');
                 const manualBranch = document.getElementById('manual-branch');
 
-                freeSections.forEach(section => section.classList.toggle('d-none', type !== 'manual_free'));
-                regularSections.forEach(section => section.classList.toggle('d-none', type === 'manual_free'));
+                freeSections.forEach(function(section) {
+                    section.classList.toggle('d-none', !isManualFree);
+                });
+
+                regularSections.forEach(function(section) {
+                    section.classList.toggle('d-none', isManualFree);
+                });
 
                 if (type === 'manual_free') {
                     if (manualUser) {
@@ -340,9 +346,31 @@
                 timeSelect.innerHTML = `<option value="">${messages.placeholder}</option>`;
 
                 slots.forEach(function(slot) {
+                    if (!slot) {
+                        return;
+                    }
+
+                    let timeValue = '';
+
+                    if (typeof slot === 'string') {
+                        timeValue = slot;
+                    } else {
+                        timeValue = slot.time || slot.start_time || slot.startTime || '';
+                    }
+
+                    if (!timeValue) {
+                        return;
+                    }
+
                     const option = document.createElement('option');
-                    option.value = slot.time;
-                    option.textContent = slot.time;
+                    option.value = timeValue;
+                    option.textContent = timeValue;
+
+                    if (typeof slot === 'object' && slot !== null && !isSlotAvailable(slot)) {
+                        option.disabled = true;
+                        option.dataset.unavailable = 'true';
+                    }
+
                     timeSelect.appendChild(option);
                 });
 
@@ -380,8 +408,10 @@
             }
 
             function fetchSlots() {
-                const specialistId = document.getElementById('manual-specialist').value;
-                const date = document.getElementById('manual-date').value;
+                const specialistSelect = document.getElementById('manual-specialist');
+                const dateInput = document.getElementById('manual-date');
+                const specialistId = specialistSelect ? specialistSelect.value : '';
+                const date = dateInput ? dateInput.value : '';
 
                 if (!specialistId || !date) {
                     resetTimeSelect("{{ __('message.select_name', ['select' => __('message.start_time')]) }}");
@@ -393,7 +423,7 @@
 
                 $.get(appointmentUrl, { specialist_id: specialistId, date: date })
                     .done(function(response) {
-                        const slots = response && Array.isArray(response.slots) ? response.slots : [];
+                        const slots = response && response.slots ? normaliseSlots(response.slots) : [];
                         const availableSlots = slots.filter(function(slot) {
                             return isSlotAvailable(slot);
                         });
