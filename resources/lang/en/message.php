@@ -155,6 +155,8 @@ return [
     'loading' => 'Loading...',
     'no_slots_available' => 'No slots available for the selected day.',
     'error_fetching_slots' => 'Unable to load available slots.',
+    'no_schedule_for_day' => 'No working hours have been configured for the selected day.',
+    'working_hours_for_day' => 'Working hours: :range',
     'manual_branch_required' => 'Please select a branch before choosing the specialist.',
     'full_name' => 'Full name',
     'confirm_password' => 'Confirm password',

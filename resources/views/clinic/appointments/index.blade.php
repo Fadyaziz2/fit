@@ -266,11 +266,70 @@
                 });
             }
 
-            function resetTimeSelect(message) {
-                const timeSelect = document.getElementById('manual-time');
-                const helper = document.getElementById('manual-time-helper');
+            const timeSelect = document.getElementById('manual-time');
+            const helper = document.getElementById('manual-time-helper');
+            const messages = {
+                placeholder: "{{ __('message.select_name', ['select' => __('message.start_time')]) }}",
+                loading: "{{ __('message.loading') }}",
+                noSlots: "{{ __('message.no_slots_available') }}",
+                noSchedule: "{{ __('message.no_schedule_for_day') }}",
+                error: "{{ __('message.error_fetching_slots') }}",
+                workingHours: "{{ __('message.working_hours_for_day', ['range' => '__RANGE__']) }}",
+            };
+
+            function formatWorkingRanges(ranges) {
+                if (!Array.isArray(ranges) || !ranges.length) {
+                    return '';
+                }
+
+                const formatted = ranges
+                    .map(range => {
+                        if (!range || !range.start || !range.end) {
+                            return null;
+                        }
+                        return `${range.start} - ${range.end}`;
+                    })
+                    .filter(Boolean);
+
+                if (!formatted.length) {
+                    return '';
+                }
+
+                return messages.workingHours.replace('__RANGE__', formatted.join(' | '));
+            }
+
+            function setTimeMessage(message, helperText = '') {
+                if (!timeSelect) {
+                    return;
+                }
+
                 timeSelect.innerHTML = `<option value="">${message}</option>`;
-                helper.textContent = '';
+                if (helper) {
+                    helper.textContent = helperText;
+                }
+            }
+
+            function setTimeOptions(slots, helperText = '') {
+                if (!timeSelect) {
+                    return;
+                }
+
+                timeSelect.innerHTML = `<option value="">${messages.placeholder}</option>`;
+
+                slots.forEach(function(slot) {
+                    const option = document.createElement('option');
+                    option.value = slot.time;
+                    option.textContent = slot.time;
+                    timeSelect.appendChild(option);
+                });
+
+                if (helper) {
+                    helper.textContent = helperText;
+                }
+            }
+
+            function resetTimeSelect(message = messages.placeholder, helperText = '') {
+                setTimeMessage(message, helperText);
             }
 
             function fetchSlots() {
@@ -283,7 +342,7 @@
                 }
 
                 $('#manual-time').prop('disabled', true);
-                $('#manual-time-helper').text('{{ __('message.loading') }}');
+                $('#manual-time-helper').text(messages.loading);
 
                 $.get(appointmentUrl, { specialist_id: specialistId, date: date })
                     .done(function(response) {
@@ -309,7 +368,7 @@
                         document.getElementById('manual-time-helper').textContent = '';
                     })
                     .fail(function() {
-                        resetTimeSelect("{{ __('message.error_fetching_slots') }}");
+                        setTimeMessage(messages.error);
                     })
                     .always(function() {
                         $('#manual-time').prop('disabled', false);
@@ -333,6 +392,7 @@
 
             $('#manual-branch').on('change', function() {
                 filterSpecialists();
+                resetTimeSelect();
                 fetchSlots();
             });
 

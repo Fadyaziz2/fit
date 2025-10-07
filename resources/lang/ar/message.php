@@ -92,6 +92,8 @@ return [
     'loading' => 'جاري التحميل...',
     'no_slots_available' => 'لا توجد مواعيد متاحة لليوم المختار.',
     'error_fetching_slots' => 'تعذر تحميل المواعيد المتاحة.',
+    'no_schedule_for_day' => 'لا توجد ساعات عمل مسجلة لهذا اليوم.',
+    'working_hours_for_day' => 'ساعات العمل: :range',
     'manual_branch_required' => 'يرجى اختيار الفرع قبل اختيار المتخصص.',
     'full_name' => 'الاسم الكامل',
     'confirm_password' => 'تأكيد كلمة المرور',
