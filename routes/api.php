@@ -39,6 +39,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('update-user-status', [ API\UserController::class, 'updateUserStatus']);
     Route::post('delete-user-account', [ API\UserController::class, 'deleteUserAccount']);
     Route::get('logout',[ API\UserController::class, 'logout']);
+    Route::post('user/health-profile',[ API\UserController::class, 'updateHealthProfile']);
+    Route::post('user/attachments',[ API\UserController::class, 'uploadAttachments']);
+    Route::delete('user/attachments/{media}',[ API\UserController::class, 'destroyAttachment']);
+
+    Route::get('ingredient-list', [ API\IngredientController::class, 'getList' ]);
 
     Route::get('payment-gateway-list', [ API\PaymentGatewayController::class, 'getList'] );
 

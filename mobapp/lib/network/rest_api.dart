@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart';
 import 'package:mighty_fitness/languageConfiguration/ServerLanguageResponse.dart';
 import 'package:mighty_fitness/models/FitBotListResponse.dart';
@@ -44,6 +45,8 @@ import '../models/workout_type_response.dart';
 import '../utils/app_config.dart';
 import '../utils/app_constants.dart';
 import '../models/clinic_models.dart';
+import '../models/ingredient_response.dart';
+import '../models/user_attachment.dart';
 import 'network_utils.dart';
 
 Future<LoginResponse> logInApi(request) async {
@@ -317,6 +320,49 @@ Future<OrderResponse> orderHistoryApi() async {
 
 Future<UserResponse> getUserDataApi({int? id}) async {
   return UserResponse.fromJson(await (handleResponse(await buildHttpResponse("user-detail?id=$id", method: HttpMethod.GET))));
+}
+
+Future<UserResponse> updateHealthProfileApi(Map req) async {
+  return UserResponse.fromJson(await handleResponse(
+      await buildHttpResponse('user/health-profile', request: req, method: HttpMethod.POST)));
+}
+
+Future<IngredientResponse> getIngredientListApi({String? search}) async {
+  String endPoint = 'ingredient-list';
+  String query = search.validate(value: '');
+  if (query.isNotEmpty) {
+    endPoint = '$endPoint?search=$query';
+  }
+  return IngredientResponse.fromJson(
+      await handleResponse(await buildHttpResponse(endPoint, method: HttpMethod.GET)));
+}
+
+Future<List<UserAttachment>> uploadUserAttachmentsApi(List<File> files) async {
+  if (files.isEmpty) return [];
+
+  final request = await getMultiPartRequest('user/attachments');
+  request.headers.addAll(buildHeaderTokens());
+
+  for (final file in files) {
+    request.files.add(await MultipartFile.fromPath('attachments[]', file.path));
+  }
+
+  final response = await http.Response.fromStream(await request.send());
+
+  if (!response.statusCode.isSuccessful()) {
+    throw errorSomethingWentWrong;
+  }
+
+  final body = jsonDecode(response.body) as Map<String, dynamic>;
+  final attachments = body['attachments'] as List? ?? [];
+  return attachments.map((e) => UserAttachment.fromJson(e)).toList();
+}
+
+Future<List<UserAttachment>> deleteUserAttachmentApi(int attachmentId) async {
+  final response = await handleResponse(
+      await buildHttpResponse('user/attachments/$attachmentId', method: HttpMethod.DELETE));
+  final attachments = response['attachments'] as List? ?? [];
+  return attachments.map((e) => UserAttachment.fromJson(e)).toList();
 }
 
 Future<WorkoutDetailResponse> getWorkoutDetailApi(int? id) async {

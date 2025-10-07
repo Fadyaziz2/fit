@@ -22,6 +22,7 @@ class UserProfileResource extends JsonResource
             'weight'        => $this->weight,
             'weight_unit'   => $this->weight_unit,
             'address'       => $this->address,
+            'notes'         => $this->notes,
             'user_id'       => $this->user_id,
             'specialist_id' => $this->specialist_id,
             'free_booking_used_at' => $this->free_booking_used_at,

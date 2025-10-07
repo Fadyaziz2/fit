@@ -137,6 +137,17 @@ class BaseLanguage {
   String get lblSelectLevels => getContentValueFromKey(209);
   String get lblUpdate => getContentValueFromKey(103);
   String get lblSteps => getContentValueFromKey(239);
+  String get lblWaterIntake => getContentValueFromKey(414);
+  String get lblLitersPerDay => getContentValueFromKey(415);
+  String get lblHealthConditions => getContentValueFromKey(416);
+  String get lblAddCondition => getContentValueFromKey(417);
+  String get lblConditionName => getContentValueFromKey(418);
+  String get lblConditionStartDate => getContentValueFromKey(419);
+  String get lblDislikedMeals => getContentValueFromKey(420);
+  String get lblManage => getContentValueFromKey(421);
+  String get lblAttachments => getContentValueFromKey(422);
+  String get lblUploadDocument => getContentValueFromKey(423);
+  String get lblSuggestedMeals => getContentValueFromKey(424);
   String get lblPackageTitle => getContentValueFromKey(70);
   String get lblPackageTitle1 => getContentValueFromKey(71);
   String get lblSubscriptionPlans => getContentValueFromKey(76);

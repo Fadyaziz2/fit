@@ -4,6 +4,9 @@ import 'package:mobx/mobx.dart';
 import '../../extensions/shared_pref.dart';
 import '../../models/user_response.dart';
 import '../../utils/app_constants.dart';
+import '../../models/ingredient_model.dart';
+import '../../models/health_condition_model.dart';
+import '../../models/user_attachment.dart';
 
 part 'UserStore.g.dart';
 
@@ -70,6 +73,18 @@ abstract class UserStoreBase with Store {
 
   @observable
   String weightUnit = '';
+
+  @observable
+  ObservableList<IngredientModel> dislikedIngredients = ObservableList<IngredientModel>();
+
+  @observable
+  ObservableList<HealthConditionModel> healthConditions = ObservableList<HealthConditionModel>();
+
+  @observable
+  ObservableList<UserAttachment> attachments = ObservableList<UserAttachment>();
+
+  @observable
+  String healthNotes = '';
 
   @observable
   String heightUnit = 'feet';
@@ -396,6 +411,32 @@ abstract class UserStoreBase with Store {
     if (!isInitialization) await setValue(WEIGHT_UNIT, val);
   }
 
+  @action
+  Future<void> setDislikedIngredients(List<IngredientModel> items) async {
+    dislikedIngredients
+      ..clear()
+      ..addAll(items);
+  }
+
+  @action
+  Future<void> setHealthConditions(List<HealthConditionModel> items) async {
+    healthConditions
+      ..clear()
+      ..addAll(items);
+  }
+
+  @action
+  Future<void> setAttachments(List<UserAttachment> items) async {
+    attachments
+      ..clear()
+      ..addAll(items);
+  }
+
+  @action
+  Future<void> setHealthNotes(String value) async {
+    healthNotes = value;
+  }
+
 
 
 
@@ -525,5 +566,9 @@ abstract class UserStoreBase with Store {
     assignedSpecialistId = null;
     freeBookingUsedAt = '';
     assignedSpecialistBranchId = null;
+    dislikedIngredients.clear();
+    healthConditions.clear();
+    attachments.clear();
+    healthNotes = '';
   }
 }

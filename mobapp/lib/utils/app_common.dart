@@ -276,11 +276,16 @@ Future<void> getUSerDetail(BuildContext context, int? id) async {
       await userStore.setAssignedSpecialistId(profile.specialistId);
       await userStore.setFreeBookingUsedAt(profile.freeBookingUsedAt);
       await userStore.setAssignedSpecialistBranchId(profile.specialist?.branchId);
+      await userStore.setHealthNotes(profile.notes.validate());
     } else {
       await userStore.setAssignedSpecialistId(null);
       await userStore.setFreeBookingUsedAt(null);
       await userStore.setAssignedSpecialistBranchId(null);
+      await userStore.setHealthNotes('');
     }
+    await userStore.setDislikedIngredients(value.data?.dislikedIngredients ?? []);
+    await userStore.setHealthConditions(value.data?.healthConditions ?? []);
+    await userStore.setAttachments(value.data?.attachments ?? []);
     userStore.setSubscribe(value.subscriptionDetail!.isSubscribe.validate());
     userStore.setSubscriptionDetail(value.subscriptionDetail!);
     print("user data->" + value.toJson().toString());

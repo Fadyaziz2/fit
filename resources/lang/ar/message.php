@@ -115,6 +115,8 @@ return [
     'choose_file' => 'اختر :file',
     'image_png_jpg' => 'يجب أن تكون الصورة png/PNG، jpg/JPG، jpeg/JPG.',
     'attachments' => 'المرفقات',
+    'attachments_uploaded' => 'تم رفع المرفقات بنجاح.',
+    'attachment_deleted' => 'تم حذف المرفق بنجاح.',
     'categorydiet' => 'فئة النظام الغذائي',
     'workouttype' => 'نوع التمرين',
     'diet' => 'نظام عذائي',

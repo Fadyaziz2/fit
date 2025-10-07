@@ -23,6 +23,7 @@ class BMRComponentState extends State<BMRComponent> {
   double? mBMR;
   double? mKg;
   double? mCm;
+  double? mWaterIntake;
 
   @override
   void initState() {
@@ -34,6 +35,7 @@ class BMRComponentState extends State<BMRComponent> {
     //
     convertLbsToKg();
     convertFeetToCm();
+    calculateWaterIntake();
 
     if (userStore.gender == "male") {
       mBMR = (10 * mKg!) + (6.25 * mCm!) - (5 * userStore.age.toDouble()) + 5;
@@ -52,6 +54,19 @@ class BMRComponentState extends State<BMRComponent> {
   // convert Feet to cm
   void convertFeetToCm() {
     mCm = userStore.heightUnit == FEET ? double.parse(userStore.height.validate()) * 30.48 : double.parse(userStore.height.validate());
+  }
+
+  void calculateWaterIntake() {
+    double? weightValue = double.tryParse(userStore.weight.validate());
+    if (weightValue == null) return;
+
+    double weightInKg = userStore.weightUnit == LBS
+        ? weightValue / 2.20462
+        : weightValue;
+
+    if (weightInKg > 0) {
+      mWaterIntake = (weightInKg * 30) / 1000;
+    }
   }
 
   @override
@@ -85,6 +100,18 @@ class BMRComponentState extends State<BMRComponent> {
           Text(mBMR.toString().isEmptyOrNull ? "0" : mBMR!.toStringAsFixed(2).validate(), style: boldTextStyle(size: 19)).center(),
           Text(languages.lblCalories, style: secondaryTextStyle()),
           8.height,
+          Column(
+            children: [
+              Text(languages.lblWaterIntake, style: secondaryTextStyle()),
+              4.height,
+              Text(
+                mWaterIntake != null
+                    ? '${mWaterIntake!.toStringAsFixed(2)} ${languages.lblLitersPerDay}'
+                    : '0 ${languages.lblLitersPerDay}',
+                style: primaryTextStyle(),
+              ),
+            ],
+          ),
         ],
       ),
     );

@@ -86,6 +86,41 @@ class UserDetailResource extends JsonResource
             'cart_items'        => CartItemResource::collection($cartItems),
             'cart_item_count'   => (int) $cartItemCount,
             'cart_total_amount' => $cartTotal,
+            'disliked_ingredients' => $this->relationLoaded('dislikedIngredients')
+                ? IngredientResource::collection($this->dislikedIngredients)
+                : [],
+            'health_conditions' => $this->formatHealthConditions(),
+            'health_profile_notes' => optional($this->userProfile)->notes,
+            'attachments' => $this->formatAttachments(),
         ];
+    }
+
+    protected function formatHealthConditions(): array
+    {
+        if (! $this->relationLoaded('userDiseases')) {
+            return [];
+        }
+
+        return $this->userDiseases->map(function ($disease) {
+            return [
+                'id' => $disease->id,
+                'name' => $disease->name,
+                'started_at' => optional($disease->started_at)->format('Y-m-d'),
+                'started_at_formatted' => optional($disease->started_at)->translatedFormat('F j, Y'),
+            ];
+        })->values()->all();
+    }
+
+    protected function formatAttachments(): array
+    {
+        return $this->getMedia('attachments')->map(function ($media) {
+            return [
+                'id' => $media->id,
+                'name' => $media->file_name,
+                'url' => $media->getFullUrl(),
+                'mime_type' => $media->mime_type,
+                'size' => $media->size,
+            ];
+        })->values()->all();
     }
 }
