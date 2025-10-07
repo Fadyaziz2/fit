@@ -355,10 +355,11 @@ class MealPlanIngredientDetail {
 
 class MealPlanMeal {
   int mealNumber;
+  String? time;
   List<MealPlanIngredientDetail> ingredients;
   MealPlanTotals totals;
 
-  MealPlanMeal({required this.mealNumber, required this.ingredients, required this.totals});
+  MealPlanMeal({required this.mealNumber, this.time, required this.ingredients, required this.totals});
 
   factory MealPlanMeal.fromJson(Map<String, dynamic>? json) {
     json ??= {};
@@ -367,6 +368,7 @@ class MealPlanMeal {
 
     return MealPlanMeal(
       mealNumber: _parseInt(json['meal_number']),
+      time: json['time']?.toString(),
       ingredients: ingredientsJson
           .map((ingredient) => MealPlanIngredientDetail.fromJson(_ensureMap(ingredient)))
           .whereType<MealPlanIngredientDetail>()
@@ -378,6 +380,7 @@ class MealPlanMeal {
   Map<String, dynamic> toJson() {
     return {
       'meal_number': mealNumber,
+      'time': time,
       'ingredients': ingredients.map((e) => e.toJson()).toList(),
       'totals': totals.toJson(),
     };
