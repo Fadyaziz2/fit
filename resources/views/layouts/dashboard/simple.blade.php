@@ -19,6 +19,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </head>
 <body class data-bs-spy="scroll" data-bs-target="#elements-section" data-bs-offset="0" tabindex="0" >
     @include('partials.dashboard._body7')
-    @stack('scripts')
+    @include('partials.dashboard._scripts')
 </body>
 </html>
