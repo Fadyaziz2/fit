@@ -330,6 +330,7 @@ return [
     'speed' => 'سرعة',
     'Calories' => 'سعرات حرارية',
     'type' => 'يكتب',
+    'all_types' => 'جميع الأنواع',
     'equipment_id' => 'معرف المعدات',
     'days' => 'أيام',
     'about_user' => 'حول المستخدم',
