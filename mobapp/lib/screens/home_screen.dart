@@ -24,6 +24,7 @@ import '../../utils/app_colors.dart';
 import '../components/body_part_component.dart';
 import '../components/equipment_component.dart';
 import '../components/workout_component.dart';
+import '../components/manual_workout_history_table.dart';
 import '../extensions/app_text_field.dart';
 import '../extensions/common.dart';
 import '../extensions/horizontal_list.dart';
@@ -38,6 +39,7 @@ import '../models/product_response.dart';
 import '../models/product_category_response.dart';
 import '../models/banner_model.dart';
 import '../models/success_story_model.dart';
+import '../models/manual_exercise_response.dart';
 import '../network/rest_api.dart';
 import '../screens/edit_profile_screen.dart';
 import '../screens/search_screen.dart';
@@ -56,7 +58,6 @@ import '../extensions/no_data_widget.dart';
 import 'clinic/my_bookings_screen.dart';
 import 'clinic/new_booking_screen.dart';
 import '../models/clinic_models.dart';
-import '../network/rest_api.dart';
 
 bool? isFirstTimeGraph = false;
 
@@ -766,6 +767,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   List<ProductModel> featuredProducts = mDashboardResponse?.featuredProducts ?? <ProductModel>[];
                   List<BannerModel> productBanners = mDashboardResponse?.productBanners ?? <BannerModel>[];
                   List<SuccessStoryModel> successStories = mDashboardResponse?.successStories ?? <SuccessStoryModel>[];
+                  List<ManualExerciseModel> manualExercises = mDashboardResponse?.manualExercises ?? <ManualExerciseModel>[];
                   List<BodyPartModel> bodyParts = mDashboardResponse?.bodypart ?? <BodyPartModel>[];
                   List<EquipmentModel> equipments = mDashboardResponse?.equipment ?? <EquipmentModel>[];
                   List<WorkoutDetailModel> workouts = mDashboardResponse?.workout ?? <WorkoutDetailModel>[];
@@ -774,6 +776,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   bool hasFeaturedProducts = featuredProducts.isNotEmpty;
                   bool hasProductBanners = productBanners.isNotEmpty;
                   bool hasSuccessStories = successStories.isNotEmpty;
+                  bool hasManualExercises = manualExercises.isNotEmpty;
                   bool hasBodyParts = bodyParts.isNotEmpty;
                   bool hasEquipments = equipments.isNotEmpty;
                   bool hasWorkouts = workouts.isNotEmpty;
@@ -824,6 +827,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                         ).paddingSymmetric(horizontal: 16),
                         16.height,
+                        ManualWorkoutHistoryTable(
+                          entries: manualExercises,
+                          title: appStore.selectedLanguageCode == 'ar'
+                              ? 'سجل التمارين اليدوي'
+                              : 'Manual Workout History',
+                        ),
                         if (hasProductBanners)
                           ProductBannerCarousel(banners: productBanners).paddingBottom(16),
                         if (!hasAnyDashboardContent)

@@ -21,6 +21,7 @@ import '../models/blog_detail_response.dart';
 import '../models/blog_response.dart';
 import '../models/body_part_response.dart';
 import '../models/dashboard_response.dart';
+import '../models/manual_exercise_response.dart';
 import '../models/day_exercise_response.dart';
 import '../models/diet_response.dart';
 import '../models/equipment_response.dart';
@@ -203,6 +204,10 @@ Future<BlogDetailResponse> setExerciseHistory(Map req) async {
   return BlogDetailResponse.fromJson(await (handleResponse(await buildHttpResponse("store-user-exercise", request: req, method: HttpMethod.POST))));
 }
 
+Future<FitnessBaseResponse> storeManualExercise(Map req) async {
+  return FitnessBaseResponse.fromJson(await (handleResponse(await buildHttpResponse("store-user-manual-exercise", request: req, method: HttpMethod.POST))));
+}
+
 
 Future<DietResponse> getDietApi(String? isFeatured, bool? isCategory, {int? page = 1, bool? isAssign = false, bool? isFav = false, int? categoryId}) async {
   if (isFav == true) {
@@ -254,6 +259,10 @@ Future<ExerciseResponse> getExerciseApi({int? page, String? mSearchValue = " ", 
 
 Future<ExerciseResponse> getExerciseListApi({int? page}) async {
   return ExerciseResponse.fromJson(await handleResponse(await buildHttpResponse('get-user-exercise?page=$page', method: HttpMethod.GET)));
+}
+
+Future<ManualExerciseResponse> getManualExerciseListApi({int? page}) async {
+  return ManualExerciseResponse.fromJson(await handleResponse(await buildHttpResponse('get-user-manual-exercise?page=$page', method: HttpMethod.GET)));
 }
 
 

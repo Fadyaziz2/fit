@@ -8,7 +8,11 @@ use App\Models\Exercise;
 use App\Http\Resources\ExerciseResource;
 use App\Http\Resources\ExerciseDetailResource;
 use App\Http\Resources\UserExerciseResource;
+use App\Http\Resources\UserManualExerciseResource;
 use App\Models\UserExercise;
+use App\Models\UserManualExercise;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
 
 class ExerciseController extends Controller
 {
@@ -107,7 +111,42 @@ class ExerciseController extends Controller
 
         return json_message_response($message);
     }
-    
+
+    public function storeUserManualExercise(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'sport' => 'required|string',
+            'duration' => 'required|numeric|min:1',
+            'custom_sport' => 'nullable|string|max:191',
+        ]);
+
+        if ($validator->fails()) {
+            return json_custom_response([
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $userId = auth()->id();
+        $sportKey = $request->input('sport');
+        $activity = $sportKey === 'other'
+            ? trim((string) $request->input('custom_sport'))
+            : trim((string) $sportKey);
+
+        if (empty($activity)) {
+            return json_message_response(__('message.manual_workout_name_required'), 422);
+        }
+
+        UserManualExercise::create([
+            'user_id' => $userId,
+            'activity' => $activity,
+            'duration' => (float) $request->input('duration'),
+            'performed_on' => Carbon::today(),
+        ]);
+
+        return json_message_response(__('message.save_form', ['form' => __('message.manual_workout')]));
+    }
+
     public function getUserExercise(Request $request)
     {
         $user = auth()->user();
@@ -136,6 +175,35 @@ class ExerciseController extends Controller
         //     'pagination' => json_pagination_response($user_exercises),
         //     'data' => $user_exercises->items(),
         // ];
+
+        return json_custom_response($response);
+    }
+
+    public function getUserManualExercise(Request $request)
+    {
+        $user = auth()->user();
+
+        $manualExercises = UserManualExercise::where('user_id', $user->id)
+            ->orderByDesc('performed_on')
+            ->orderByDesc('id');
+
+        $perPage = config('constant.PER_PAGE_LIMIT', 10);
+        if ($request->has('per_page') && !empty($request->per_page)) {
+            if (is_numeric($request->per_page)) {
+                $perPage = $request->per_page;
+            } elseif ($request->per_page == -1) {
+                $perPage = $manualExercises->count();
+            }
+        }
+
+        $manualExercises = $manualExercises->paginate($perPage);
+
+        $items = UserManualExerciseResource::collection($manualExercises);
+
+        $response = [
+            'pagination'    => json_pagination_response($items),
+            'data'          => $items,
+        ];
 
         return json_custom_response($response);
     }

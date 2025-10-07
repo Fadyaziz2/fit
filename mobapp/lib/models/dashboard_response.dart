@@ -9,6 +9,7 @@ import 'level_response.dart';
 import 'product_response.dart';
 import 'banner_model.dart';
 import 'success_story_model.dart';
+import 'manual_exercise_response.dart';
 
 class DashboardResponse {
   List<BodyPartModel>? bodypart;
@@ -22,8 +23,9 @@ class DashboardResponse {
   List<ProductModel>? featuredProducts;
   List<BannerModel>? productBanners;
   List<SuccessStoryModel>? successStories;
+  List<ManualExerciseModel>? manualExercises;
 
-  DashboardResponse({this.bodypart, this.level, this.equipment, this.exercise, this.diet, this.workouttype, this.workout, this.featuredDiet, this.featuredProducts, this.productBanners, this.successStories});
+  DashboardResponse({this.bodypart, this.level, this.equipment, this.exercise, this.diet, this.workouttype, this.workout, this.featuredDiet, this.featuredProducts, this.productBanners, this.successStories, this.manualExercises});
 
   DashboardResponse.fromJson(Map<String, dynamic> json) {
     if (json['bodypart'] != null) {
@@ -92,6 +94,12 @@ class DashboardResponse {
         successStories!.add(SuccessStoryModel.fromJson(v));
       });
     }
+    if (json['manual_exercises'] != null) {
+      manualExercises = <ManualExerciseModel>[];
+      json['manual_exercises'].forEach((v) {
+        manualExercises!.add(ManualExerciseModel.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -128,6 +136,9 @@ class DashboardResponse {
     }
     if (this.successStories != null) {
       data['success_stories'] = this.successStories!.map((v) => v.toJson()).toList();
+    }
+    if (this.manualExercises != null) {
+      data['manual_exercises'] = this.manualExercises!.map((v) => v.toJson()).toList();
     }
     return data;
   }
