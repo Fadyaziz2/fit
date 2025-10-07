@@ -214,14 +214,15 @@ class _CartItemTile extends StatelessWidget {
                   Text(category, style: secondaryTextStyle(size: 12))
                       .paddingTop(4),
                 12.height,
-                Row(
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
                   children: [
                     _InfoChip(
                       icon: Icons.shopping_bag_outlined,
                       label:
                           '${languages.lblQuantity}: ${item.quantity.validate()}',
                     ),
-                    12.width,
                     _InfoChip(
                       icon: Icons.attach_money,
                       label:
