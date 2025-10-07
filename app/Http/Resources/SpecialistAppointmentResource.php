@@ -29,6 +29,12 @@ class SpecialistAppointmentResource extends JsonResource
                         'id' => $this->specialist?->branch?->id,
                         'name' => $this->specialist?->branch?->name,
                     ] : null,
+                    'branches' => $this->specialist?->branches->map(function ($branch) {
+                        return [
+                            'id' => $branch->id,
+                            'name' => $branch->name,
+                        ];
+                    })->values(),
                 ];
             }),
             'branch' => $this->whenLoaded('branch', function () {

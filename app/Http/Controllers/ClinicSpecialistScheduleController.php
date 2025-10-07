@@ -20,7 +20,7 @@ class ClinicSpecialistScheduleController extends Controller
         $this->authorizeAccess();
 
         $pageTitle = __('message.list_form_title', ['form' => __('message.specialist_schedule')]);
-        $schedules = SpecialistSchedule::with('specialist.branch')->orderBy('day_of_week')->paginate(20);
+        $schedules = SpecialistSchedule::with(['specialist.branch', 'specialist.branches'])->orderBy('day_of_week')->paginate(20);
 
         return view('clinic.schedules.index', compact('pageTitle', 'schedules'));
     }
@@ -30,7 +30,7 @@ class ClinicSpecialistScheduleController extends Controller
         $this->authorizeAccess();
 
         $pageTitle = __('message.add_form_title', ['form' => __('message.specialist_schedule')]);
-        $specialists = Specialist::with('branch')->orderBy('name')->get();
+        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
 
         return view('clinic.schedules.form', compact('pageTitle', 'specialists'));
     }
@@ -57,7 +57,7 @@ class ClinicSpecialistScheduleController extends Controller
         $this->authorizeAccess();
 
         $pageTitle = __('message.update_form_title', ['form' => __('message.specialist_schedule')]);
-        $specialists = Specialist::with('branch')->orderBy('name')->get();
+        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
 
         return view('clinic.schedules.form', compact('pageTitle', 'specialists', 'schedule'));
     }

@@ -96,6 +96,8 @@ return [
     'no_schedule_for_day' => 'لا توجد ساعات عمل مسجلة لهذا اليوم.',
     'working_hours_for_day' => 'ساعات العمل: :range',
     'manual_branch_required' => 'يرجى اختيار الفرع قبل اختيار المتخصص.',
+    'specialist_branch_hint' => 'حدد جميع الفروع التي يعمل بها الأخصائي.',
+    'specialist_not_in_branch' => 'الأخصائي المحدد غير مرتبط بهذا الفرع.',
     'full_name' => 'الاسم الكامل',
     'confirm_password' => 'تأكيد كلمة المرور',
     'free_booking_already_used' => 'تم استخدام الحجز المجاني بالفعل.',

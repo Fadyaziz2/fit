@@ -108,6 +108,7 @@ class UserController extends Controller
 
         $data = User::with([
             'userProfile.specialist.branch',
+            'userProfile.specialist.branches',
             'roles',
             'dislikedIngredients',
             'userDiseases',
@@ -137,7 +138,7 @@ class UserController extends Controller
 
         $cartItems = $data->cartItems;
 
-        $specialists = Specialist::with('branch')->orderBy('name')->get();
+        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
 
         return $dataTable->with('user_id',$id)->render('users.profile', compact(
             'data',

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Specialist extends Model
 {
@@ -27,6 +28,11 @@ class Specialist extends Model
     public function branch()
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function branches(): BelongsToMany
+    {
+        return $this->belongsToMany(Branch::class, 'branch_specialist')->withTimestamps();
     }
 
     public function schedules()

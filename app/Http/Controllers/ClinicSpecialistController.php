@@ -20,7 +20,7 @@ class ClinicSpecialistController extends Controller
         $this->authorizeAccess();
 
         $pageTitle = __('message.list_form_title', ['form' => __('message.specialist')]);
-        $specialists = Specialist::with('branch')->orderBy('name')->paginate(15);
+        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->paginate(15);
 
         return view('clinic.specialists.index', compact('pageTitle', 'specialists'));
     }
@@ -44,14 +44,24 @@ class ClinicSpecialistController extends Controller
             'phone' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:191',
             'specialty' => 'nullable|string|max:191',
-            'branch_id' => 'required|exists:branches,id',
+            'branch_ids' => 'required|array|min:1',
+            'branch_ids.*' => 'exists:branches,id',
             'is_active' => 'nullable|boolean',
             'notes' => 'nullable|string',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
 
-        Specialist::create($data);
+        $branchIds = collect($request->input('branch_ids'))->filter()->unique()->values()->all();
+        $primaryBranchId = collect($branchIds)->first();
+        $primaryBranchId = $primaryBranchId !== null ? (int) $primaryBranchId : null;
+
+        $specialist = Specialist::create(array_merge(
+            $data,
+            ['branch_id' => $primaryBranchId]
+        ));
+
+        $specialist->branches()->sync($branchIds);
 
         return redirect()->route('clinic.specialists.index')->withSuccess(__('message.save_form', ['form' => __('message.specialist')]));
     }
@@ -62,6 +72,8 @@ class ClinicSpecialistController extends Controller
 
         $pageTitle = __('message.update_form_title', ['form' => __('message.specialist')]);
         $branches = Branch::orderBy('name')->pluck('name', 'id');
+
+        $specialist->load('branches');
 
         return view('clinic.specialists.form', compact('pageTitle', 'branches', 'specialist'));
     }
@@ -75,14 +87,24 @@ class ClinicSpecialistController extends Controller
             'phone' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:191',
             'specialty' => 'nullable|string|max:191',
-            'branch_id' => 'required|exists:branches,id',
+            'branch_ids' => 'required|array|min:1',
+            'branch_ids.*' => 'exists:branches,id',
             'is_active' => 'nullable|boolean',
             'notes' => 'nullable|string',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
 
-        $specialist->update($data);
+        $branchIds = collect($request->input('branch_ids'))->filter()->unique()->values()->all();
+        $primaryBranchId = collect($branchIds)->first();
+        $primaryBranchId = $primaryBranchId !== null ? (int) $primaryBranchId : null;
+
+        $specialist->update(array_merge(
+            $data,
+            ['branch_id' => $primaryBranchId]
+        ));
+
+        $specialist->branches()->sync($branchIds);
 
         return redirect()->route('clinic.specialists.index')->withSuccess(__('message.update_form', ['form' => __('message.specialist')]));
     }

@@ -23,10 +23,13 @@
         }
       @php
             $specialistDirectory = $specialists->mapWithKeys(function ($specialist) {
+                $branchNames = $specialist->branches->pluck('name')->filter()->values();
+
                 return [
                     (string) $specialist->id => [
                         'name' => $specialist->name,
-                        'branch' => optional($specialist->branch)->name,
+                        'branches' => $branchNames->toArray(),
+                        'branch_label' => $branchNames->implode(', '),
                         'phone' => $specialist->phone,
                         'email' => $specialist->email,
                     ],
@@ -52,8 +55,8 @@
 
             let content = '<h6 class="mb-2">' + $('<div>').text(details.name).html() + '</h6>';
 
-            if (details.branch) {
-                content += '<p class="mb-1"><strong>{{ __('message.branch') }}:</strong> ' + $('<div>').text(details.branch).html() + '</p>';
+            if (details.branch_label) {
+                content += '<p class="mb-1"><strong>{{ __('message.branch') }}:</strong> ' + $('<div>').text(details.branch_label).html() + '</p>';
             }
 
             if (details.phone) {
@@ -675,8 +678,11 @@
                                         <select name="specialist_id" id="specialist-id" class="form-select">
                                             <option value="">{{ __('message.no_specialist_assigned') }}</option>
                                             @foreach($specialists as $specialist)
+                                                @php
+                                                    $branchNames = $specialist->branches->pluck('name')->filter()->implode(', ');
+                                                @endphp
                                                 <option value="{{ $specialist->id }}" {{ (string) $specialist->id === (string) $assignedSpecialistId ? 'selected' : '' }}>
-                                                    {{ $specialist->name }}@if($specialist->branch) ({{ $specialist->branch->name }}) @endif
+                                                    {{ $specialist->name }}@if($branchNames) ({{ $branchNames }})@endif
                                                 </option>
                                             @endforeach
                                         </select>
@@ -686,8 +692,11 @@
                                         <div id="specialist-details" class="border rounded p-3 bg-light h-100">
                                             @if($assignedSpecialist->id)
                                                 <h6 class="mb-2">{{ $assignedSpecialist->name }}</h6>
-                                                @if($assignedSpecialist->branch?->name)
-                                                    <p class="mb-1"><strong>{{ __('message.branch') }}:</strong> {{ $assignedSpecialist->branch->name }}</p>
+                                                @php
+                                                    $branchNames = $assignedSpecialist?->branches?->pluck('name')->filter()->implode(', ');
+                                                @endphp
+                                                @if($branchNames)
+                                                    <p class="mb-1"><strong>{{ __('message.branch') }}:</strong> {{ $branchNames }}</p>
                                                 @endif
                                                 @if($assignedSpecialist->phone)
                                                     <p class="mb-1"><strong>{{ __('message.phone') }}:</strong> {{ $assignedSpecialist->phone }}</p>

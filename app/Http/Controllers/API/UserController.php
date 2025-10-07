@@ -92,6 +92,7 @@ class UserController extends Controller
 
         $user = User::with([
             'userProfile.specialist',
+            'userProfile.specialist.branches',
             'userFavouriteDiet.diet.media',
             'userFavouriteWorkout.workout.media',
             'userFavouriteProducts.product.media',
@@ -444,6 +445,7 @@ class UserController extends Controller
 
         $user = User::with([
             'userProfile.specialist',
+            'userProfile.specialist.branches',
             'userFavouriteDiet.diet.media',
             'userFavouriteWorkout.workout.media',
             'userFavouriteProducts.product.media',
@@ -545,6 +547,7 @@ class UserController extends Controller
 
         $user->refresh()->load([
             'userProfile.specialist',
+            'userProfile.specialist.branches',
             'userFavouriteDiet.diet.media',
             'userFavouriteWorkout.workout.media',
             'userFavouriteProducts.product.media',

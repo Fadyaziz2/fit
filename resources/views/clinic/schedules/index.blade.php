@@ -34,7 +34,10 @@
                                         <tr>
                                             <td>{{ $schedule->id }}</td>
                                             <td>{{ $schedule->specialist?->name ?? '-' }}</td>
-                                            <td>{{ $schedule->specialist?->branch?->name ?? '-' }}</td>
+                                            @php
+                                                $branchNames = $schedule->specialist?->branches?->pluck('name')->filter()->implode(', ');
+                                            @endphp
+                                            <td>{{ $branchNames !== '' ? $branchNames : '-' }}</td>
                                             <td>{{ \Carbon\Carbon::create()->startOfWeek()->addDays($schedule->day_of_week)->translatedFormat('l') }}</td>
                                             <td>{{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }}</td>
                                             <td>{{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}</td>
