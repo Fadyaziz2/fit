@@ -355,6 +355,30 @@
                 setTimeMessage(message, helperText);
             }
 
+            function isSlotAvailable(slot) {
+                if (!slot) {
+                    return false;
+                }
+
+                const markers = [
+                    slot.available,
+                    slot.is_available,
+                    slot.isAvailable,
+                ];
+
+                return markers.some(function(marker) {
+                    if (marker === undefined || marker === null) {
+                        return false;
+                    }
+
+                    if (typeof marker === 'string') {
+                        return ['1', 'true'].includes(marker.toLowerCase());
+                    }
+
+                    return Boolean(marker);
+                });
+            }
+
             function fetchSlots() {
                 const specialistId = document.getElementById('manual-specialist').value;
                 const date = document.getElementById('manual-date').value;
@@ -371,7 +395,14 @@
                     .done(function(response) {
                         const slots = response && Array.isArray(response.slots) ? response.slots : [];
                         const availableSlots = slots.filter(function(slot) {
-                            return slot && slot.available;
+                            return isSlotAvailable(slot);
+                        });
+                        const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
+                            ? response.meta.working_ranges
+                            : [];
+                        const helperText = formatWorkingRanges(workingRanges);
+                        const hasAvailabilityFlags = slots.some(function(slot) {
+                            return slot && (slot.hasOwnProperty('available') || slot.hasOwnProperty('is_available') || slot.hasOwnProperty('isAvailable'));
                         });
                         const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
                             ? response.meta.working_ranges
