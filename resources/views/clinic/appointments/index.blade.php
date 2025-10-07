@@ -269,10 +269,6 @@
                         manualBranch.value = '';
                     }
                 }
-
-                if (manualBranch) {
-                    filterSpecialists();
-                }
             }
 
             function filterSpecialists() {
@@ -408,18 +404,22 @@
                         const hasAvailabilityFlags = slots.some(function(slot) {
                             return slot && (slot.hasOwnProperty('available') || slot.hasOwnProperty('is_available') || slot.hasOwnProperty('isAvailable'));
                         });
+                        const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
+                            ? response.meta.working_ranges
+                            : [];
+                        const helperText = formatWorkingRanges(workingRanges);
 
                         if (!slots.length) {
                             resetTimeSelect(messages.noSchedule, helperText);
                             return;
                         }
 
-                        if (hasAvailabilityFlags && !availableSlots.length) {
+                        if (!availableSlots.length) {
                             resetTimeSelect(messages.noSlots, helperText);
                             return;
                         }
 
-                        setTimeOptions(hasAvailabilityFlags ? availableSlots : slots, helperText);
+                        setTimeOptions(availableSlots, helperText);
                     })
                     .fail(function() {
                         setTimeMessage(messages.error);
