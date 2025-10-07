@@ -270,51 +270,47 @@
             }
 
             function toggleManualSections(type) {
-                if (!manualForm) {
-                    return;
-                }
-
                 const isManualFree = type === 'manual_free';
-                const regularSections = manualForm.querySelectorAll('.manual-regular-section');
-                const freeSections = manualForm.querySelectorAll('.manual-free-section');
+                const freeSections = document.querySelectorAll('.manual-free-section');
+                const regularSections = document.querySelectorAll('.manual-regular-section');
+                const manualUser = document.getElementById('manual-user');
+                const manualName = document.getElementById('manual-name');
+                const manualPhone = document.getElementById('manual-phone');
+                const manualBranch = document.getElementById('manual-branch');
 
-                regularSections.forEach(function (section) {
-                    section.classList.toggle('d-none', isManualFree);
-                });
-
-                freeSections.forEach(function (section) {
+                freeSections.forEach(function(section) {
                     section.classList.toggle('d-none', !isManualFree);
                 });
 
-                if (manualUser) {
-                    const $manualUser = $(manualUser);
+                regularSections.forEach(function(section) {
+                    section.classList.toggle('d-none', isManualFree);
+                });
 
-                    if (isManualFree) {
-                        $manualUser.val('').trigger('change');
-                        $manualUser.prop('disabled', true);
-                    } else {
-                        $manualUser.prop('disabled', false).trigger('change');
+                if (type === 'manual_free') {
+                    if (manualUser) {
+                        $(manualUser).val('').prop('disabled', true).trigger('change');
                     }
-
-                    const select2Container = $manualUser.next('.select2-container, .select2');
-                    if (select2Container.length) {
-                        select2Container.toggleClass('d-none', isManualFree);
-                    }
-                }
-
-                if (isManualFree) {
                     if (manualName) {
                         manualName.setAttribute('required', 'required');
                     }
                     if (manualPhone) {
                         manualPhone.setAttribute('required', 'required');
                     }
-                    if (manualBranch) {
-                        manualBranch.removeAttribute('disabled');
-                        manualBranch.setAttribute('required', 'required');
-                    }
                 } else {
-                    resetManualFreeFields();
+                    if (manualUser) {
+                        $(manualUser).prop('disabled', false).trigger('change');
+                    }
+                    if (manualName) {
+                        manualName.value = '';
+                        manualName.removeAttribute('required');
+                    }
+                    if (manualPhone) {
+                        manualPhone.value = '';
+                        manualPhone.removeAttribute('required');
+                    }
+                    if (manualBranch) {
+                        manualBranch.value = '';
+                    }
                 }
 
                 filterSpecialists();
@@ -434,12 +430,30 @@
                         return;
                     }
 
-                    const option = document.createElement('option');
-                    option.value = value;
-                    option.textContent = value;
+                slots.forEach(function(slot) {
+                    if (!slot) {
+                        return;
+                    }
 
-                    if (!slotIsAvailable(slot)) {
+                    let timeValue = '';
+
+                    if (typeof slot === 'string') {
+                        timeValue = slot;
+                    } else {
+                        timeValue = slot.time || slot.start_time || slot.startTime || '';
+                    }
+
+                    if (!timeValue) {
+                        return;
+                    }
+
+                    const option = document.createElement('option');
+                    option.value = timeValue;
+                    option.textContent = timeValue;
+
+                    if (typeof slot === 'object' && slot !== null && !isSlotAvailable(slot)) {
                         option.disabled = true;
+                        option.dataset.unavailable = 'true';
                     }
 
                     timeSelect.appendChild(option);
@@ -462,10 +476,35 @@
                 return Object.values(rawSlots);
             }
 
-            function fetchSlots() {
-                if (!specialistSelect || !dateInput) {
-                    return;
+            function isSlotAvailable(slot) {
+                if (!slot) {
+                    return false;
                 }
+
+                const markers = [
+                    slot.available,
+                    slot.is_available,
+                    slot.isAvailable,
+                ];
+
+                return markers.some(function(marker) {
+                    if (marker === undefined || marker === null) {
+                        return false;
+                    }
+
+                    if (typeof marker === 'string') {
+                        return ['1', 'true'].includes(marker.toLowerCase());
+                    }
+
+                    return Boolean(marker);
+                });
+            }
+
+            function fetchSlots() {
+                const specialistSelect = document.getElementById('manual-specialist');
+                const dateInput = document.getElementById('manual-date');
+                const specialistId = specialistSelect ? specialistSelect.value : '';
+                const date = dateInput ? dateInput.value : '';
 
                 const specialistId = specialistSelect.value;
                 const appointmentDate = dateInput.value;
@@ -477,29 +516,35 @@
 
                 setTimeMessage(messages.loading);
 
-                $.get(appointmentUrl, { specialist_id: specialistId, date: appointmentDate })
-                    .done(function (response) {
-                        const slots = normaliseSlots(response && response.slots);
+                $.get(appointmentUrl, { specialist_id: specialistId, date: date })
+                    .done(function(response) {
+                        const slots = response && response.slots ? normaliseSlots(response.slots) : [];
+                        const availableSlots = slots.filter(function(slot) {
+                            return isSlotAvailable(slot);
+                        });
+                        const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
+                            ? response.meta.working_ranges
+                            : [];
+                        const helperText = formatWorkingRanges(workingRanges);
+                        const hasAvailabilityFlags = slots.some(function(slot) {
+                            return slot && (slot.hasOwnProperty('available') || slot.hasOwnProperty('is_available') || slot.hasOwnProperty('isAvailable'));
+                        });
                         const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
                             ? response.meta.working_ranges
                             : [];
                         const helperText = formatWorkingRanges(workingRanges);
 
                         if (!slots.length) {
-                            setTimeMessage(messages.noSchedule, helperText);
+                            resetTimeSelect(messages.noSchedule, helperText);
                             return;
                         }
 
-                        const available = slots.filter(function (slot) {
-                            return slotIsAvailable(slot);
-                        });
-
-                        if (!available.length) {
-                            populateSlots(slots, helperText ? helperText + ' — ' + messages.noSlots : messages.noSlots);
+                        if (!availableSlots.length) {
+                            resetTimeSelect(messages.noSlots, helperText);
                             return;
                         }
 
-                        populateSlots(available, helperText);
+                        setTimeOptions(availableSlots, helperText);
                     })
                     .fail(function () {
                         setTimeMessage(messages.error);
