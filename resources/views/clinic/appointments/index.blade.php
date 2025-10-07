@@ -115,7 +115,7 @@
                             </div>
                             <div class="col-md-6 manual-regular-section">
                                 <label class="form-label">{{ __('message.user') }} <span class="text-danger">*</span></label>
-                                <select name="user_id" id="manual-user" class="form-select select2js" data-placeholder="{{ __('message.select_name', ['select' => __('message.user')]) }}">
+                                <select name="user_id" id="manual-user" class="form-select select2js" data-placeholder="{{ __('message.select_name', ['select' => __('message.user')]) }}" data-dropdown-parent="#manualAppointmentModal">
                                     <option value="">{{ __('message.select_name', ['select' => __('message.user')]) }}</option>
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}">{{ $user->display_name ?? $user->email }}</option>
@@ -287,17 +287,20 @@
 
                 $.get(appointmentUrl, { specialist_id: specialistId, date: date })
                     .done(function(response) {
-                        const availableSlots = response.slots.filter(slot => slot.available);
+                        const slots = response && Array.isArray(response.slots) ? response.slots : [];
+                        const availableSlots = slots.filter(function(slot) {
+                            return slot && slot.available;
+                        });
                         const select = document.getElementById('manual-time');
                         select.innerHTML = '';
 
                         if (!availableSlots.length) {
-                            resetTimeSelect("{{ __('message.no_slots_available') }}");
+                            resetTimeSelect(slots.length ? "{{ __('message.no_slots_available') }}" : "{{ __('message.error_fetching_slots') }}");
                             return;
                         }
 
                         select.innerHTML = `<option value="">{{ __('message.select_name', ['select' => __('message.start_time')]) }}</option>`;
-                        availableSlots.forEach(slot => {
+                        availableSlots.forEach(function(slot) {
                             const option = document.createElement('option');
                             option.value = slot.time;
                             option.textContent = slot.time;
