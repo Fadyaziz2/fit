@@ -7,9 +7,12 @@
                         <div class="header-title">
                             <h4 class="card-title">{{ $pageTitle }}</h4>
                         </div>
-                        <div class="card-action">
-                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#manualAppointmentModal">
+                        <div class="card-action d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#manualRegularModal">
                                 {{ __('message.add_manual_appointment') }}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#manualFreeModal">
+                                {{ __('message.add_manual_free_appointment') }}
                             </button>
                         </div>
                     </div>
@@ -89,59 +92,30 @@
         </div>
     </div>
 
-    <div class="modal fade" id="manualAppointmentModal" tabindex="-1" aria-labelledby="manualAppointmentModalLabel" aria-hidden="true">
+    <div class="modal fade" id="manualRegularModal" tabindex="-1" aria-labelledby="manualRegularModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <form method="POST" action="{{ route('clinic.appointments.store') }}" id="manual-appointment-form">
+                <form method="POST" action="{{ route('clinic.appointments.store') }}" id="manual-regular-form">
                     @csrf
+                    <input type="hidden" name="type" value="regular">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="manualAppointmentModalLabel">{{ __('message.add_manual_appointment') }}</h5>
+                        <h5 class="modal-title" id="manualRegularModalLabel">{{ __('message.add_manual_appointment') }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('message.close') }}"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label">{{ __('message.appointment_type') }} <span class="text-danger">*</span></label>
-                                <div class="d-flex gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="type" id="manual-type-regular" value="regular" checked>
-                                        <label class="form-check-label" for="manual-type-regular">{{ __('message.regular_appointment') }}</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="type" id="manual-type-free" value="manual_free">
-                                        <label class="form-check-label" for="manual-type-free">{{ __('message.manual_free_appointment') }}</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 manual-regular-section">
+                            <div class="col-md-6">
                                 <label class="form-label">{{ __('message.user') }} <span class="text-danger">*</span></label>
-                                <select name="user_id" id="manual-user" class="form-select select2js" data-placeholder="{{ __('message.select_name', ['select' => __('message.user')]) }}" data-dropdown-parent="#manualAppointmentModal">
+                                <select name="user_id" id="manual-regular-user" class="form-select select2js" data-placeholder="{{ __('message.select_name', ['select' => __('message.user')]) }}" data-dropdown-parent="#manualRegularModal">
                                     <option value="">{{ __('message.select_name', ['select' => __('message.user')]) }}</option>
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}">{{ $user->display_name ?? $user->email }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-6 manual-free-section d-none">
-                                <label class="form-label">{{ __('message.full_name') }} <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="manual_name" id="manual-name" placeholder="{{ __('message.full_name') }}">
-                            </div>
-                            <div class="col-md-6 manual-free-section d-none">
-                                <label class="form-label">{{ __('message.contact_number') }} <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="manual_phone" id="manual-phone" placeholder="{{ __('message.contact_number') }}">
-                            </div>
-                            <div class="col-md-6 manual-free-section d-none">
-                                <label class="form-label">{{ __('message.branch') }} <span class="text-danger">*</span></label>
-                                <select class="form-select" id="manual-branch">
-                                    <option value="">{{ __('message.select_name', ['select' => __('message.branch')]) }}</option>
-                                    @foreach($branches as $branch)
-                                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ __('message.specialist') }} <span class="text-danger">*</span></label>
-                                <select name="specialist_id" id="manual-specialist" class="form-select" data-placeholder="{{ __('message.select_name', ['select' => __('message.specialist')]) }}">
+                                <select name="specialist_id" id="manual-regular-specialist" class="form-select" data-placeholder="{{ __('message.select_name', ['select' => __('message.specialist')]) }}">
                                     <option value="">{{ __('message.select_name', ['select' => __('message.specialist')]) }}</option>
                                     @foreach($specialists as $specialist)
                                         <option value="{{ $specialist->id }}" data-branch="{{ $specialist->branch_id }}">{{ $specialist->name }} - {{ $specialist->branch?->name }}</option>
@@ -150,14 +124,74 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ __('message.day') }} <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" name="appointment_date" id="manual-date" min="{{ now()->format('Y-m-d') }}">
+                                <input type="date" class="form-control" name="appointment_date" id="manual-regular-date" min="{{ now()->format('Y-m-d') }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ __('message.start_time') }} <span class="text-danger">*</span></label>
-                                <select name="appointment_time" id="manual-time" class="form-select">
+                                <select name="appointment_time" id="manual-regular-time" class="form-select">
                                     <option value="">{{ __('message.select_name', ['select' => __('message.start_time')]) }}</option>
                                 </select>
-                                <small class="text-muted d-block" id="manual-time-helper"></small>
+                                <small class="text-muted d-block" id="manual-regular-time-helper"></small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('message.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ __('message.save') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="manualFreeModal" tabindex="-1" aria-labelledby="manualFreeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form method="POST" action="{{ route('clinic.appointments.store') }}" id="manual-free-form">
+                    @csrf
+                    <input type="hidden" name="type" value="manual_free">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="manualFreeModalLabel">{{ __('message.manual_free_appointment') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('message.close') }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.full_name') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="manual_name" id="manual-free-name" placeholder="{{ __('message.full_name') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.contact_number') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="manual_phone" id="manual-free-phone" placeholder="{{ __('message.contact_number') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.branch') }} <span class="text-danger">*</span></label>
+                                <select class="form-select" name="manual_branch" id="manual-free-branch" required>
+                                    <option value="">{{ __('message.select_name', ['select' => __('message.branch')]) }}</option>
+                                    @foreach($branches as $branch)
+                                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.specialist') }} <span class="text-danger">*</span></label>
+                                <select name="specialist_id" id="manual-free-specialist" class="form-select" data-placeholder="{{ __('message.select_name', ['select' => __('message.specialist')]) }}" disabled>
+                                    <option value="">{{ __('message.select_name', ['select' => __('message.specialist')]) }}</option>
+                                    @foreach($specialists as $specialist)
+                                        <option value="{{ $specialist->id }}" data-branch="{{ $specialist->branch_id }}">{{ $specialist->name }} - {{ $specialist->branch?->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.day') }} <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="appointment_date" id="manual-free-date" min="{{ now()->format('Y-m-d') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.start_time') }} <span class="text-danger">*</span></label>
+                                <select name="appointment_time" id="manual-free-time" class="form-select">
+                                    <option value="">{{ __('message.select_name', ['select' => __('message.start_time')]) }}</option>
+                                </select>
+                                <small class="text-muted d-block" id="manual-free-time-helper"></small>
                             </div>
                         </div>
                     </div>
@@ -225,49 +259,11 @@
 
 @push('scripts')
     <script>
-        (function($) {
+        (function ($) {
             'use strict';
 
-            const manualModal = document.getElementById('manualAppointmentModal');
-            const convertModal = document.getElementById('convertManualModal');
             const appointmentUrl = "{{ route('clinic.appointments.available_slots') }}";
 
-            function toggleManualSections(type) {
-                const freeSections = document.querySelectorAll('.manual-free-section');
-                const regularSections = document.querySelectorAll('.manual-regular-section');
-
-                freeSections.forEach(section => section.classList.toggle('d-none', type !== 'manual_free'));
-                regularSections.forEach(section => section.classList.toggle('d-none', type === 'manual_free'));
-
-                if (type === 'manual_free') {
-                    document.getElementById('manual-user').value = '';
-                } else {
-                    document.getElementById('manual-name').value = '';
-                    document.getElementById('manual-phone').value = '';
-                    document.getElementById('manual-branch').value = '';
-                }
-            }
-
-            function filterSpecialists() {
-                const branchId = document.getElementById('manual-branch').value;
-                const specialistSelect = document.getElementById('manual-specialist');
-
-                Array.from(specialistSelect.options).forEach(option => {
-                    if (!option.value) {
-                        option.hidden = false;
-                        return;
-                    }
-                    const optionBranch = option.getAttribute('data-branch');
-                    option.hidden = branchId && optionBranch !== branchId;
-                    if (option.hidden && option.selected) {
-                        specialistSelect.value = '';
-                        $('#manual-specialist').trigger('change');
-                    }
-                });
-            }
-
-            const timeSelect = document.getElementById('manual-time');
-            const helper = document.getElementById('manual-time-helper');
             const messages = {
                 placeholder: "{{ __('message.select_name', ['select' => __('message.start_time')]) }}",
                 loading: "{{ __('message.loading') }}",
@@ -277,19 +273,35 @@
                 workingHours: "{{ __('message.working_hours_for_day', ['range' => '__RANGE__']) }}",
             };
 
+            function setTimeMessage(select, helper, message, helperText, disableSelect) {
+                if (!select) {
+                    return;
+                }
+
+                select.innerHTML = '<option value="">' + message + '</option>';
+                select.disabled = Boolean(disableSelect);
+
+                if (helper) {
+                    helper.textContent = helperText || '';
+                }
+            }
+
             function formatWorkingRanges(ranges) {
                 if (!Array.isArray(ranges) || !ranges.length) {
                     return '';
                 }
 
                 const formatted = ranges
-                    .map(range => {
+                    .map(function (range) {
                         if (!range || !range.start || !range.end) {
                             return null;
                         }
-                        return `${range.start} - ${range.end}`;
+
+                        return range.start + ' - ' + range.end;
                     })
-                    .filter(Boolean);
+                    .filter(function (value) {
+                        return Boolean(value);
+                    });
 
                 if (!formatted.length) {
                     return '';
@@ -298,134 +310,296 @@
                 return messages.workingHours.replace('__RANGE__', formatted.join(' | '));
             }
 
-            function setTimeMessage(message, helperText = '') {
-                if (!timeSelect) {
-                    return;
+            function slotIsAvailable(slot) {
+                if (!slot || typeof slot !== 'object') {
+                    return true;
                 }
 
-                timeSelect.innerHTML = `<option value="">${message}</option>`;
-                if (helper) {
-                    helper.textContent = helperText;
+                const marker = slot.available !== undefined ? slot.available
+                    : (slot.is_available !== undefined ? slot.is_available : slot.isAvailable);
+
+                if (marker === undefined || marker === null) {
+                    return true;
                 }
+
+                if (typeof marker === 'string') {
+                    return ['1', 'true', 'yes'].indexOf(marker.toLowerCase()) !== -1;
+                }
+
+                return Boolean(marker);
             }
 
-            function setTimeOptions(slots, helperText = '') {
-                if (!timeSelect) {
+            function optionTime(slot) {
+                if (!slot) {
+                    return '';
+                }
+
+                if (typeof slot === 'string') {
+                    return slot;
+                }
+
+                return slot.time || slot.start_time || slot.startTime || '';
+            }
+
+            function populateSlots(select, helper, slots, helperText) {
+                if (!select) {
                     return;
                 }
 
-                timeSelect.innerHTML = `<option value="">${messages.placeholder}</option>`;
+                select.disabled = false;
+                select.innerHTML = '<option value="">' + messages.placeholder + '</option>';
 
-                slots.forEach(function(slot) {
+                slots.forEach(function (slot) {
+                    const value = optionTime(slot);
+                    if (!value) {
+                        return;
+                    }
+
                     const option = document.createElement('option');
-                    option.value = slot.time;
-                    option.textContent = slot.time;
-                    timeSelect.appendChild(option);
+                    option.value = value;
+                    option.textContent = value;
+
+                    if (!slotIsAvailable(slot)) {
+                        option.disabled = true;
+                    }
+
+                    select.appendChild(option);
                 });
 
                 if (helper) {
-                    helper.textContent = helperText;
+                    helper.textContent = helperText || '';
                 }
             }
 
-            function resetTimeSelect(message = messages.placeholder, helperText = '') {
-                setTimeMessage(message, helperText);
+            function normaliseSlots(rawSlots) {
+                if (!rawSlots) {
+                    return [];
+                }
+
+                if (Array.isArray(rawSlots)) {
+                    return rawSlots;
+                }
+
+                return Object.values(rawSlots);
             }
 
-            function fetchSlots() {
-                const specialistId = document.getElementById('manual-specialist').value;
-                const date = document.getElementById('manual-date').value;
+            function createSlotFetcher(config) {
+                return function fetchSlots() {
+                    if (!config.specialistSelect || !config.dateInput || !config.timeSelect) {
+                        return;
+                    }
 
-                if (!specialistId || !date) {
-                    resetTimeSelect("{{ __('message.select_name', ['select' => __('message.start_time')]) }}");
+                    const specialistId = config.specialistSelect.value;
+                    const appointmentDate = config.dateInput.value;
+
+                    if (!specialistId || !appointmentDate) {
+                        setTimeMessage(config.timeSelect, config.helper, messages.placeholder);
+                        return;
+                    }
+
+                    setTimeMessage(config.timeSelect, config.helper, messages.loading, '', true);
+
+                    $.get(appointmentUrl, { specialist_id: specialistId, date: appointmentDate })
+                        .done(function (response) {
+                            const slots = normaliseSlots(response && response.slots);
+                            const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
+                                ? response.meta.working_ranges
+                                : [];
+                            const helperText = formatWorkingRanges(workingRanges);
+
+                            if (!slots.length) {
+                                setTimeMessage(config.timeSelect, config.helper, messages.noSchedule, helperText);
+                                return;
+                            }
+
+                            const available = slots.filter(function (slot) {
+                                return slotIsAvailable(slot);
+                            });
+
+                            if (!available.length) {
+                                const helperMessage = helperText ? helperText + ' — ' + messages.noSlots : messages.noSlots;
+                                populateSlots(config.timeSelect, config.helper, slots, helperMessage);
+                                return;
+                            }
+
+                            populateSlots(config.timeSelect, config.helper, available, helperText);
+                        })
+                        .fail(function () {
+                            setTimeMessage(config.timeSelect, config.helper, messages.error);
+                        });
+                };
+            }
+
+            function filterSpecialistsByBranch(specialistSelect, branchSelect) {
+                if (!specialistSelect) {
                     return;
                 }
 
-                $('#manual-time').prop('disabled', true);
-                $('#manual-time-helper').text(messages.loading);
+                const branchId = branchSelect ? branchSelect.value : '';
+                let hasSelection = false;
 
-                $.get(appointmentUrl, { specialist_id: specialistId, date: date })
-                    .done(function(response) {
-                        const slots = response && Array.isArray(response.slots) ? response.slots : [];
-                        const availableSlots = slots.filter(function(slot) {
-                            return slot && slot.available;
-                        });
-                        const select = document.getElementById('manual-time');
-                        select.innerHTML = '';
+                Array.from(specialistSelect.options).forEach(function (option) {
+                    if (!option.value) {
+                        option.hidden = false;
+                        return;
+                    }
 
-                        if (!availableSlots.length) {
-                            resetTimeSelect(slots.length ? "{{ __('message.no_slots_available') }}" : "{{ __('message.error_fetching_slots') }}");
-                            return;
-                        }
+                    const matches = !branchId || option.getAttribute('data-branch') === branchId;
+                    option.hidden = !matches;
 
-                        select.innerHTML = `<option value="">{{ __('message.select_name', ['select' => __('message.start_time')]) }}</option>`;
-                        availableSlots.forEach(function(slot) {
-                            const option = document.createElement('option');
-                            option.value = slot.time;
-                            option.textContent = slot.time;
-                            select.appendChild(option);
-                        });
-                        document.getElementById('manual-time-helper').textContent = '';
-                    })
-                    .fail(function() {
-                        setTimeMessage(messages.error);
-                    })
-                    .always(function() {
-                        $('#manual-time').prop('disabled', false);
-                    });
-            }
+                    if (option.selected && matches) {
+                        hasSelection = true;
+                    }
 
-            if (manualModal) {
-                manualModal.addEventListener('shown.bs.modal', function() {
-                    $('#manual-user').trigger('change');
-                    toggleManualSections(document.querySelector('input[name="type"]:checked').value);
-                    resetTimeSelect("{{ __('message.select_name', ['select' => __('message.start_time')]) }}");
+                    if (!matches && option.selected) {
+                        option.selected = false;
+                    }
                 });
-            }
 
-            document.querySelectorAll('input[name="type"]').forEach(function(input) {
-                input.addEventListener('change', function() {
-                    toggleManualSections(this.value);
-                    fetchSlots();
-                });
-            });
+                if (!hasSelection) {
+                    specialistSelect.value = '';
+                }
 
-            $('#manual-branch').on('change', function() {
-                filterSpecialists();
-                resetTimeSelect();
-                fetchSlots();
-            });
-
-            $('#manual-specialist').on('change', function() {
-                fetchSlots();
-            });
-
-            $('#manual-date').on('change', function() {
-                fetchSlots();
-            });
-
-            $('#manual-time').on('change', function() {
-                document.getElementById('manual-time-helper').textContent = '';
-            });
-
-            $('#manual-appointment-form').on('submit', function(event) {
-                if (document.querySelector('input[name="type"]:checked').value === 'manual_free') {
-                    if (!$('#manual-branch').val()) {
-                        event.preventDefault();
-                        Swal.fire({
-                            icon: 'error',
-                            title: '{{ __('message.opps') }}',
-                            text: '{{ __('message.manual_branch_required') }}',
-                            confirmButtonColor: 'var(--bs-primary)'
-                        });
-                        return false;
+                if (branchSelect) {
+                    if (!branchId) {
+                        specialistSelect.setAttribute('disabled', 'disabled');
+                    } else {
+                        specialistSelect.removeAttribute('disabled');
                     }
                 }
-                return true;
-            });
+            }
 
-            document.querySelectorAll('.convert-manual-free').forEach(function(button) {
-                button.addEventListener('click', function() {
+            (function initManualRegularModal() {
+                const modal = document.getElementById('manualRegularModal');
+                if (!modal) {
+                    return;
+                }
+
+                const form = modal.querySelector('form');
+                const userSelect = form ? form.querySelector('#manual-regular-user') : null;
+                const specialistSelect = form ? form.querySelector('#manual-regular-specialist') : null;
+                const dateInput = form ? form.querySelector('#manual-regular-date') : null;
+                const timeSelect = form ? form.querySelector('#manual-regular-time') : null;
+                const helper = form ? form.querySelector('#manual-regular-time-helper') : null;
+
+                const fetchSlots = createSlotFetcher({ specialistSelect, dateInput, timeSelect, helper });
+
+                if (specialistSelect) {
+                    $(specialistSelect).on('change', function () {
+                        setTimeMessage(timeSelect, helper, messages.placeholder);
+                        fetchSlots();
+                    });
+                }
+
+                if (dateInput) {
+                    $(dateInput).on('change', fetchSlots);
+                }
+
+                if (timeSelect) {
+                    $(timeSelect).on('change', function () {
+                        if (helper) {
+                            helper.textContent = '';
+                        }
+                    });
+                }
+
+                modal.addEventListener('shown.bs.modal', function () {
+                    setTimeMessage(timeSelect, helper, messages.placeholder);
+                    fetchSlots();
+                });
+
+                modal.addEventListener('hidden.bs.modal', function () {
+                    if (form) {
+                        form.reset();
+                    }
+
+                    if (userSelect) {
+                        $(userSelect).val('').trigger('change');
+                    }
+
+                    setTimeMessage(timeSelect, helper, messages.placeholder);
+                });
+            })();
+
+            (function initManualFreeModal() {
+                const modal = document.getElementById('manualFreeModal');
+                if (!modal) {
+                    return;
+                }
+
+                const form = modal.querySelector('form');
+                const branchSelect = form ? form.querySelector('#manual-free-branch') : null;
+                const specialistSelect = form ? form.querySelector('#manual-free-specialist') : null;
+                const dateInput = form ? form.querySelector('#manual-free-date') : null;
+                const timeSelect = form ? form.querySelector('#manual-free-time') : null;
+                const helper = form ? form.querySelector('#manual-free-time-helper') : null;
+
+                const fetchSlots = createSlotFetcher({ specialistSelect, dateInput, timeSelect, helper });
+
+                if (branchSelect) {
+                    $(branchSelect).on('change', function () {
+                        filterSpecialistsByBranch(specialistSelect, branchSelect);
+                        if (specialistSelect) {
+                            $(specialistSelect).trigger('change');
+                        }
+                    });
+                }
+
+                if (specialistSelect) {
+                    $(specialistSelect).on('change', function () {
+                        setTimeMessage(timeSelect, helper, messages.placeholder);
+                        fetchSlots();
+                    });
+                }
+
+                if (dateInput) {
+                    $(dateInput).on('change', fetchSlots);
+                }
+
+                if (timeSelect) {
+                    $(timeSelect).on('change', function () {
+                        if (helper) {
+                            helper.textContent = '';
+                        }
+                    });
+                }
+
+                if (form) {
+                    $(form).on('submit', function (event) {
+                        if (branchSelect && !branchSelect.value) {
+                            event.preventDefault();
+                            Swal.fire({
+                                icon: 'error',
+                                title: '{{ __('message.opps') }}',
+                                text: '{{ __('message.manual_branch_required') }}',
+                                confirmButtonColor: 'var(--bs-primary)'
+                            });
+                            return false;
+                        }
+
+                        return true;
+                    });
+                }
+
+                modal.addEventListener('shown.bs.modal', function () {
+                    filterSpecialistsByBranch(specialistSelect, branchSelect);
+                    setTimeMessage(timeSelect, helper, messages.placeholder);
+                });
+
+                modal.addEventListener('hidden.bs.modal', function () {
+                    if (form) {
+                        form.reset();
+                    }
+
+                    filterSpecialistsByBranch(specialistSelect, branchSelect);
+                    setTimeMessage(timeSelect, helper, messages.placeholder);
+                });
+            })();
+
+            const convertModal = document.getElementById('convertManualModal');
+
+            document.querySelectorAll('.convert-manual-free').forEach(function (button) {
+                button.addEventListener('click', function () {
                     const appointmentId = this.dataset.appointmentId;
                     const action = `{{ route('clinic.appointments.convert', ['appointment' => '__id__']) }}`.replace('__id__', appointmentId);
 
@@ -439,7 +613,7 @@
             });
 
             if (convertModal) {
-                convertModal.addEventListener('hidden.bs.modal', function() {
+                convertModal.addEventListener('hidden.bs.modal', function () {
                     document.getElementById('convert-manual-form').reset();
                 });
             }
