@@ -336,6 +336,7 @@ return [
     'speed' => 'Speed',
     'Calories' => 'Calories',
     'type' => 'Type',
+    'all_types' => 'All Types',
     'equipment_id' => 'Equipment Id',
     'days' => 'Days',
     'about_user' => 'About User',
