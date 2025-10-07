@@ -93,52 +93,37 @@ class _CartScreenState extends State<CartScreen> {
         onRefresh: _loadCart,
         color: primaryColor,
         child: _isLoading
-            ? Loader()
+            ? ListView(
+                physics: AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(vertical: 32),
+                children: [Loader().center()],
+              )
             : cartItems.isEmpty
-                ? NoDataWidget(title: languages.lblNoFoundData)
-                    .center()
-                : SingleChildScrollView(
+                ? ListView(
                     physics: AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      children: [
-                        12.height,
-                        ...cartItems.map((item) => _CartItemTile(
-                              item: item,
-                              onRemove: () => _removeItem(item.product?.id),
-                            ).paddingSymmetric(horizontal: 16, vertical: 8)),
-                        16.height,
-                        Container(
-                          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          padding: EdgeInsets.all(16),
-                          decoration: boxDecorationWithRoundedCorners(
-                            borderRadius: radius(12),
-                            backgroundColor: appStore.isDarkMode
-                                ? cardDarkColor
-                                : cardLightColor,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Total', style: boldTextStyle()),
-                                  4.height,
-                                  Text('Items: ${summary?.totalItems ?? 0}',
-                                      style: secondaryTextStyle()),
-                                ],
-                              ),
-                              Text(
-                                '${userStore.currencySymbol.validate()}${(summary?.totalAmount ?? 0).toStringAsFixed(2)}',
-                                style: boldTextStyle(size: 18, color: primaryColor),
-                              )
-                            ],
-                          ),
-                        ),
-                        20.height,
-                        SizedBox(height: 80),
-                      ],
-                    ),
+                    padding: EdgeInsets.symmetric(vertical: context.height() * 0.15),
+                    children: [
+                      NoDataWidget(title: languages.lblNoFoundData)
+                          .paddingSymmetric(horizontal: 16),
+                    ],
+                  )
+                : ListView.separated(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, 140),
+                    itemCount: cartItems.length + 1,
+                    separatorBuilder: (_, __) => 16.height,
+                    itemBuilder: (_, index) {
+                      if (index == cartItems.length) {
+                        return _CartSummaryCard(summary: summary);
+                      }
+
+                      final item = cartItems[index];
+
+                      return _CartItemTile(
+                        item: item,
+                        onRemove: () => _removeItem(item.product?.id),
+                      );
+                    },
                   ),
       ),
       bottomNavigationBar: !_isLoading && cartItems.isNotEmpty
@@ -203,41 +188,50 @@ class _CartItemTile extends StatelessWidget {
 
     return Container(
       decoration: boxDecorationWithRoundedCorners(
-        borderRadius: radius(12),
+        borderRadius: radius(16),
         backgroundColor:
             appStore.isDarkMode ? cardDarkColor : context.cardColor,
-        border: Border.all(color: context.dividerColor),
+        border: Border.all(color: context.dividerColor.withOpacity(0.4)),
       ),
-      padding: EdgeInsets.all(12),
+      padding: EdgeInsets.all(14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          cachedImage(image, height: 70, width: 70, fit: BoxFit.cover)
-              .cornerRadiusWithClipRRect(12),
-          12.width,
+          cachedImage(image, height: 80, width: 80, fit: BoxFit.cover)
+              .cornerRadiusWithClipRRect(16),
+          14.width,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: boldTextStyle(), maxLines: 2, overflow: TextOverflow.ellipsis),
+                Text(
+                  title,
+                  style: boldTextStyle(size: 16),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 if (category.isNotEmpty)
                   Text(category, style: secondaryTextStyle(size: 12))
                       .paddingTop(4),
-                8.height,
+                12.height,
                 Row(
                   children: [
-                    Text('${languages.lblQuantity}: ${item.quantity}',
-                        style: secondaryTextStyle()),
+                    _InfoChip(
+                      icon: Icons.shopping_bag_outlined,
+                      label:
+                          '${languages.lblQuantity}: ${item.quantity.validate()}',
+                    ),
                     12.width,
-                    Text(
-                      '${userStore.currencySymbol.validate()}${(item.unitPrice ?? 0).toStringAsFixed(2)}',
-                      style: secondaryTextStyle(),
+                    _InfoChip(
+                      icon: Icons.attach_money,
+                      label:
+                          '${userStore.currencySymbol.validate()}${(item.unitPrice ?? 0).toStringAsFixed(2)}',
                     ),
                   ],
                 ),
-                4.height,
+                12.height,
                 Text(
-                  'Total: ${userStore.currencySymbol.validate()}${(item.totalPrice ?? 0).toStringAsFixed(2)}',
+                  '${languages.lblOrderTotal}: ${userStore.currencySymbol.validate()}${(item.totalPrice ?? 0).toStringAsFixed(2)}',
                   style: boldTextStyle(color: primaryColor),
                 ),
               ],
@@ -246,8 +240,89 @@ class _CartItemTile extends StatelessWidget {
           IconButton(
             onPressed: onRemove,
             icon: Icon(Icons.delete_outline, color: Colors.redAccent),
-            tooltip: 'Remove',
+            tooltip: languages.lblDelete,
           )
+        ],
+      ),
+    );
+  }
+}
+
+class _CartSummaryCard extends StatelessWidget {
+  final CartSummary? summary;
+
+  const _CartSummaryCard({this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalItems = summary?.totalItems ?? 0;
+    final totalAmount = summary?.totalAmount ?? 0;
+
+    return Container(
+      decoration: boxDecorationWithRoundedCorners(
+        borderRadius: radius(16),
+        backgroundColor: appStore.isDarkMode ? cardDarkColor : cardLightColor,
+      ),
+      padding: EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(languages.lblOrderSummary, style: boldTextStyle(size: 18)),
+          12.height,
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(languages.lblQuantity, style: secondaryTextStyle()),
+                    4.height,
+                    Text('$totalItems', style: boldTextStyle(size: 16)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(languages.lblOrderTotal, style: secondaryTextStyle()),
+                    4.height,
+                    Text(
+                      '${userStore.currencySymbol.validate()}${totalAmount.toStringAsFixed(2)}',
+                      style: boldTextStyle(size: 18, color: primaryColor),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _InfoChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: radius(20),
+        border: Border.all(color: context.dividerColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: context.iconColor.withOpacity(0.6)),
+          6.width,
+          Text(label, style: secondaryTextStyle(size: 12)),
         ],
       ),
     );
