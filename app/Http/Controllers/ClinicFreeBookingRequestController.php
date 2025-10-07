@@ -77,26 +77,39 @@ class ClinicFreeBookingRequestController extends Controller
                 return back()->withErrors(__('message.slot_not_available'))->withInput();
             }
 
-            $alreadyBooked = SpecialistAppointment::where('specialist_id', $request->specialist_id)
+            $alreadyBookedQuery = SpecialistAppointment::where('specialist_id', $request->specialist_id)
                 ->where('appointment_date', $date->toDateString())
                 ->where('appointment_time', $time)
-                ->whereIn('status', ['pending', 'confirmed', 'completed'])
-                ->exists();
+                ->whereIn('status', ['pending', 'confirmed', 'completed']);
+
+            if ($freeRequest->appointment_id) {
+                $alreadyBookedQuery->where('id', '!=', $freeRequest->appointment_id);
+            }
+
+            $alreadyBooked = $alreadyBookedQuery->exists();
 
             if ($alreadyBooked) {
                 return back()->withErrors(__('message.slot_already_booked'))->withInput();
             }
 
-            $appointment = SpecialistAppointment::create([
+            $appointmentData = [
                 'user_id' => $freeRequest->user_id,
                 'specialist_id' => $request->specialist_id,
                 'branch_id' => $freeRequest->branch_id,
                 'appointment_date' => $date->toDateString(),
                 'appointment_time' => $time,
-                'status' => 'pending',
+                'status' => $freeRequest->appointment?->status ?? 'pending',
                 'type' => 'free',
                 'notes' => $request->admin_notes,
-            ]);
+            ];
+
+            if ($freeRequest->appointment) {
+                $freeRequest->appointment->fill($appointmentData);
+                $freeRequest->appointment->save();
+                $appointment = $freeRequest->appointment;
+            } else {
+                $appointment = SpecialistAppointment::create($appointmentData);
+            }
 
             $freeRequest->appointment_id = $appointment->id;
             $freeRequest->specialist_id = $request->specialist_id;
