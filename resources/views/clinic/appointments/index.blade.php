@@ -262,19 +262,26 @@
         (function ($) {
             'use strict';
 
-            const manualModal = document.getElementById('manualAppointmentModal');
-            const convertModal = document.getElementById('convertManualModal');
-            const manualForm = document.getElementById('manual-appointment-form');
             const appointmentUrl = "{{ route('clinic.appointments.available_slots') }}";
 
-            const manualUser = manualForm ? manualForm.querySelector('#manual-user') : null;
-            const manualName = manualForm ? manualForm.querySelector('#manual-name') : null;
-            const manualPhone = manualForm ? manualForm.querySelector('#manual-phone') : null;
-            const manualBranch = manualForm ? manualForm.querySelector('#manual-branch') : null;
-            const specialistSelect = manualForm ? manualForm.querySelector('#manual-specialist') : null;
-            const dateInput = manualForm ? manualForm.querySelector('#manual-date') : null;
-            const timeSelect = manualForm ? manualForm.querySelector('#manual-time') : null;
-            const helper = manualForm ? manualForm.querySelector('#manual-time-helper') : null;
+            const manualRegular = {
+                form: document.getElementById('manual-regular-form'),
+                specialist: document.getElementById('manual-regular-specialist'),
+                date: document.getElementById('manual-regular-date'),
+                time: document.getElementById('manual-regular-time'),
+                helper: document.getElementById('manual-regular-time-helper'),
+            };
+
+            const manualFree = {
+                form: document.getElementById('manual-free-form'),
+                branch: document.getElementById('manual-free-branch'),
+                specialist: document.getElementById('manual-free-specialist'),
+                date: document.getElementById('manual-free-date'),
+                time: document.getElementById('manual-free-time'),
+                helper: document.getElementById('manual-free-time-helper'),
+            };
+
+            const convertModal = document.getElementById('convertManualModal');
 
             const messages = {
                 placeholder: "{{ __('message.select_name', ['select' => __('message.start_time')]) }}",
@@ -285,123 +292,48 @@
                 workingHours: "{{ __('message.working_hours_for_day', ['range' => '__RANGE__']) }}",
             };
 
-            function resetManualFreeFields() {
-                if (manualName) {
-                    manualName.value = '';
-                    manualName.removeAttribute('required');
+            function normaliseSlots(rawSlots) {
+                if (!rawSlots) {
+                    return [];
                 }
 
-                if (manualPhone) {
-                    manualPhone.value = '';
-                    manualPhone.removeAttribute('required');
+                if (Array.isArray(rawSlots)) {
+                    return rawSlots;
                 }
 
-                if (manualBranch) {
-                    manualBranch.value = '';
-                    manualBranch.removeAttribute('required');
-                    manualBranch.setAttribute('disabled', 'disabled');
-                }
+                return Object.values(rawSlots);
             }
 
-            function toggleManualSections(type) {
-                const isManualFree = type === 'manual_free';
-                const freeSections = document.querySelectorAll('.manual-free-section');
-                const regularSections = document.querySelectorAll('.manual-regular-section');
-                const manualUser = document.getElementById('manual-user');
-                const manualName = document.getElementById('manual-name');
-                const manualPhone = document.getElementById('manual-phone');
-                const manualBranch = document.getElementById('manual-branch');
+            function extractTime(slot) {
+                if (!slot) {
+                    return '';
+                }
 
-                freeSections.forEach(function(section) {
-                    section.classList.toggle('d-none', !isManualFree);
+                if (typeof slot === 'string') {
+                    return slot;
+                }
+
+                return slot.time || slot.start_time || slot.startTime || '';
+            }
+
+            function isSlotAvailable(slot) {
+                if (!slot || typeof slot !== 'object') {
+                    return true;
+                }
+
+                const markers = [slot.available, slot.is_available, slot.isAvailable];
+
+                return markers.some(function (marker) {
+                    if (marker === undefined || marker === null) {
+                        return false;
+                    }
+
+                    if (typeof marker === 'string') {
+                        return ['1', 'true', 'yes'].includes(marker.toLowerCase());
+                    }
+
+                    return Boolean(marker);
                 });
-
-                regularSections.forEach(function(section) {
-                    section.classList.toggle('d-none', isManualFree);
-                });
-
-                if (type === 'manual_free') {
-                    if (manualUser) {
-                        $(manualUser).val('').prop('disabled', true).trigger('change');
-                    }
-                    if (manualName) {
-                        manualName.setAttribute('required', 'required');
-                    }
-                    if (manualPhone) {
-                        manualPhone.setAttribute('required', 'required');
-                    }
-                } else {
-                    if (manualUser) {
-                        $(manualUser).prop('disabled', false).trigger('change');
-                    }
-                    if (manualName) {
-                        manualName.value = '';
-                        manualName.removeAttribute('required');
-                    }
-                    if (manualPhone) {
-                        manualPhone.value = '';
-                        manualPhone.removeAttribute('required');
-                    }
-                    if (manualBranch) {
-                        manualBranch.value = '';
-                    }
-                }
-
-                filterSpecialists();
-            }
-
-            function filterSpecialists() {
-                if (!manualForm || !specialistSelect) {
-                    return;
-                }
-
-                const typeInput = manualForm.querySelector('input[name="type"]:checked');
-                const branchId = typeInput && typeInput.value === 'manual_free' && manualBranch ? manualBranch.value : '';
-
-                Array.from(specialistSelect.options).forEach(function (option) {
-                    if (!option.value) {
-                        option.hidden = false;
-                        return;
-                    }
-
-                    const matchesBranch = !branchId || option.getAttribute('data-branch') === branchId;
-                    option.hidden = !matchesBranch;
-
-                    if (option.hidden && option.selected) {
-                        specialistSelect.value = '';
-                        $('#manual-specialist').trigger('change');
-                    }
-                });
-            }
-
-            function setTimeMessage(message, helperText) {
-                if (helperText === undefined) {
-                    helperText = '';
-                }
-
-                if (!timeSelect) {
-                    return;
-                }
-
-                timeSelect.innerHTML = '<option value="">' + message + '</option>';
-                timeSelect.disabled = message === messages.loading;
-
-                if (helper) {
-                    helper.textContent = helperText;
-                }
-            }
-
-            function setTimeMessage(select, helper, message, helperText, disableSelect) {
-                if (!select) {
-                    return;
-                }
-
-                select.innerHTML = '<option value="">' + message + '</option>';
-                select.disabled = Boolean(disableSelect);
-
-                if (helper) {
-                    helper.textContent = helperText || '';
-                }
             }
 
             function formatWorkingRanges(ranges) {
@@ -417,9 +349,7 @@
 
                         return range.start + ' - ' + range.end;
                     })
-                    .filter(function (value) {
-                        return Boolean(value);
-                    });
+                    .filter(Boolean);
 
                 if (!formatted.length) {
                     return '';
@@ -428,82 +358,43 @@
                 return messages.workingHours.replace('__RANGE__', formatted.join(' | '));
             }
 
-            function slotIsAvailable(slot) {
-                if (!slot || typeof slot !== 'object') {
-                    return true;
-                }
-
-                const marker = slot.available !== undefined ? slot.available
-                    : (slot.is_available !== undefined ? slot.is_available : slot.isAvailable);
-
-                if (marker === undefined || marker === null) {
-                    return true;
-                }
-
-                if (typeof marker === 'string') {
-                    return ['1', 'true', 'yes'].indexOf(marker.toLowerCase()) !== -1;
-                }
-
-                return Boolean(marker);
-            }
-
-            function optionTime(slot) {
-                if (!slot) {
-                    return '';
-                }
-
-                if (typeof slot === 'string') {
-                    return slot;
-                }
-
-                return slot.time || slot.start_time || slot.startTime || '';
-            }
-
-            function populateSlots(slots, helperText) {
-                if (helperText === undefined) {
-                    helperText = '';
-                }
-
-                if (!timeSelect) {
+            function showMessage(select, helper, message, helperText, disableSelect) {
+                if (!select) {
                     return;
                 }
 
-                timeSelect.disabled = false;
-                timeSelect.innerHTML = '<option value="">' + messages.placeholder + '</option>';
+                select.innerHTML = '<option value="">' + message + '</option>';
+                select.disabled = Boolean(disableSelect);
+
+                if (helper) {
+                    helper.textContent = helperText || '';
+                }
+            }
+
+            function showOptions(select, helper, slots, helperText) {
+                if (!select) {
+                    return;
+                }
+
+                select.disabled = false;
+                select.innerHTML = '<option value="">' + messages.placeholder + '</option>';
 
                 slots.forEach(function (slot) {
-                    const value = optionTime(slot);
-                    if (!value) {
-                        return;
-                    }
+                    const time = extractTime(slot);
 
-                slots.forEach(function(slot) {
-                    if (!slot) {
-                        return;
-                    }
-
-                    let timeValue = '';
-
-                    if (typeof slot === 'string') {
-                        timeValue = slot;
-                    } else {
-                        timeValue = slot.time || slot.start_time || slot.startTime || '';
-                    }
-
-                    if (!timeValue) {
+                    if (!time) {
                         return;
                     }
 
                     const option = document.createElement('option');
-                    option.value = timeValue;
-                    option.textContent = timeValue;
+                    option.value = time;
+                    option.textContent = time;
 
-                    if (typeof slot === 'object' && slot !== null && !isSlotAvailable(slot)) {
+                    if (!isSlotAvailable(slot)) {
                         option.disabled = true;
-                        option.dataset.unavailable = 'true';
                     }
 
-                    timeSelect.appendChild(option);
+                    select.appendChild(option);
                 });
 
                 if (helper) {
@@ -511,190 +402,159 @@
                 }
             }
 
-            function normaliseSlots(rawSlots) {
-                if (!rawSlots) {
-                    return [];
-                }
-
-                if (Array.isArray(rawSlots)) {
-                    return rawSlots;
-                }
-
-                return Object.values(rawSlots);
-            }
-
-            function isSlotAvailable(slot) {
-                if (!slot) {
-                    return false;
-                }
-
-                const markers = [
-                    slot.available,
-                    slot.is_available,
-                    slot.isAvailable,
-                ];
-
-                return markers.some(function(marker) {
-                    if (marker === undefined || marker === null) {
-                        return false;
-                    }
-
-                    if (typeof marker === 'string') {
-                        return ['1', 'true'].includes(marker.toLowerCase());
-                    }
-
-                    return Boolean(marker);
-                });
-            }
-
-            function fetchSlots() {
-                const specialistSelect = document.getElementById('manual-specialist');
-                const dateInput = document.getElementById('manual-date');
-                const specialistId = specialistSelect ? specialistSelect.value : '';
-                const date = dateInput ? dateInput.value : '';
-
-                const specialistId = specialistSelect.value;
-                const appointmentDate = dateInput.value;
-
-                if (!specialistId || !appointmentDate) {
-                    setTimeMessage(messages.placeholder);
+            function fetchSlotsFor(specialist, dateInput, select, helper) {
+                if (!specialist || !dateInput || !select) {
                     return;
                 }
 
-                setTimeMessage(messages.loading);
+                const specialistId = specialist.value;
+                const appointmentDate = dateInput.value;
 
-                $.get(appointmentUrl, { specialist_id: specialistId, date: date })
-                    .done(function(response) {
+                if (!specialistId || !appointmentDate) {
+                    showMessage(select, helper, messages.placeholder, '', true);
+                    return;
+                }
+
+                showMessage(select, helper, messages.loading, '', true);
+
+                $.get(appointmentUrl, { specialist_id: specialistId, date: appointmentDate })
+                    .done(function (response) {
                         const slots = response && response.slots ? normaliseSlots(response.slots) : [];
-                        const availableSlots = slots.filter(function(slot) {
-                            return isSlotAvailable(slot);
-                        });
-                        const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
-                            ? response.meta.working_ranges
-                            : [];
-                        const helperText = formatWorkingRanges(workingRanges);
-                        const hasAvailabilityFlags = slots.some(function(slot) {
-                            return slot && (slot.hasOwnProperty('available') || slot.hasOwnProperty('is_available') || slot.hasOwnProperty('isAvailable'));
-                        });
                         const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
                             ? response.meta.working_ranges
                             : [];
                         const helperText = formatWorkingRanges(workingRanges);
 
                         if (!slots.length) {
-                            resetTimeSelect(messages.noSchedule, helperText);
+                            showMessage(select, helper, messages.noSchedule, helperText, true);
                             return;
                         }
 
-                        if (!availableSlots.length) {
-                            resetTimeSelect(messages.noSlots, helperText);
+                        const validSlots = slots.filter(function (slot) {
+                            return Boolean(extractTime(slot));
+                        });
+
+                        if (!validSlots.length) {
+                            showMessage(select, helper, messages.noSchedule, helperText, true);
                             return;
                         }
 
-                        setTimeOptions(availableSlots, helperText);
+                        const hasAvailable = validSlots.some(function (slot) {
+                            return isSlotAvailable(slot);
+                        });
+
+                        if (!hasAvailable) {
+                            showMessage(select, helper, messages.noSlots, helperText, true);
+                            return;
+                        }
+
+                        showOptions(select, helper, validSlots, helperText);
                     })
                     .fail(function () {
-                        setTimeMessage(messages.error);
+                        showMessage(select, helper, messages.error, '', true);
                     });
             }
 
-            if (manualForm) {
-                $(manualForm).on('submit', function (event) {
-                    const typeInput = manualForm.querySelector('input[name="type"]:checked');
-                    const selectedType = typeInput ? typeInput.value : 'regular';
+            function wireManualRegularForm() {
+                if (!manualRegular.form) {
+                    return;
+                }
 
-                    if (selectedType === 'manual_free' && manualBranch && !manualBranch.value) {
-                        event.preventDefault();
-                        Swal.fire({
-                            icon: 'error',
-                            title: '{{ __('message.opps') }}',
-                            text: '{{ __('message.manual_branch_required') }}',
-                            confirmButtonColor: 'var(--bs-primary)'
-                        });
-                        return false;
-                    }
+                showMessage(manualRegular.time, manualRegular.helper, messages.placeholder, '', true);
 
-                    return true;
-                });
-
-                manualForm.querySelectorAll('input[name="type"]').forEach(function (input) {
-                    input.addEventListener('change', function (event) {
-                        toggleManualSections(event.target.value);
-                        setTimeMessage(messages.placeholder);
-                        fetchSlots();
+                if (manualRegular.specialist) {
+                    $(manualRegular.specialist).on('change', function () {
+                        fetchSlotsFor(manualRegular.specialist, manualRegular.date, manualRegular.time, manualRegular.helper);
                     });
-                });
-
-                if (!hasSelection) {
-                    specialistSelect.value = '';
                 }
 
-                if (branchSelect) {
-                    if (!branchId) {
-                        specialistSelect.setAttribute('disabled', 'disabled');
-                    } else {
-                        specialistSelect.removeAttribute('disabled');
-                    }
+                if (manualRegular.date) {
+                    $(manualRegular.date).on('change', function () {
+                        fetchSlotsFor(manualRegular.specialist, manualRegular.date, manualRegular.time, manualRegular.helper);
+                    });
                 }
-            }
 
-            if (manualBranch) {
-                $(manualBranch).on('change', function () {
-                    filterSpecialists();
-                    setTimeMessage(messages.placeholder);
-                    fetchSlots();
+                if (manualRegular.time && manualRegular.helper) {
+                    $(manualRegular.time).on('change', function () {
+                        manualRegular.helper.textContent = '';
+                    });
+                }
+
+                manualRegular.form.addEventListener('reset', function () {
+                    showMessage(manualRegular.time, manualRegular.helper, messages.placeholder, '', true);
                 });
             }
 
-            if (specialistSelect) {
-                $(specialistSelect).on('change', function () {
-                    setTimeMessage(messages.placeholder);
-                    fetchSlots();
-                });
-            }
+            function handleManualFreeBranchChange() {
+                if (!manualFree.branch || !manualFree.specialist) {
+                    return;
+                }
 
-            if (dateInput) {
-                $(dateInput).on('change', fetchSlots);
-            }
+                const branchId = manualFree.branch.value;
+                let hasVisibleOption = false;
 
-            if (timeSelect) {
-                $(timeSelect).on('change', function () {
-                    if (helper) {
-                        helper.textContent = '';
-                    }
-                });
-            }
-
-            if (manualModal) {
-                manualModal.addEventListener('shown.bs.modal', function () {
-                    const typeInput = manualForm ? manualForm.querySelector('input[name="type"]:checked') : null;
-                    const selectedType = typeInput ? typeInput.value : 'regular';
-                    toggleManualSections(selectedType);
-                    filterSpecialists();
-                    setTimeMessage(messages.placeholder);
-                });
-
-                manualModal.addEventListener('hidden.bs.modal', function () {
-                    if (manualForm) {
-                        manualForm.reset();
+                Array.from(manualFree.specialist.options).forEach(function (option) {
+                    if (!option.value) {
+                        option.hidden = false;
+                        return;
                     }
 
-                    if (manualUser) {
-                        $(manualUser).val('').trigger('change');
-                        $(manualUser).prop('disabled', false);
-                        const select2Container = $(manualUser).next('.select2-container, .select2');
-                        if (select2Container.length) {
-                            select2Container.removeClass('d-none');
-                        }
+                    const matchesBranch = !branchId || option.getAttribute('data-branch') === branchId;
+                    option.hidden = !matchesBranch;
+
+                    if (matchesBranch) {
+                        hasVisibleOption = true;
                     }
 
-                    resetManualFreeFields();
-                    setTimeMessage(messages.placeholder);
-
-                    if (helper) {
-                        helper.textContent = '';
+                    if (!matchesBranch && option.selected) {
+                        option.selected = false;
                     }
                 });
+
+                manualFree.specialist.disabled = !branchId || !hasVisibleOption;
+
+                fetchSlotsFor(manualFree.specialist, manualFree.date, manualFree.time, manualFree.helper);
+            }
+
+            function wireManualFreeForm() {
+                if (!manualFree.form) {
+                    return;
+                }
+
+                showMessage(manualFree.time, manualFree.helper, messages.placeholder, '', true);
+
+                if (manualFree.branch) {
+                    $(manualFree.branch).on('change', function () {
+                        handleManualFreeBranchChange();
+                    });
+                }
+
+                if (manualFree.specialist) {
+                    $(manualFree.specialist).on('change', function () {
+                        fetchSlotsFor(manualFree.specialist, manualFree.date, manualFree.time, manualFree.helper);
+                    });
+                }
+
+                if (manualFree.date) {
+                    $(manualFree.date).on('change', function () {
+                        fetchSlotsFor(manualFree.specialist, manualFree.date, manualFree.time, manualFree.helper);
+                    });
+                }
+
+                if (manualFree.time && manualFree.helper) {
+                    $(manualFree.time).on('change', function () {
+                        manualFree.helper.textContent = '';
+                    });
+                }
+
+                manualFree.form.addEventListener('reset', function () {
+                    showMessage(manualFree.time, manualFree.helper, messages.placeholder, '', true);
+                    if (manualFree.specialist) {
+                        manualFree.specialist.disabled = true;
+                    }
+                });
+
+                handleManualFreeBranchChange();
             }
 
             document.querySelectorAll('.convert-manual-free').forEach(function (button) {
@@ -716,6 +576,9 @@
                     document.getElementById('convert-manual-form').reset();
                 });
             }
+
+            wireManualRegularForm();
+            wireManualFreeForm();
         })(jQuery);
     </script>
 @endpush
