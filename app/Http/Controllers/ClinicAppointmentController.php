@@ -206,8 +206,10 @@ class ClinicAppointmentController extends Controller
         $date = Carbon::createFromFormat('Y-m-d', $data['appointment_date']);
         $time = Carbon::createFromFormat('H:i', $data['appointment_time'])->format('H:i:s');
 
+        $scheduleDay = ($date->dayOfWeek + 6) % 7;
+
         $scheduleExists = SpecialistSchedule::where('specialist_id', $specialist->id)
-            ->where('day_of_week', $date->dayOfWeek)
+            ->where('day_of_week', $scheduleDay)
             ->where('start_time', '<=', $time)
             ->where('end_time', '>', $time)
             ->exists();
