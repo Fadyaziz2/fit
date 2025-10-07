@@ -109,14 +109,15 @@ class _CartScreenState extends State<CartScreen> {
                   )
                 : ListView.separated(
                     physics: AlwaysScrollableScrollPhysics(),
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, 140),
-                    itemCount: cartItems.length + 1,
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      16,
+                      16,
+                      16 + context.navigationBarHeight + 160,
+                    ),
+                    itemCount: cartItems.length,
                     separatorBuilder: (_, __) => 16.height,
                     itemBuilder: (_, index) {
-                      if (index == cartItems.length) {
-                        return _CartSummaryCard(summary: summary);
-                      }
-
                       final item = cartItems[index];
 
                       return _CartItemTile(
@@ -130,7 +131,7 @@ class _CartScreenState extends State<CartScreen> {
           ? SafeArea(
               top: false,
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 decoration: BoxDecoration(
                   color: appStore.isDarkMode ? cardDarkColor : context.cardColor,
                   boxShadow: [
@@ -141,27 +142,51 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Text(languages.lblOrderSummary,
+                        style: boldTextStyle(size: 18)),
+                    12.height,
+                    Row(
                       children: [
-                        Text(languages.lblOrderTotal,
-                            style: secondaryTextStyle()),
-                        4.height,
-                        Text(
-                          '${userStore.currencySymbol.validate()}${(summary?.totalAmount ?? 0).toStringAsFixed(2)}',
-                          style: boldTextStyle(size: 18, color: primaryColor),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(languages.lblQuantity,
+                                  style: secondaryTextStyle()),
+                              4.height,
+                              Text('${summary?.totalItems ?? 0}',
+                                  style: boldTextStyle(size: 16)),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(languages.lblOrderTotal,
+                                  style: secondaryTextStyle()),
+                              4.height,
+                              Text(
+                                '${userStore.currencySymbol.validate()}${(summary?.totalAmount ?? 0).toStringAsFixed(2)}',
+                                style:
+                                    boldTextStyle(size: 18, color: primaryColor),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
-                    ).expand(),
-                    16.width,
+                    ),
+                    16.height,
                     AppButton(
                       elevation: 0,
                       color: primaryColor,
                       text: languages.lblCheckout,
                       textStyle: boldTextStyle(color: white),
-                      width: context.width() * 0.4,
+                      width: double.infinity,
                       onTap: _goToCheckout,
                     ),
                   ],
@@ -243,60 +268,6 @@ class _CartItemTile extends StatelessWidget {
             icon: Icon(Icons.delete_outline, color: Colors.redAccent),
             tooltip: languages.lblDelete,
           )
-        ],
-      ),
-    );
-  }
-}
-
-class _CartSummaryCard extends StatelessWidget {
-  final CartSummary? summary;
-
-  const _CartSummaryCard({this.summary});
-
-  @override
-  Widget build(BuildContext context) {
-    final totalItems = summary?.totalItems ?? 0;
-    final totalAmount = summary?.totalAmount ?? 0;
-
-    return Container(
-      decoration: boxDecorationWithRoundedCorners(
-        borderRadius: radius(16),
-        backgroundColor: appStore.isDarkMode ? cardDarkColor : cardLightColor,
-      ),
-      padding: EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(languages.lblOrderSummary, style: boldTextStyle(size: 18)),
-          12.height,
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(languages.lblQuantity, style: secondaryTextStyle()),
-                    4.height,
-                    Text('$totalItems', style: boldTextStyle(size: 16)),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(languages.lblOrderTotal, style: secondaryTextStyle()),
-                    4.height,
-                    Text(
-                      '${userStore.currencySymbol.validate()}${totalAmount.toStringAsFixed(2)}',
-                      style: boldTextStyle(size: 18, color: primaryColor),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
