@@ -127,10 +127,8 @@
             </div>
         </form>
     </div>
-</x-app-layout>
-
-@push('scripts')
-    <script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
         (function () {
             const dateInput = document.querySelector('input[name="appointment_date"]');
             const specialistSelect = document.querySelector('select[name="specialist_id"]');
@@ -257,4 +255,8 @@
             }
         })();
     </script>
+</x-app-layout>
+
+@push('scripts')
+  
 @endpush

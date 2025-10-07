@@ -255,10 +255,9 @@
             </div>
         </div>
     </div>
-</x-app-layout>
+                        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-@push('scripts')
-    <script>
+                        <script>
         (function ($) {
             'use strict';
 
@@ -581,4 +580,8 @@
             wireManualFreeForm();
         })(jQuery);
     </script>
+</x-app-layout>
+
+@push('scripts')
+    
 @endpush
