@@ -262,7 +262,19 @@
         (function ($) {
             'use strict';
 
+            const manualModal = document.getElementById('manualAppointmentModal');
+            const convertModal = document.getElementById('convertManualModal');
+            const manualForm = document.getElementById('manual-appointment-form');
             const appointmentUrl = "{{ route('clinic.appointments.available_slots') }}";
+
+            const manualUser = manualForm ? manualForm.querySelector('#manual-user') : null;
+            const manualName = manualForm ? manualForm.querySelector('#manual-name') : null;
+            const manualPhone = manualForm ? manualForm.querySelector('#manual-phone') : null;
+            const manualBranch = manualForm ? manualForm.querySelector('#manual-branch') : null;
+            const specialistSelect = manualForm ? manualForm.querySelector('#manual-specialist') : null;
+            const dateInput = manualForm ? manualForm.querySelector('#manual-date') : null;
+            const timeSelect = manualForm ? manualForm.querySelector('#manual-time') : null;
+            const helper = manualForm ? manualForm.querySelector('#manual-time-helper') : null;
 
             const messages = {
                 placeholder: "{{ __('message.select_name', ['select' => __('message.start_time')]) }}",
@@ -272,6 +284,112 @@
                 error: "{{ __('message.error_fetching_slots') }}",
                 workingHours: "{{ __('message.working_hours_for_day', ['range' => '__RANGE__']) }}",
             };
+
+            function resetManualFreeFields() {
+                if (manualName) {
+                    manualName.value = '';
+                    manualName.removeAttribute('required');
+                }
+
+                if (manualPhone) {
+                    manualPhone.value = '';
+                    manualPhone.removeAttribute('required');
+                }
+
+                if (manualBranch) {
+                    manualBranch.value = '';
+                    manualBranch.removeAttribute('required');
+                    manualBranch.setAttribute('disabled', 'disabled');
+                }
+            }
+
+            function toggleManualSections(type) {
+                const isManualFree = type === 'manual_free';
+                const freeSections = document.querySelectorAll('.manual-free-section');
+                const regularSections = document.querySelectorAll('.manual-regular-section');
+                const manualUser = document.getElementById('manual-user');
+                const manualName = document.getElementById('manual-name');
+                const manualPhone = document.getElementById('manual-phone');
+                const manualBranch = document.getElementById('manual-branch');
+
+                freeSections.forEach(function(section) {
+                    section.classList.toggle('d-none', !isManualFree);
+                });
+
+                regularSections.forEach(function(section) {
+                    section.classList.toggle('d-none', isManualFree);
+                });
+
+                if (type === 'manual_free') {
+                    if (manualUser) {
+                        $(manualUser).val('').prop('disabled', true).trigger('change');
+                    }
+                    if (manualName) {
+                        manualName.setAttribute('required', 'required');
+                    }
+                    if (manualPhone) {
+                        manualPhone.setAttribute('required', 'required');
+                    }
+                } else {
+                    if (manualUser) {
+                        $(manualUser).prop('disabled', false).trigger('change');
+                    }
+                    if (manualName) {
+                        manualName.value = '';
+                        manualName.removeAttribute('required');
+                    }
+                    if (manualPhone) {
+                        manualPhone.value = '';
+                        manualPhone.removeAttribute('required');
+                    }
+                    if (manualBranch) {
+                        manualBranch.value = '';
+                    }
+                }
+
+                filterSpecialists();
+            }
+
+            function filterSpecialists() {
+                if (!manualForm || !specialistSelect) {
+                    return;
+                }
+
+                const typeInput = manualForm.querySelector('input[name="type"]:checked');
+                const branchId = typeInput && typeInput.value === 'manual_free' && manualBranch ? manualBranch.value : '';
+
+                Array.from(specialistSelect.options).forEach(function (option) {
+                    if (!option.value) {
+                        option.hidden = false;
+                        return;
+                    }
+
+                    const matchesBranch = !branchId || option.getAttribute('data-branch') === branchId;
+                    option.hidden = !matchesBranch;
+
+                    if (option.hidden && option.selected) {
+                        specialistSelect.value = '';
+                        $('#manual-specialist').trigger('change');
+                    }
+                });
+            }
+
+            function setTimeMessage(message, helperText) {
+                if (helperText === undefined) {
+                    helperText = '';
+                }
+
+                if (!timeSelect) {
+                    return;
+                }
+
+                timeSelect.innerHTML = '<option value="">' + message + '</option>';
+                timeSelect.disabled = message === messages.loading;
+
+                if (helper) {
+                    helper.textContent = helperText;
+                }
+            }
 
             function setTimeMessage(select, helper, message, helperText, disableSelect) {
                 if (!select) {
@@ -341,13 +459,17 @@
                 return slot.time || slot.start_time || slot.startTime || '';
             }
 
-            function populateSlots(select, helper, slots, helperText) {
-                if (!select) {
+            function populateSlots(slots, helperText) {
+                if (helperText === undefined) {
+                    helperText = '';
+                }
+
+                if (!timeSelect) {
                     return;
                 }
 
-                select.disabled = false;
-                select.innerHTML = '<option value="">' + messages.placeholder + '</option>';
+                timeSelect.disabled = false;
+                timeSelect.innerHTML = '<option value="">' + messages.placeholder + '</option>';
 
                 slots.forEach(function (slot) {
                     const value = optionTime(slot);
@@ -355,15 +477,33 @@
                         return;
                     }
 
-                    const option = document.createElement('option');
-                    option.value = value;
-                    option.textContent = value;
-
-                    if (!slotIsAvailable(slot)) {
-                        option.disabled = true;
+                slots.forEach(function(slot) {
+                    if (!slot) {
+                        return;
                     }
 
-                    select.appendChild(option);
+                    let timeValue = '';
+
+                    if (typeof slot === 'string') {
+                        timeValue = slot;
+                    } else {
+                        timeValue = slot.time || slot.start_time || slot.startTime || '';
+                    }
+
+                    if (!timeValue) {
+                        return;
+                    }
+
+                    const option = document.createElement('option');
+                    option.value = timeValue;
+                    option.textContent = timeValue;
+
+                    if (typeof slot === 'object' && slot !== null && !isSlotAvailable(slot)) {
+                        option.disabled = true;
+                        option.dataset.unavailable = 'true';
+                    }
+
+                    timeSelect.appendChild(option);
                 });
 
                 if (helper) {
@@ -383,77 +523,106 @@
                 return Object.values(rawSlots);
             }
 
-            function createSlotFetcher(config) {
-                return function fetchSlots() {
-                    if (!config.specialistSelect || !config.dateInput || !config.timeSelect) {
-                        return;
+            function isSlotAvailable(slot) {
+                if (!slot) {
+                    return false;
+                }
+
+                const markers = [
+                    slot.available,
+                    slot.is_available,
+                    slot.isAvailable,
+                ];
+
+                return markers.some(function(marker) {
+                    if (marker === undefined || marker === null) {
+                        return false;
                     }
 
-                    const specialistId = config.specialistSelect.value;
-                    const appointmentDate = config.dateInput.value;
-
-                    if (!specialistId || !appointmentDate) {
-                        setTimeMessage(config.timeSelect, config.helper, messages.placeholder);
-                        return;
+                    if (typeof marker === 'string') {
+                        return ['1', 'true'].includes(marker.toLowerCase());
                     }
 
-                    setTimeMessage(config.timeSelect, config.helper, messages.loading, '', true);
-
-                    $.get(appointmentUrl, { specialist_id: specialistId, date: appointmentDate })
-                        .done(function (response) {
-                            const slots = normaliseSlots(response && response.slots);
-                            const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
-                                ? response.meta.working_ranges
-                                : [];
-                            const helperText = formatWorkingRanges(workingRanges);
-
-                            if (!slots.length) {
-                                setTimeMessage(config.timeSelect, config.helper, messages.noSchedule, helperText);
-                                return;
-                            }
-
-                            const available = slots.filter(function (slot) {
-                                return slotIsAvailable(slot);
-                            });
-
-                            if (!available.length) {
-                                const helperMessage = helperText ? helperText + ' — ' + messages.noSlots : messages.noSlots;
-                                populateSlots(config.timeSelect, config.helper, slots, helperMessage);
-                                return;
-                            }
-
-                            populateSlots(config.timeSelect, config.helper, available, helperText);
-                        })
-                        .fail(function () {
-                            setTimeMessage(config.timeSelect, config.helper, messages.error);
-                        });
-                };
+                    return Boolean(marker);
+                });
             }
 
-            function filterSpecialistsByBranch(specialistSelect, branchSelect) {
-                if (!specialistSelect) {
+            function fetchSlots() {
+                const specialistSelect = document.getElementById('manual-specialist');
+                const dateInput = document.getElementById('manual-date');
+                const specialistId = specialistSelect ? specialistSelect.value : '';
+                const date = dateInput ? dateInput.value : '';
+
+                const specialistId = specialistSelect.value;
+                const appointmentDate = dateInput.value;
+
+                if (!specialistId || !appointmentDate) {
+                    setTimeMessage(messages.placeholder);
                     return;
                 }
 
-                const branchId = branchSelect ? branchSelect.value : '';
-                let hasSelection = false;
+                setTimeMessage(messages.loading);
 
-                Array.from(specialistSelect.options).forEach(function (option) {
-                    if (!option.value) {
-                        option.hidden = false;
-                        return;
+                $.get(appointmentUrl, { specialist_id: specialistId, date: date })
+                    .done(function(response) {
+                        const slots = response && response.slots ? normaliseSlots(response.slots) : [];
+                        const availableSlots = slots.filter(function(slot) {
+                            return isSlotAvailable(slot);
+                        });
+                        const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
+                            ? response.meta.working_ranges
+                            : [];
+                        const helperText = formatWorkingRanges(workingRanges);
+                        const hasAvailabilityFlags = slots.some(function(slot) {
+                            return slot && (slot.hasOwnProperty('available') || slot.hasOwnProperty('is_available') || slot.hasOwnProperty('isAvailable'));
+                        });
+                        const workingRanges = response && response.meta && Array.isArray(response.meta.working_ranges)
+                            ? response.meta.working_ranges
+                            : [];
+                        const helperText = formatWorkingRanges(workingRanges);
+
+                        if (!slots.length) {
+                            resetTimeSelect(messages.noSchedule, helperText);
+                            return;
+                        }
+
+                        if (!availableSlots.length) {
+                            resetTimeSelect(messages.noSlots, helperText);
+                            return;
+                        }
+
+                        setTimeOptions(availableSlots, helperText);
+                    })
+                    .fail(function () {
+                        setTimeMessage(messages.error);
+                    });
+            }
+
+            if (manualForm) {
+                $(manualForm).on('submit', function (event) {
+                    const typeInput = manualForm.querySelector('input[name="type"]:checked');
+                    const selectedType = typeInput ? typeInput.value : 'regular';
+
+                    if (selectedType === 'manual_free' && manualBranch && !manualBranch.value) {
+                        event.preventDefault();
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ __('message.opps') }}',
+                            text: '{{ __('message.manual_branch_required') }}',
+                            confirmButtonColor: 'var(--bs-primary)'
+                        });
+                        return false;
                     }
 
-                    const matches = !branchId || option.getAttribute('data-branch') === branchId;
-                    option.hidden = !matches;
+                    return true;
+                });
 
-                    if (option.selected && matches) {
-                        hasSelection = true;
-                    }
-
-                    if (!matches && option.selected) {
-                        option.selected = false;
-                    }
+                manualForm.querySelectorAll('input[name="type"]').forEach(function (input) {
+                    input.addEventListener('change', function (event) {
+                        toggleManualSections(event.target.value);
+                        setTimeMessage(messages.placeholder);
+                        fetchSlots();
+                    });
                 });
 
                 if (!hasSelection) {
@@ -469,134 +638,64 @@
                 }
             }
 
-            (function initManualRegularModal() {
-                const modal = document.getElementById('manualRegularModal');
-                if (!modal) {
-                    return;
-                }
-
-                const form = modal.querySelector('form');
-                const userSelect = form ? form.querySelector('#manual-regular-user') : null;
-                const specialistSelect = form ? form.querySelector('#manual-regular-specialist') : null;
-                const dateInput = form ? form.querySelector('#manual-regular-date') : null;
-                const timeSelect = form ? form.querySelector('#manual-regular-time') : null;
-                const helper = form ? form.querySelector('#manual-regular-time-helper') : null;
-
-                const fetchSlots = createSlotFetcher({ specialistSelect, dateInput, timeSelect, helper });
-
-                if (specialistSelect) {
-                    $(specialistSelect).on('change', function () {
-                        setTimeMessage(timeSelect, helper, messages.placeholder);
-                        fetchSlots();
-                    });
-                }
-
-                if (dateInput) {
-                    $(dateInput).on('change', fetchSlots);
-                }
-
-                if (timeSelect) {
-                    $(timeSelect).on('change', function () {
-                        if (helper) {
-                            helper.textContent = '';
-                        }
-                    });
-                }
-
-                modal.addEventListener('shown.bs.modal', function () {
-                    setTimeMessage(timeSelect, helper, messages.placeholder);
+            if (manualBranch) {
+                $(manualBranch).on('change', function () {
+                    filterSpecialists();
+                    setTimeMessage(messages.placeholder);
                     fetchSlots();
                 });
+            }
 
-                modal.addEventListener('hidden.bs.modal', function () {
-                    if (form) {
-                        form.reset();
-                    }
-
-                    if (userSelect) {
-                        $(userSelect).val('').trigger('change');
-                    }
-
-                    setTimeMessage(timeSelect, helper, messages.placeholder);
+            if (specialistSelect) {
+                $(specialistSelect).on('change', function () {
+                    setTimeMessage(messages.placeholder);
+                    fetchSlots();
                 });
-            })();
+            }
 
-            (function initManualFreeModal() {
-                const modal = document.getElementById('manualFreeModal');
-                if (!modal) {
-                    return;
-                }
+            if (dateInput) {
+                $(dateInput).on('change', fetchSlots);
+            }
 
-                const form = modal.querySelector('form');
-                const branchSelect = form ? form.querySelector('#manual-free-branch') : null;
-                const specialistSelect = form ? form.querySelector('#manual-free-specialist') : null;
-                const dateInput = form ? form.querySelector('#manual-free-date') : null;
-                const timeSelect = form ? form.querySelector('#manual-free-time') : null;
-                const helper = form ? form.querySelector('#manual-free-time-helper') : null;
+            if (timeSelect) {
+                $(timeSelect).on('change', function () {
+                    if (helper) {
+                        helper.textContent = '';
+                    }
+                });
+            }
 
-                const fetchSlots = createSlotFetcher({ specialistSelect, dateInput, timeSelect, helper });
-
-                if (branchSelect) {
-                    $(branchSelect).on('change', function () {
-                        filterSpecialistsByBranch(specialistSelect, branchSelect);
-                        if (specialistSelect) {
-                            $(specialistSelect).trigger('change');
-                        }
-                    });
-                }
-
-                if (specialistSelect) {
-                    $(specialistSelect).on('change', function () {
-                        setTimeMessage(timeSelect, helper, messages.placeholder);
-                        fetchSlots();
-                    });
-                }
-
-                if (dateInput) {
-                    $(dateInput).on('change', fetchSlots);
-                }
-
-                if (timeSelect) {
-                    $(timeSelect).on('change', function () {
-                        if (helper) {
-                            helper.textContent = '';
-                        }
-                    });
-                }
-
-                if (form) {
-                    $(form).on('submit', function (event) {
-                        if (branchSelect && !branchSelect.value) {
-                            event.preventDefault();
-                            Swal.fire({
-                                icon: 'error',
-                                title: '{{ __('message.opps') }}',
-                                text: '{{ __('message.manual_branch_required') }}',
-                                confirmButtonColor: 'var(--bs-primary)'
-                            });
-                            return false;
-                        }
-
-                        return true;
-                    });
-                }
-
-                modal.addEventListener('shown.bs.modal', function () {
-                    filterSpecialistsByBranch(specialistSelect, branchSelect);
-                    setTimeMessage(timeSelect, helper, messages.placeholder);
+            if (manualModal) {
+                manualModal.addEventListener('shown.bs.modal', function () {
+                    const typeInput = manualForm ? manualForm.querySelector('input[name="type"]:checked') : null;
+                    const selectedType = typeInput ? typeInput.value : 'regular';
+                    toggleManualSections(selectedType);
+                    filterSpecialists();
+                    setTimeMessage(messages.placeholder);
                 });
 
-                modal.addEventListener('hidden.bs.modal', function () {
-                    if (form) {
-                        form.reset();
+                manualModal.addEventListener('hidden.bs.modal', function () {
+                    if (manualForm) {
+                        manualForm.reset();
                     }
 
-                    filterSpecialistsByBranch(specialistSelect, branchSelect);
-                    setTimeMessage(timeSelect, helper, messages.placeholder);
-                });
-            })();
+                    if (manualUser) {
+                        $(manualUser).val('').trigger('change');
+                        $(manualUser).prop('disabled', false);
+                        const select2Container = $(manualUser).next('.select2-container, .select2');
+                        if (select2Container.length) {
+                            select2Container.removeClass('d-none');
+                        }
+                    }
 
-            const convertModal = document.getElementById('convertManualModal');
+                    resetManualFreeFields();
+                    setTimeMessage(messages.placeholder);
+
+                    if (helper) {
+                        helper.textContent = '';
+                    }
+                });
+            }
 
             document.querySelectorAll('.convert-manual-free').forEach(function (button) {
                 button.addEventListener('click', function () {
