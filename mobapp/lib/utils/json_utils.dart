@@ -56,3 +56,21 @@ String? parseStringFromJson(dynamic value) {
 
   return value.toString();
 }
+
+/// Safely converts dynamic json values to a [double].
+///
+/// Accepts numeric values and strings that can be parsed into a double.
+/// Returns `null` when conversion isn't possible instead of throwing.
+double? parseDouble(dynamic value) {
+  if (value == null) return null;
+
+  if (value is num) return value.toDouble();
+
+  if (value is String) {
+    final normalised = value.trim();
+    if (normalised.isEmpty) return null;
+    return double.tryParse(normalised);
+  }
+
+  return null;
+}

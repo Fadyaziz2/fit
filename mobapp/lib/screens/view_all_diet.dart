@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../extensions/extension_util/context_extensions.dart';
+import '../../extensions/extension_util/int_extensions.dart';
 import '../../extensions/extension_util/string_extensions.dart';
 import '../../extensions/extension_util/widget_extensions.dart';
 import '../../extensions/decorations.dart';
+import '../../extensions/text_styles.dart';
 import '../../extensions/widgets.dart';
 import '../components/adMob_component.dart';
 import '../components/featured_diet_component.dart';
@@ -14,6 +16,7 @@ import '../models/category_diet_response.dart';
 import '../models/diet_response.dart';
 import '../network/rest_api.dart';
 import '../utils/app_common.dart';
+import '../utils/app_colors.dart';
 import 'no_data_screen.dart';
 
 class ViewAllDiet extends StatefulWidget {
