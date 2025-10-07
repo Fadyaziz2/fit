@@ -143,6 +143,7 @@ return [
     'slot_already_booked' => 'This slot has already been booked.',
     'appointment_booked_successfully' => 'Appointment booked successfully.',
     'add_manual_appointment' => 'Add manual appointment',
+    'add_manual_free_appointment' => 'Add manual free appointment',
     'appointment_type' => 'Appointment type',
     'regular_appointment' => 'Regular',
     'free_appointment' => 'Free',

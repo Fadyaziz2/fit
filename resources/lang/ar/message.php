@@ -80,6 +80,7 @@ return [
     'slot_already_booked' => 'تم حجز هذا المعاد مسبقًا.',
     'appointment_booked_successfully' => 'تم حجز الموعد بنجاح.',
     'add_manual_appointment' => 'إضافة موعد يدوي',
+    'add_manual_free_appointment' => 'إضافة موعد مجاني يدوي',
     'appointment_type' => 'نوع الموعد',
     'regular_appointment' => 'عادي',
     'free_appointment' => 'مجاني',

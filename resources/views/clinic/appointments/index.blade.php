@@ -7,9 +7,12 @@
                         <div class="header-title">
                             <h4 class="card-title">{{ $pageTitle }}</h4>
                         </div>
-                        <div class="card-action">
-                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#manualAppointmentModal">
+                        <div class="card-action d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#manualRegularModal">
                                 {{ __('message.add_manual_appointment') }}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#manualFreeModal">
+                                {{ __('message.add_manual_free_appointment') }}
                             </button>
                         </div>
                     </div>
@@ -89,59 +92,30 @@
         </div>
     </div>
 
-    <div class="modal fade" id="manualAppointmentModal" tabindex="-1" aria-labelledby="manualAppointmentModalLabel" aria-hidden="true">
+    <div class="modal fade" id="manualRegularModal" tabindex="-1" aria-labelledby="manualRegularModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <form method="POST" action="{{ route('clinic.appointments.store') }}" id="manual-appointment-form">
+                <form method="POST" action="{{ route('clinic.appointments.store') }}" id="manual-regular-form">
                     @csrf
+                    <input type="hidden" name="type" value="regular">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="manualAppointmentModalLabel">{{ __('message.add_manual_appointment') }}</h5>
+                        <h5 class="modal-title" id="manualRegularModalLabel">{{ __('message.add_manual_appointment') }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('message.close') }}"></button>
                     </div>
                     <div class="modal-body">
                         <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label">{{ __('message.appointment_type') }} <span class="text-danger">*</span></label>
-                                <div class="d-flex gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="type" id="manual-type-regular" value="regular" checked>
-                                        <label class="form-check-label" for="manual-type-regular">{{ __('message.regular_appointment') }}</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="type" id="manual-type-free" value="manual_free">
-                                        <label class="form-check-label" for="manual-type-free">{{ __('message.manual_free_appointment') }}</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6 manual-regular-section">
+                            <div class="col-md-6">
                                 <label class="form-label">{{ __('message.user') }} <span class="text-danger">*</span></label>
-                                <select name="user_id" id="manual-user" class="form-select select2js" data-placeholder="{{ __('message.select_name', ['select' => __('message.user')]) }}" data-dropdown-parent="#manualAppointmentModal">
+                                <select name="user_id" id="manual-regular-user" class="form-select select2js" data-placeholder="{{ __('message.select_name', ['select' => __('message.user')]) }}" data-dropdown-parent="#manualRegularModal">
                                     <option value="">{{ __('message.select_name', ['select' => __('message.user')]) }}</option>
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}">{{ $user->display_name ?? $user->email }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-6 manual-free-section d-none">
-                                <label class="form-label">{{ __('message.full_name') }} <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="manual_name" id="manual-name" placeholder="{{ __('message.full_name') }}">
-                            </div>
-                            <div class="col-md-6 manual-free-section d-none">
-                                <label class="form-label">{{ __('message.contact_number') }} <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="manual_phone" id="manual-phone" placeholder="{{ __('message.contact_number') }}">
-                            </div>
-                            <div class="col-md-6 manual-free-section d-none">
-                                <label class="form-label">{{ __('message.branch') }} <span class="text-danger">*</span></label>
-                                <select class="form-select" id="manual-branch">
-                                    <option value="">{{ __('message.select_name', ['select' => __('message.branch')]) }}</option>
-                                    @foreach($branches as $branch)
-                                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ __('message.specialist') }} <span class="text-danger">*</span></label>
-                                <select name="specialist_id" id="manual-specialist" class="form-select" data-placeholder="{{ __('message.select_name', ['select' => __('message.specialist')]) }}">
+                                <select name="specialist_id" id="manual-regular-specialist" class="form-select" data-placeholder="{{ __('message.select_name', ['select' => __('message.specialist')]) }}">
                                     <option value="">{{ __('message.select_name', ['select' => __('message.specialist')]) }}</option>
                                     @foreach($specialists as $specialist)
                                         <option value="{{ $specialist->id }}" data-branch="{{ $specialist->branch_id }}">{{ $specialist->name }} - {{ $specialist->branch?->name }}</option>
@@ -150,14 +124,74 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ __('message.day') }} <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" name="appointment_date" id="manual-date" min="{{ now()->format('Y-m-d') }}">
+                                <input type="date" class="form-control" name="appointment_date" id="manual-regular-date" min="{{ now()->format('Y-m-d') }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">{{ __('message.start_time') }} <span class="text-danger">*</span></label>
-                                <select name="appointment_time" id="manual-time" class="form-select">
+                                <select name="appointment_time" id="manual-regular-time" class="form-select">
                                     <option value="">{{ __('message.select_name', ['select' => __('message.start_time')]) }}</option>
                                 </select>
-                                <small class="text-muted d-block" id="manual-time-helper"></small>
+                                <small class="text-muted d-block" id="manual-regular-time-helper"></small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('message.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ __('message.save') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="manualFreeModal" tabindex="-1" aria-labelledby="manualFreeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form method="POST" action="{{ route('clinic.appointments.store') }}" id="manual-free-form">
+                    @csrf
+                    <input type="hidden" name="type" value="manual_free">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="manualFreeModalLabel">{{ __('message.manual_free_appointment') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('message.close') }}"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.full_name') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="manual_name" id="manual-free-name" placeholder="{{ __('message.full_name') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.contact_number') }} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="manual_phone" id="manual-free-phone" placeholder="{{ __('message.contact_number') }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.branch') }} <span class="text-danger">*</span></label>
+                                <select class="form-select" name="manual_branch" id="manual-free-branch" required>
+                                    <option value="">{{ __('message.select_name', ['select' => __('message.branch')]) }}</option>
+                                    @foreach($branches as $branch)
+                                        <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.specialist') }} <span class="text-danger">*</span></label>
+                                <select name="specialist_id" id="manual-free-specialist" class="form-select" data-placeholder="{{ __('message.select_name', ['select' => __('message.specialist')]) }}" disabled>
+                                    <option value="">{{ __('message.select_name', ['select' => __('message.specialist')]) }}</option>
+                                    @foreach($specialists as $specialist)
+                                        <option value="{{ $specialist->id }}" data-branch="{{ $specialist->branch_id }}">{{ $specialist->name }} - {{ $specialist->branch?->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.day') }} <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="appointment_date" id="manual-free-date" min="{{ now()->format('Y-m-d') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ __('message.start_time') }} <span class="text-danger">*</span></label>
+                                <select name="appointment_time" id="manual-free-time" class="form-select">
+                                    <option value="">{{ __('message.select_name', ['select' => __('message.start_time')]) }}</option>
+                                </select>
+                                <small class="text-muted d-block" id="manual-free-time-helper"></small>
                             </div>
                         </div>
                     </div>
@@ -357,6 +391,19 @@
                 }
             }
 
+            function setTimeMessage(select, helper, message, helperText, disableSelect) {
+                if (!select) {
+                    return;
+                }
+
+                select.innerHTML = '<option value="">' + message + '</option>';
+                select.disabled = Boolean(disableSelect);
+
+                if (helper) {
+                    helper.textContent = helperText || '';
+                }
+            }
+
             function formatWorkingRanges(ranges) {
                 if (!Array.isArray(ranges) || !ranges.length) {
                     return '';
@@ -460,7 +507,7 @@
                 });
 
                 if (helper) {
-                    helper.textContent = helperText;
+                    helper.textContent = helperText || '';
                 }
             }
 
@@ -577,6 +624,18 @@
                         fetchSlots();
                     });
                 });
+
+                if (!hasSelection) {
+                    specialistSelect.value = '';
+                }
+
+                if (branchSelect) {
+                    if (!branchId) {
+                        specialistSelect.setAttribute('disabled', 'disabled');
+                    } else {
+                        specialistSelect.removeAttribute('disabled');
+                    }
+                }
             }
 
             if (manualBranch) {
