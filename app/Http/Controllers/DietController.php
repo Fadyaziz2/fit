@@ -10,6 +10,8 @@ use App\Models\AssignDiet;
 use App\Models\Ingredient;
 
 use App\Http\Requests\DietRequest;
+use App\Support\MealPlan;
+use InvalidArgumentException;
 
 
 class DietController extends Controller
@@ -224,6 +226,10 @@ class DietController extends Controller
 
         $decoded = json_decode($value, true);
 
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return [];
+        }
+
         if (isset($decoded['plan']) && is_array($decoded['plan'])) {
             $decoded = $decoded['plan'];
         }
@@ -232,29 +238,48 @@ class DietController extends Controller
             return [];
         }
 
-        return array_values(array_map(function ($dayMeals) {
-            if (!is_array($dayMeals)) {
-                return [];
-            }
-
-            return array_values(array_map(function ($meal) {
-                return $this->normalizeMealSelection($meal);
-            }, $dayMeals));
-        }, $decoded));
+        try {
+            return MealPlan::normalizePlan($decoded, true);
+        } catch (InvalidArgumentException $exception) {
+            return [];
+        }
     }
 
     protected function calculateAverageMacros(array $plan): array
     {
-        $ingredientIds = collect($plan)
-            ->flatten()
-            ->filter(function ($value) {
-                return is_numeric($value) && (int) $value > 0;
-            })
-            ->map(function ($value) {
-                return (int) $value;
-            });
+        $entries = [];
 
-        if ($ingredientIds->isEmpty()) {
+        foreach ($plan as $dayMeals) {
+            if (!is_array($dayMeals)) {
+                continue;
+            }
+
+            foreach ($dayMeals as $mealEntries) {
+                if (!is_array($mealEntries)) {
+                    continue;
+                }
+
+                foreach ($mealEntries as $entry) {
+                    if (!is_array($entry)) {
+                        continue;
+                    }
+
+                    $id = (int) ($entry['id'] ?? 0);
+                    $quantity = isset($entry['quantity']) ? (float) $entry['quantity'] : 1.0;
+
+                    if ($id <= 0 || $quantity <= 0) {
+                        continue;
+                    }
+
+                    $entries[] = [
+                        'id' => $id,
+                        'quantity' => $quantity,
+                    ];
+                }
+            }
+        }
+
+        if (empty($entries)) {
             return [
                 'protein' => 0,
                 'carbs' => 0,
@@ -263,7 +288,11 @@ class DietController extends Controller
             ];
         }
 
-        $ingredients = Ingredient::whereIn('id', $ingredientIds->unique())->get(['id', 'protein', 'carbs', 'fat'])->keyBy('id');
+        $ingredientIds = array_unique(array_map(function ($entry) {
+            return $entry['id'];
+        }, $entries));
+
+        $ingredients = Ingredient::whereIn('id', $ingredientIds)->get(['id', 'protein', 'carbs', 'fat'])->keyBy('id');
 
         $totals = [
             'protein' => 0.0,
@@ -271,22 +300,28 @@ class DietController extends Controller
             'fat' => 0.0,
         ];
 
-        $count = 0;
+        $totalQuantity = 0.0;
 
-        foreach ($ingredientIds as $ingredientId) {
-            $ingredient = $ingredients->get($ingredientId);
+        foreach ($entries as $entry) {
+            $ingredient = $ingredients->get($entry['id']);
 
             if (!$ingredient) {
                 continue;
             }
 
-            $count++;
-            $totals['protein'] += (float) $ingredient->protein;
-            $totals['carbs'] += (float) $ingredient->carbs;
-            $totals['fat'] += (float) $ingredient->fat;
+            $quantity = (float) $entry['quantity'];
+
+            if ($quantity <= 0) {
+                continue;
+            }
+
+            $totals['protein'] += (float) $ingredient->protein * $quantity;
+            $totals['carbs'] += (float) $ingredient->carbs * $quantity;
+            $totals['fat'] += (float) $ingredient->fat * $quantity;
+            $totalQuantity += $quantity;
         }
 
-        if ($count === 0) {
+        if ($totalQuantity <= 0) {
             return [
                 'protein' => 0,
                 'carbs' => 0,
@@ -296,44 +331,13 @@ class DietController extends Controller
         }
 
         $averages = [
-            'protein' => round($totals['protein'] / $count, 2),
-            'carbs' => round($totals['carbs'] / $count, 2),
-            'fat' => round($totals['fat'] / $count, 2),
+            'protein' => round($totals['protein'] / $totalQuantity, 2),
+            'carbs' => round($totals['carbs'] / $totalQuantity, 2),
+            'fat' => round($totals['fat'] / $totalQuantity, 2),
         ];
 
         $averages['calories'] = round(($averages['protein'] * 4) + ($averages['carbs'] * 4) + ($averages['fat'] * 9), 2);
 
         return $averages;
-    }
-
-    protected function normalizeMealSelection($value): array
-    {
-        if (is_array($value)) {
-            $normalized = [];
-
-            foreach ($value as $item) {
-                if (!is_numeric($item)) {
-                    continue;
-                }
-
-                $id = (int) $item;
-
-                if ($id <= 0 || in_array($id, $normalized, true)) {
-                    continue;
-                }
-
-                $normalized[] = $id;
-            }
-
-            return $normalized;
-        }
-
-        if (is_numeric($value)) {
-            $id = (int) $value;
-
-            return $id > 0 ? [$id] : [];
-        }
-
-        return [];
     }
 }

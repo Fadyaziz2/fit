@@ -2,6 +2,7 @@ import '../models/workout_detail_response.dart';
 import '../utils/json_utils.dart';
 
 import 'body_part_response.dart';
+import 'diet_response.dart';
 import 'equipment_response.dart';
 import 'exercise_response.dart';
 import 'level_response.dart';
@@ -143,7 +144,10 @@ class Diet {
   String? totalTime;
   String? isFeatured;
   String? status;
-  String? ingredients;
+  List<List<MealIngredientEntry>>? plan;
+  List<List<MealIngredientEntry>>? customPlan;
+  List<MealPlanDay>? mealPlan;
+  bool? hasCustomPlan;
   String? description;
   String? dietImage;
   int? isPremium;
@@ -164,7 +168,10 @@ class Diet {
       this.totalTime,
       this.isFeatured,
       this.status,
-      this.ingredients,
+      this.plan,
+      this.customPlan,
+      this.mealPlan,
+      this.hasCustomPlan,
       this.description,
       this.dietImage,
       this.isPremium,
@@ -185,7 +192,10 @@ class Diet {
     totalTime = parseStringFromJson(json['total_time']);
     isFeatured = parseStringFromJson(json['is_featured']);
     status = parseStringFromJson(json['status']);
-    ingredients = parseStringFromJson(json['ingredients']);
+    plan = parseMealEntryMatrix(json['ingredients']);
+    customPlan = parseMealEntryMatrix(json['custom_plan']);
+    hasCustomPlan = json['has_custom_plan'] == true;
+    mealPlan = parseMealPlanDays(json['meal_plan']);
     description = parseStringFromJson(json['description']);
     dietImage = parseStringFromJson(json['diet_image']);
     isPremium = json['is_premium'];
@@ -208,7 +218,22 @@ class Diet {
     data['total_time'] = this.totalTime;
     data['is_featured'] = this.isFeatured;
     data['status'] = this.status;
-    data['ingredients'] = this.ingredients;
+    if (this.plan != null) {
+      data['ingredients'] = this
+          .plan!
+          .map((day) => day.map((entry) => entry.toJson()).toList())
+          .toList();
+    }
+    if (this.customPlan != null) {
+      data['custom_plan'] = this
+          .customPlan!
+          .map((day) => day.map((entry) => entry.toJson()).toList())
+          .toList();
+    }
+    if (this.mealPlan != null) {
+      data['meal_plan'] = this.mealPlan!.map((e) => e.toJson()).toList();
+    }
+    data['has_custom_plan'] = this.hasCustomPlan;
     data['description'] = this.description;
     data['diet_image'] = this.dietImage;
     data['is_premium'] = this.isPremium;

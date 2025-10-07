@@ -121,7 +121,8 @@
                     noResults: "{{ __('message.no_results_found') }}",
                     selectedIngredients: "{{ __('message.selected_ingredients') }}",
                     noIngredientsSelected: "{{ __('message.no_ingredients_selected') }}",
-                    mealTotals: "{{ __('message.meal_totals') }}"
+                    mealTotals: "{{ __('message.meal_totals') }}",
+                    quantity: "{{ __('message.quantity') }}"
                 };
 
                 const planInput = $('#meal-plan-input');
@@ -150,32 +151,115 @@
                 let mealPlan = [];
                 let currentSelection = { day: null, meal: null };
                 let modalSelection = [];
+                let currentQuantities = {};
 
                 function sanitizeCount(value) {
                     const number = parseInt(value, 10);
                     return Number.isFinite(number) && number > 0 ? number : 0;
                 }
 
+                function sanitizeQuantity(value) {
+                    if (value === null || value === undefined || value === '') {
+                        return 1;
+                    }
+
+                    if (typeof value === 'string') {
+                        value = value.replace(',', '.');
+                    }
+
+                    const number = parseFloat(value);
+
+                    if (!Number.isFinite(number) || number <= 0) {
+                        return 1;
+                    }
+
+                    return Math.round(number * 100) / 100;
+                }
+
+                function extractEntryId(source) {
+                    if (!source || typeof source !== 'object') {
+                        return NaN;
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(source, 'id')) {
+                        return parseInt(source.id, 10);
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(source, 'ingredient_id')) {
+                        return parseInt(source.ingredient_id, 10);
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(source, 'ingredient')) {
+                        return parseInt(source.ingredient, 10);
+                    }
+
+                    return NaN;
+                }
+
+                function extractEntryQuantity(source) {
+                    if (!source || typeof source !== 'object') {
+                        return 1;
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(source, 'quantity')) {
+                        return source.quantity;
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(source, 'qty')) {
+                        return source.qty;
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(source, 'amount')) {
+                        return source.amount;
+                    }
+
+                    return 1;
+                }
+
                 function normalizeMealValue(value) {
                     const normalized = [];
                     const seen = new Set();
 
+                    function addEntry(id, quantity) {
+                        if (!Number.isInteger(id) || id <= 0 || seen.has(id)) {
+                            return;
+                        }
+
+                        const sanitizedQuantity = sanitizeQuantity(quantity);
+                        seen.add(id);
+                        normalized.push({ id: id, quantity: sanitizedQuantity });
+                    }
+
                     if (Array.isArray(value)) {
                         value.forEach(function (item) {
-                            const id = parseInt(item, 10);
-                            if (!Number.isInteger(id) || id <= 0 || seen.has(id)) {
+                            if (item === null || item === undefined) {
                                 return;
                             }
-                            seen.add(id);
-                            normalized.push(id);
+
+                            if (typeof item === 'object') {
+                                const id = extractEntryId(item);
+                                const quantity = extractEntryQuantity(item);
+                                addEntry(id, quantity);
+                                return;
+                            }
+
+                            const id = parseInt(item, 10);
+                            addEntry(id, 1);
                         });
+
+                        return normalized;
+                    }
+
+                    if (value && typeof value === 'object') {
+                        const id = extractEntryId(value);
+                        const quantity = extractEntryQuantity(value);
+                        addEntry(id, quantity);
+
                         return normalized;
                     }
 
                     const id = parseInt(value, 10);
-                    if (Number.isInteger(id) && id > 0 && !seen.has(id)) {
-                        normalized.push(id);
-                    }
+                    addEntry(id, 1);
 
                     return normalized;
                 }
@@ -259,16 +343,23 @@
                     const totals = { protein: 0, carbs: 0, fat: 0, calories: 0 };
                     const normalized = normalizeMealValue(ingredientIds);
 
-                    normalized.forEach(function (ingredientId) {
-                        const ingredient = ingredientMap[ingredientId];
+                    normalized.forEach(function (entry) {
+                        const ingredient = ingredientMap[entry.id];
+
                         if (!ingredient) {
                             return;
                         }
 
-                        totals.protein += Number(ingredient.protein) || 0;
-                        totals.carbs += Number(ingredient.carbs) || 0;
-                        totals.fat += Number(ingredient.fat) || 0;
-                        totals.calories += Number(ingredient.calories) || 0;
+                        const quantity = Number(entry.quantity) || 0;
+
+                        if (!Number.isFinite(quantity) || quantity <= 0) {
+                            return;
+                        }
+
+                        totals.protein += (Number(ingredient.protein) || 0) * quantity;
+                        totals.carbs += (Number(ingredient.carbs) || 0) * quantity;
+                        totals.fat += (Number(ingredient.fat) || 0) * quantity;
+                        totals.calories += (Number(ingredient.calories) || 0) * quantity;
                     });
 
                     return totals;
@@ -381,17 +472,23 @@
 
                     container.append(selectButton, content);
 
-                    const ingredientIds = getMealSelection(dayIndex, mealIndex);
-                    mealPlan[dayIndex][mealIndex] = ingredientIds;
+                    const mealEntries = getMealSelection(dayIndex, mealIndex).map(function (entry) {
+                        return {
+                            id: entry.id,
+                            quantity: sanitizeQuantity(entry.quantity),
+                        };
+                    });
 
-                    if (ingredientIds.length) {
+                    mealPlan[dayIndex][mealIndex] = mealEntries;
+
+                    if (mealEntries.length) {
                         selectButton.addClass('d-none');
                         content.removeClass('d-none');
 
                         const list = $('<div />').addClass('meal-ingredients-list');
 
-                        ingredientIds.forEach(function (ingredientId) {
-                            const ingredient = ingredientMap[ingredientId];
+                        mealEntries.forEach(function (entry, entryIndex) {
+                            const ingredient = ingredientMap[entry.id];
                             if (!ingredient) {
                                 return;
                             }
@@ -409,21 +506,51 @@
                             const textWrapper = $('<div />').addClass('flex-grow-1');
                             textWrapper.append($('<div />').addClass('fw-semibold').text(ingredient.title));
 
+                            const quantityValue = sanitizeQuantity(entry.quantity);
+                            mealPlan[dayIndex][mealIndex][entryIndex].quantity = quantityValue;
+
+                            const ingredientProtein = (Number(ingredient.protein) || 0) * quantityValue;
+                            const ingredientCarbs = (Number(ingredient.carbs) || 0) * quantityValue;
+                            const ingredientFat = (Number(ingredient.fat) || 0) * quantityValue;
+                            const ingredientCalories = (Number(ingredient.calories) || 0) * quantityValue;
+
                             const macros = [
-                                translations.protein + ': ' + formatNumber(ingredient.protein) + ' ' + translations.grams,
-                                translations.carbs + ': ' + formatNumber(ingredient.carbs) + ' ' + translations.grams,
-                                translations.fat + ': ' + formatNumber(ingredient.fat) + ' ' + translations.grams,
-                                translations.calories + ': ' + formatNumber(ingredient.calories)
+                                translations.protein + ': ' + formatNumber(ingredientProtein) + ' ' + translations.grams,
+                                translations.carbs + ': ' + formatNumber(ingredientCarbs) + ' ' + translations.grams,
+                                translations.fat + ': ' + formatNumber(ingredientFat) + ' ' + translations.grams,
+                                translations.calories + ': ' + formatNumber(ingredientCalories)
                             ].join(' | ');
 
                             textWrapper.append($('<div />').addClass('meal-macros').text(macros));
+
+                            const quantityGroup = $('<div />').addClass('d-flex align-items-center gap-2 mt-2 flex-wrap');
+                            quantityGroup.append($('<span />').addClass('text-muted small').text(translations.quantity));
+
+                            const quantityInput = $('<input />')
+                                .attr({
+                                    type: 'number',
+                                    step: '0.01',
+                                    min: '0.01',
+                                })
+                                .addClass('form-control form-control-sm')
+                                .css('max-width', '120px')
+                                .val(formatNumber(quantityValue))
+                                .on('change', function () {
+                                    const sanitized = sanitizeQuantity($(this).val());
+                                    mealPlan[dayIndex][mealIndex][entryIndex].quantity = sanitized;
+                                    updatePlanInput();
+                                    renderTable();
+                                });
+
+                            quantityGroup.append(quantityInput);
+                            textWrapper.append(quantityGroup);
                             info.append(textWrapper);
                             list.append(info);
                         });
 
                         content.append(list);
 
-                        const mealTotals = computeMealTotals(ingredientIds);
+                        const mealTotals = computeMealTotals(mealEntries);
                         content.append(
                             $('<div />')
                                 .addClass('meal-macros mt-2 fw-semibold')
@@ -531,8 +658,13 @@
                         if (index === -1) {
                             modalSelection.push(ingredientId);
                         }
+
+                        if (!Object.prototype.hasOwnProperty.call(currentQuantities, ingredientId)) {
+                            currentQuantities[ingredientId] = 1;
+                        }
                     } else if (index !== -1) {
                         modalSelection.splice(index, 1);
+                        delete currentQuantities[ingredientId];
                     }
                 }
 
@@ -556,7 +688,19 @@
                     modalSelection.forEach(function (ingredientId) {
                         const ingredient = ingredientMap[ingredientId];
                         const badge = $('<span />').addClass('selected-ingredient-badge');
-                        badge.text(ingredient ? ingredient.title : '#' + ingredientId);
+                        const title = ingredient ? ingredient.title : '#' + ingredientId;
+                        badge.append($('<span />').text(title));
+
+                        const quantity = Object.prototype.hasOwnProperty.call(currentQuantities, ingredientId)
+                            ? currentQuantities[ingredientId]
+                            : 1;
+
+                        badge.append(
+                            $('<small />')
+                                .addClass('d-block text-muted')
+                                .text(translations.quantity + ': ' + formatNumber(quantity))
+                        );
+
                         selectionSummary.append(badge);
                     });
                 }
@@ -636,7 +780,15 @@
 
                 function openIngredientModal(dayIndex, mealIndex) {
                     currentSelection = { day: dayIndex, meal: mealIndex };
-                    modalSelection = getMealSelection(dayIndex, mealIndex).slice();
+                    const currentEntries = getMealSelection(dayIndex, mealIndex);
+                    modalSelection = currentEntries.map(function (entry) {
+                        return entry.id;
+                    });
+
+                    currentQuantities = {};
+                    currentEntries.forEach(function (entry) {
+                        currentQuantities[entry.id] = sanitizeQuantity(entry.quantity);
+                    });
                     ingredientSearch.val('');
                     renderIngredientList('');
                     updateSelectionSummary();
@@ -655,6 +807,7 @@
                     }
 
                     modalSelection = [];
+                    currentQuantities = {};
                     setMealSelection(currentSelection.day, currentSelection.meal, []);
                     renderTable();
                     closeModal();
@@ -665,7 +818,18 @@
                         return;
                     }
 
-                    setMealSelection(currentSelection.day, currentSelection.meal, modalSelection);
+                    const entries = modalSelection.map(function (ingredientId) {
+                        const quantity = Object.prototype.hasOwnProperty.call(currentQuantities, ingredientId)
+                            ? currentQuantities[ingredientId]
+                            : 1;
+
+                        return {
+                            id: ingredientId,
+                            quantity: sanitizeQuantity(quantity),
+                        };
+                    });
+
+                    setMealSelection(currentSelection.day, currentSelection.meal, entries);
                     renderTable();
                     closeModal();
                 });
@@ -679,6 +843,7 @@
                         currentSelection = { day: null, meal: null };
                         ingredientSearch.val('');
                         modalSelection = [];
+                        currentQuantities = {};
                         if (selectionSummary.length) {
                             selectionSummary.empty();
                         }

@@ -3,9 +3,13 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Support\MealPlan;
+use App\Traits\BuildsMealPlanDetails;
 
 class DietDetailResource extends JsonResource
 {
+    use BuildsMealPlanDetails;
+
     /**
      * Transform the resource into an array.
      *
@@ -14,6 +18,8 @@ class DietDetailResource extends JsonResource
      */
     public function toArray($request)
     {
+        $plan = MealPlan::normalizePlan($this->ingredients ?? []);
+
         return [
             'id'                  => $this->id,
             'title'               => $this->title,
@@ -26,7 +32,8 @@ class DietDetailResource extends JsonResource
             'total_time'          => $this->total_time,
             'is_featured'         => $this->is_featured,
             'status'              => $this->status,
-            'ingredients'         => $this->normalizePlan($this->ingredients),
+            'ingredients'         => $plan,
+            'meal_plan'          => $this->buildMealPlanDetails($plan),
             'description'         => $this->description,
             'diet_image'          => getSingleMedia($this, 'diet_image', null),
             'is_premium'          => $this->is_premium,
@@ -35,58 +42,5 @@ class DietDetailResource extends JsonResource
             'created_at'          => $this->created_at,
             'updated_at'          => $this->updated_at,
         ];
-    }
-
-    protected function normalizePlan($plan): array
-    {
-        if (!is_array($plan)) {
-            return [];
-        }
-
-        $normalized = [];
-
-        foreach ($plan as $dayIndex => $dayMeals) {
-            if (!is_array($dayMeals)) {
-                $normalized[] = [];
-                continue;
-            }
-
-            $normalized[] = array_values(array_map(function ($meal) {
-                return $this->normalizeMealSelection($meal);
-            }, $dayMeals));
-        }
-
-        return $normalized;
-    }
-
-    protected function normalizeMealSelection($value): array
-    {
-        if (is_array($value)) {
-            $normalized = [];
-
-            foreach ($value as $item) {
-                if (!is_numeric($item)) {
-                    continue;
-                }
-
-                $id = (int) $item;
-
-                if ($id <= 0 || in_array($id, $normalized, true)) {
-                    continue;
-                }
-
-                $normalized[] = $id;
-            }
-
-            return $normalized;
-        }
-
-        if (is_numeric($value)) {
-            $id = (int) $value;
-
-            return $id > 0 ? [$id] : [];
-        }
-
-        return [];
     }
 }
