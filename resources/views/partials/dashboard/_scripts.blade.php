@@ -62,8 +62,6 @@
 @endif
 
 
-@stack('scripts')
-
 <script src="{{asset('js/plugins/prism.mini.js')}}"></script>
 
 <!-- Custom JavaScript -->

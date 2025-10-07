@@ -31,5 +31,6 @@
             {{ $slot }}
         </div>
          @include('partials.dashboard._scripts')
+         @stack('scripts')
     </body>
 </html>
