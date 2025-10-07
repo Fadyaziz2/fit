@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart';
+import 'package:http/http.dart' as http;
 import 'package:mighty_fitness/languageConfiguration/ServerLanguageResponse.dart';
 import 'package:mighty_fitness/models/FitBotListResponse.dart';
 import 'package:mighty_fitness/models/FitBotSaveDataResponse.dart';
@@ -12,6 +12,7 @@ import '../../models/graph_response.dart';
 import '../../models/level_response.dart';
 import '../../extensions/extension_util/int_extensions.dart';
 import '../../extensions/extension_util/string_extensions.dart';
+import '../extensions/constants.dart';
 import '../extensions/shared_pref.dart';
 import '../main.dart';
 import '../models/payment_list_model.dart';
@@ -51,7 +52,7 @@ import '../models/user_attachment.dart';
 import 'network_utils.dart';
 
 Future<LoginResponse> logInApi(request) async {
-  Response response = await buildHttpResponse('login', request: request, method: HttpMethod.POST);
+  http.Response response = await buildHttpResponse('login', request: request, method: HttpMethod.POST);
   if (!response.statusCode.isSuccessful()) {
     if (response.body.isJson()) {
       var json = jsonDecode(response.body);

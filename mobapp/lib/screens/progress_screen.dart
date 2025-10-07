@@ -19,6 +19,7 @@ import '../../extensions/extension_util/int_extensions.dart';
 import '../../extensions/extension_util/widget_extensions.dart';
 import '../../extensions/extension_util/string_extensions.dart';
 import '../extensions/app_button.dart';
+import '../extensions/app_text_field.dart';
 import '../extensions/common.dart';
 import '../extensions/constants.dart';
 import '../../screens/progress_detail_screen.dart';
@@ -181,7 +182,7 @@ class ProgressScreenState extends State<ProgressScreen> {
       _isUpdatingHealth = true;
     });
 
-    final payload = {
+    final Map<String, dynamic> payload = {
       'disliked_ingredients':
           dislikedItems.map((e) => e.id).whereType<int>().toList(),
       'diseases': conditionItems
