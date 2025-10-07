@@ -16,9 +16,13 @@ class AssignUserController extends Controller
 {
     public function getAssignDiet(Request $request)
     {
-        $assign_diet = Diet::myAssignDiet()
-            ->with(['userAssignDiet' => function ($query) {
-                $query->where('user_id', auth()->id());
+        $userId = auth()->id();
+
+        $assign_diet = Diet::myAssignDiet($userId)
+            ->with(['userAssignDiet' => function ($query) use ($userId) {
+                if ($userId) {
+                    $query->where('user_id', $userId);
+                }
             }]);
         
         $per_page = config('constant.PER_PAGE_LIMIT');
