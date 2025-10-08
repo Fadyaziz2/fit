@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class ClinicAppointmentController extends Controller
@@ -204,14 +205,15 @@ class ClinicAppointmentController extends Controller
 
         $specialist = Specialist::with(['branch', 'branches'])->findOrFail($data['specialist_id']);
         $date = Carbon::createFromFormat('Y-m-d', $data['appointment_date']);
-        $time = Carbon::createFromFormat('H:i', $data['appointment_time'])->format('H:i:s');
+        $time = Carbon::createFromFormat('H:i', $data['appointment_time']);
+        $timeString = $time->format('H:i:s');
 
         $scheduleDay = ($date->dayOfWeek + 6) % 7;
 
         $scheduleExists = SpecialistSchedule::where('specialist_id', $specialist->id)
             ->where('day_of_week', $scheduleDay)
-            ->where('start_time', '<=', $time)
-            ->where('end_time', '>', $time)
+            ->where('start_time', '<=', $timeString)
+            ->where('end_time', '>', $timeString)
             ->exists();
 
         if (! $scheduleExists) {
@@ -220,7 +222,7 @@ class ClinicAppointmentController extends Controller
 
         $alreadyBooked = SpecialistAppointment::where('specialist_id', $specialist->id)
             ->where('appointment_date', $date->toDateString())
-            ->where('appointment_time', $time)
+            ->where('appointment_time', $timeString)
             ->whereIn('status', ['pending', 'confirmed', 'completed'])
             ->exists();
 
@@ -231,6 +233,7 @@ class ClinicAppointmentController extends Controller
         $userId = $data['user_id'] ?? null;
 
         $branchId = null;
+        $user = null;
 
         if ($data['type'] === 'manual_free') {
             $user = $this->createManualUser($data['manual_name'], $data['manual_phone']);
@@ -240,6 +243,10 @@ class ClinicAppointmentController extends Controller
             if (! $specialist->branches->pluck('id')->contains($branchId)) {
                 return back()->withErrors(__('message.specialist_not_in_branch'))->withInput();
             }
+        }
+
+        if ($data['type'] !== 'manual_free' && $userId) {
+            $user = User::find($userId);
         }
 
         $branchId = $branchId ?? (int) $specialist->branch_id;
@@ -253,11 +260,17 @@ class ClinicAppointmentController extends Controller
             'specialist_id' => $specialist->id,
             'branch_id' => $branchId,
             'appointment_date' => $date->toDateString(),
-            'appointment_time' => $time,
+            'appointment_time' => $timeString,
             'status' => 'pending',
             'type' => $data['type'] === 'manual_free' ? 'manual_free' : 'regular',
             'notes' => $data['type'] === 'manual_free' ? __('message.manual_free_notes', ['name' => $data['manual_name'], 'phone' => $data['manual_phone']]) : null,
         ]);
+
+        $phoneNumber = $data['type'] === 'manual_free'
+            ? ($data['manual_phone'] ?? null)
+            : ($user?->phone_number ?? null);
+
+        $this->sendAppointmentConfirmationSms($phoneNumber, $date, $time);
 
         return redirect()->route('clinic.appointments.index')->withSuccess(__('message.save_form', ['form' => __('message.appointment')]));
     }
@@ -352,5 +365,65 @@ class ClinicAppointmentController extends Controller
         $user->assignRole('user');
 
         return $user;
+    }
+
+    protected function sendAppointmentConfirmationSms(?string $phoneNumber, Carbon $date, Carbon $time): void
+    {
+        $normalizedPhone = $this->normalizeJordanPhone($phoneNumber);
+
+        if (! $normalizedPhone) {
+            return;
+        }
+
+        $message = sprintf(
+            'تم تثبيت موعدك فى مركز مايكرو فى (%s الساعة %s) للاستفسار ٠٧٨٠٩٢٢٨٥٤ نذكركم بالحضور قبل الموعد بعشره دقائق',
+            $date->format('Y-m-d'),
+            $time->format('H:i')
+        );
+
+        try {
+            Http::timeout(10)
+                ->get('https://smsapi.theblunet.com:8441/websmpp/websms', [
+                    'user' => 'microjo',
+                    'pass' => 'Mic0@25!',
+                    'sid' => 'micro jo',
+                    'mno' => $normalizedPhone,
+                    'type' => 4,
+                    'text' => $message,
+                ]);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    protected function normalizeJordanPhone(?string $phone): ?string
+    {
+        if (! $phone) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $phone);
+
+        if ($digits === '') {
+            return null;
+        }
+
+        if (Str::startsWith($digits, '00')) {
+            $digits = substr($digits, 2);
+        }
+
+        if (Str::startsWith($digits, '962')) {
+            return $digits;
+        }
+
+        if (Str::startsWith($digits, '0')) {
+            return '962' . substr($digits, 1);
+        }
+
+        if (Str::startsWith($digits, '7') && strlen($digits) === 9) {
+            return '962' . $digits;
+        }
+
+        return $digits;
     }
 }
