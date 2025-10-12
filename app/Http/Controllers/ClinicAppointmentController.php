@@ -199,6 +199,7 @@ class ClinicAppointmentController extends Controller
             'manual_phone' => 'required_if:type,manual_free|nullable|string|max:20',
             'manual_branch' => 'required_if:type,manual_free|nullable|exists:branches,id',
             'specialist_id' => 'required|exists:specialists,id',
+            'branch_id' => 'nullable|exists:branches,id',
             'appointment_date' => 'required|date_format:Y-m-d',
             'appointment_time' => 'required|date_format:H:i',
         ]);
@@ -234,19 +235,36 @@ class ClinicAppointmentController extends Controller
 
         $branchId = null;
         $user = null;
+        $specialistBranchIds = $specialist->branches->pluck('id')->map(fn ($id) => (int) $id);
 
         if ($data['type'] === 'manual_free') {
             $user = $this->createManualUser($data['manual_name'], $data['manual_phone']);
             $userId = $user->id;
             $branchId = (int) $data['manual_branch'];
 
-            if (! $specialist->branches->pluck('id')->contains($branchId)) {
+            if (! $specialistBranchIds->contains($branchId)) {
+                return back()->withErrors(__('message.specialist_not_in_branch'))->withInput();
+            }
+        } else {
+            if ($request->filled('branch_id')) {
+                $branchId = (int) $request->input('branch_id');
+            }
+
+            if ($specialistBranchIds->count() > 1 && ! $branchId) {
+                return back()->withErrors(__('message.specialist_branch_selection_required'))->withInput();
+            }
+
+            if ($branchId && ! $specialistBranchIds->contains($branchId)) {
                 return back()->withErrors(__('message.specialist_not_in_branch'))->withInput();
             }
         }
 
         if ($data['type'] !== 'manual_free' && $userId) {
             $user = User::find($userId);
+        }
+
+        if (! $branchId && $specialistBranchIds->count() === 1) {
+            $branchId = $specialistBranchIds->first();
         }
 
         $branchId = $branchId ?? (int) $specialist->branch_id;
