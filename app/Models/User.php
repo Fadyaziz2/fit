@@ -11,6 +11,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Permission\Traits\HasRoles;
 
+use App\Models\Branch;
 use App\Models\Ingredient;
 use App\Models\Product;
 use App\Models\UserDisease;
@@ -31,7 +32,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
      *
      * @var array
      */
-    protected $fillable = [ 'username', 'first_name', 'last_name', 'phone_number', 'status', 'email', 'password', 'gender', 'display_name', 'login_type', 'user_type', 'player_id', 'is_subscribe', 'timezone','last_notification_seen' ];
+    protected $fillable = [ 'username', 'first_name', 'last_name', 'phone_number', 'status', 'email', 'password', 'gender', 'display_name', 'login_type', 'user_type', 'player_id', 'is_subscribe', 'timezone','last_notification_seen', 'can_access_all_branches' ];
 
     /**
      * The attributes that should be hidden for arrays.
@@ -51,6 +52,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_subscribe'  => 'integer',
+        'can_access_all_branches' => 'boolean',
     ];
 
     public function userProfile() {
@@ -125,6 +127,32 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->hasMany(FreeBookingRequest::class);
     }
 
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class)->withTimestamps();
+    }
+
+    public function hasAccessToAllBranches(): bool
+    {
+        return $this->user_type === 'admin' || (bool) $this->can_access_all_branches;
+    }
+
+    public function accessibleBranchIds(): array
+    {
+        if ($this->hasAccessToAllBranches()) {
+            return [];
+        }
+
+        $this->loadMissing('branches');
+
+        return $this->branches
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -152,6 +180,8 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
                     # code...
                 break;
             }
+
+            $row->branches()->detach();
         });
 
         static::updated(function($model) {

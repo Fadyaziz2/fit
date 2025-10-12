@@ -4,40 +4,64 @@ namespace App\Http\Controllers;
 
 use App\Models\Specialist;
 use App\Models\SpecialistSchedule;
+use App\Traits\HandlesBranchAccess;
 use Illuminate\Http\Request;
 
 class ClinicSpecialistScheduleController extends Controller
 {
+    use HandlesBranchAccess;
+
     protected function authorizeAccess()
     {
-        if (auth()->user()?->user_type !== 'admin') {
-            abort(403, __('message.permission_denied_for_account'));
-        }
+        return $this->authorizeBranchAccess();
     }
 
     public function index()
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $pageTitle = __('message.list_form_title', ['form' => __('message.specialist_schedule')]);
-        $schedules = SpecialistSchedule::with(['specialist.branch', 'specialist.branches'])->orderBy('day_of_week')->paginate(20);
+        $schedules = SpecialistSchedule::with(['specialist.branch', 'specialist.branches'])
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->whereHas('specialist', function ($specialistQuery) use ($branchIds) {
+                    $specialistQuery->whereIn('branch_id', $branchIds)
+                        ->orWhereHas('branches', function ($branchQuery) use ($branchIds) {
+                            $branchQuery->whereIn('branches.id', $branchIds);
+                        });
+                });
+            })
+            ->orderBy('day_of_week')
+            ->paginate(20);
 
         return view('clinic.schedules.index', compact('pageTitle', 'schedules'));
     }
 
     public function create()
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $pageTitle = __('message.add_form_title', ['form' => __('message.specialist_schedule')]);
-        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
+        $specialists = Specialist::with(['branch', 'branches'])
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->where(function ($innerQuery) use ($branchIds) {
+                    $innerQuery->whereIn('branch_id', $branchIds)
+                        ->orWhereHas('branches', function ($branchQuery) use ($branchIds) {
+                            $branchQuery->whereIn('branches.id', $branchIds);
+                        });
+                });
+            })
+            ->orderBy('name')
+            ->get();
 
         return view('clinic.schedules.form', compact('pageTitle', 'specialists'));
     }
 
     public function store(Request $request)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $data = $request->validate([
             'specialist_id' => 'required|exists:specialists,id',
@@ -46,6 +70,9 @@ class ClinicSpecialistScheduleController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'slot_duration' => 'required|integer|min:5',
         ]);
+
+        $specialist = Specialist::with('branches')->findOrFail($data['specialist_id']);
+        $this->ensureSpecialistAccessible($specialist, $branchIds);
 
         SpecialistSchedule::create($data);
 
@@ -54,17 +81,37 @@ class ClinicSpecialistScheduleController extends Controller
 
     public function edit(SpecialistSchedule $schedule)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
+        $schedule->load('specialist.branches');
+        if ($schedule->specialist) {
+            $this->ensureSpecialistAccessible($schedule->specialist, $branchIds);
+        }
 
         $pageTitle = __('message.update_form_title', ['form' => __('message.specialist_schedule')]);
-        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
+        $specialists = Specialist::with(['branch', 'branches'])
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->where(function ($innerQuery) use ($branchIds) {
+                    $innerQuery->whereIn('branch_id', $branchIds)
+                        ->orWhereHas('branches', function ($branchQuery) use ($branchIds) {
+                            $branchQuery->whereIn('branches.id', $branchIds);
+                        });
+                });
+            })
+            ->orderBy('name')
+            ->get();
 
         return view('clinic.schedules.form', compact('pageTitle', 'specialists', 'schedule'));
     }
 
     public function update(Request $request, SpecialistSchedule $schedule)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
+        $schedule->load('specialist.branches');
+        if ($schedule->specialist) {
+            $this->ensureSpecialistAccessible($schedule->specialist, $branchIds);
+        }
 
         $data = $request->validate([
             'specialist_id' => 'required|exists:specialists,id',
@@ -74,6 +121,9 @@ class ClinicSpecialistScheduleController extends Controller
             'slot_duration' => 'required|integer|min:5',
         ]);
 
+        $specialist = Specialist::with('branches')->findOrFail($data['specialist_id']);
+        $this->ensureSpecialistAccessible($specialist, $branchIds);
+
         $schedule->update($data);
 
         return redirect()->route('clinic.schedules.index')->withSuccess(__('message.update_form', ['form' => __('message.specialist_schedule')]));
@@ -81,7 +131,12 @@ class ClinicSpecialistScheduleController extends Controller
 
     public function destroy(SpecialistSchedule $schedule)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
+        $schedule->load('specialist.branches');
+        if ($schedule->specialist) {
+            $this->ensureSpecialistAccessible($schedule->specialist, $branchIds);
+        }
 
         $schedule->delete();
 

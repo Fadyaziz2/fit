@@ -6,25 +6,33 @@ use App\Models\FreeBookingRequest;
 use App\Models\Specialist;
 use App\Models\SpecialistAppointment;
 use App\Models\SpecialistSchedule;
+use App\Traits\HandlesBranchAccess;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class ClinicFreeBookingRequestController extends Controller
 {
+    use HandlesBranchAccess;
+
     protected function authorizeAccess()
     {
-        if (auth()->user()?->user_type !== 'admin') {
-            abort(403, __('message.permission_denied_for_account'));
-        }
+        return $this->authorizeBranchAccess();
     }
 
     public function index()
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $pageTitle = __('message.list_form_title', ['form' => __('message.free_booking_request')]);
         $requests = FreeBookingRequest::with(['user', 'branch', 'specialist'])
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->where(function ($innerQuery) use ($branchIds) {
+                    $innerQuery->whereIn('branch_id', $branchIds)
+                        ->orWhereNull('branch_id');
+                });
+            })
             ->orderByDesc('created_at')
             ->paginate(20);
 
@@ -33,19 +41,48 @@ class ClinicFreeBookingRequestController extends Controller
 
     public function edit(FreeBookingRequest $freeRequest)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
+
+        if ($branchIds !== null && $freeRequest->branch_id && ! in_array((int) $freeRequest->branch_id, $branchIds, true)) {
+            abort(403, __('message.permission_denied_for_account'));
+        }
 
         $pageTitle = __('message.update_form_title', ['form' => __('message.free_booking_request')]);
-        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
+        $specialists = Specialist::with(['branch', 'branches'])
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->where(function ($innerQuery) use ($branchIds) {
+                    $innerQuery->whereIn('branch_id', $branchIds)
+                        ->orWhereHas('branches', function ($branchQuery) use ($branchIds) {
+                            $branchQuery->whereIn('branches.id', $branchIds);
+                        });
+                });
+            })
+            ->orderBy('name')
+            ->get();
 
-        $freeRequest->load('appointment');
+        $freeRequest->load('appointment', 'specialist.branches');
+
+        if ($freeRequest->specialist) {
+            $this->ensureSpecialistAccessible($freeRequest->specialist, $branchIds);
+        }
 
         return view('clinic.free_requests.form', compact('pageTitle', 'freeRequest', 'specialists'));
     }
 
     public function update(Request $request, FreeBookingRequest $freeRequest)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
+
+        if ($branchIds !== null && $freeRequest->branch_id && ! in_array((int) $freeRequest->branch_id, $branchIds, true)) {
+            abort(403, __('message.permission_denied_for_account'));
+        }
+
+        $freeRequest->load('specialist.branches', 'appointment');
+        if ($freeRequest->specialist) {
+            $this->ensureSpecialistAccessible($freeRequest->specialist, $branchIds);
+        }
 
         $data = $request->validate([
             'status' => 'required|in:pending,converted,cancelled',
@@ -65,6 +102,7 @@ class ClinicFreeBookingRequestController extends Controller
             ]);
 
             $specialist = Specialist::with('branches')->findOrFail($request->specialist_id);
+            $this->ensureSpecialistAccessible($specialist, $branchIds);
             $date = Carbon::createFromFormat('Y-m-d', $request->appointment_date);
             $time = Carbon::createFromFormat('H:i', $request->appointment_time)->format('H:i:s');
 
@@ -149,7 +187,8 @@ class ClinicFreeBookingRequestController extends Controller
 
     public function availableSlots(Request $request)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $validator = Validator::make($request->all(), [
             'specialist_id' => 'required|exists:specialists,id',
@@ -162,7 +201,8 @@ class ClinicFreeBookingRequestController extends Controller
             ], 422);
         }
 
-        $specialist = Specialist::with('schedules')->findOrFail($request->specialist_id);
+        $specialist = Specialist::with(['schedules', 'branches'])->findOrFail($request->specialist_id);
+        $this->ensureSpecialistAccessible($specialist, $branchIds);
         $date = Carbon::parse($request->date);
 
         $weekStart = Carbon::create()->startOfWeek();

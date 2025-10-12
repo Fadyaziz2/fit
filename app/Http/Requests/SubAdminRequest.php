@@ -2,10 +2,11 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
+use App\Models\Branch;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 
 class SubAdminRequest extends FormRequest
@@ -48,6 +49,10 @@ class SubAdminRequest extends FormRequest
                 ];
             break;
         }
+
+        $branchOptions = Branch::query()->pluck('id')->map(fn ($id) => (string) $id)->all();
+        $rules['branch_ids'] = 'required|array|min:1';
+        $rules['branch_ids.*'] = Rule::in(array_merge(['all'], $branchOptions));
 
         return $rules;
     }

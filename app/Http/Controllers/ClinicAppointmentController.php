@@ -9,6 +9,7 @@ use App\Models\SpecialistAppointment;
 use App\Models\SpecialistSchedule;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Traits\HandlesBranchAccess;
 use App\Traits\SubscriptionTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -19,25 +20,27 @@ use Illuminate\Support\Str;
 
 class ClinicAppointmentController extends Controller
 {
-    use SubscriptionTrait;
+    use SubscriptionTrait, HandlesBranchAccess;
 
-    protected function authorizeAccess()
+    protected function authorizeAccess(): User
     {
-        if (auth()->user()?->user_type !== 'admin') {
-            abort(403, __('message.permission_denied_for_account'));
-        }
+        return $this->authorizeBranchAccess();
     }
 
     public function index(Request $request)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $request->validate([
             'type' => 'nullable|in:regular,free,manual_free',
         ]);
 
         $pageTitle = __('message.list_form_title', ['form' => __('message.appointment')]);
-        $appointments = SpecialistAppointment::with(['user', 'specialist.branch'])
+        $appointments = SpecialistAppointment::with(['user', 'specialist.branch', 'branch'])
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->whereIn('branch_id', $branchIds);
+            })
             ->when($request->filled('type'), function ($query) use ($request) {
                 $query->where('type', $request->input('type'));
             })
@@ -50,8 +53,23 @@ class ClinicAppointmentController extends Controller
             ->orderBy('display_name')
             ->get();
 
-        $branches = Branch::orderBy('name')->get();
-        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
+        $branches = Branch::orderBy('name')
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->whereIn('id', $branchIds);
+            })
+            ->get();
+
+        $specialists = Specialist::with(['branch', 'branches'])
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->where(function ($innerQuery) use ($branchIds) {
+                    $innerQuery->whereIn('branch_id', $branchIds)
+                        ->orWhereHas('branches', function ($branchQuery) use ($branchIds) {
+                            $branchQuery->whereIn('branches.id', $branchIds);
+                        });
+                });
+            })
+            ->orderBy('name')
+            ->get();
         $packages = Package::where('status', 'active')->orderBy('name')->get();
 
         return view('clinic.appointments.index', compact('pageTitle', 'appointments', 'users', 'branches', 'specialists', 'packages'));
@@ -82,14 +100,16 @@ class ClinicAppointmentController extends Controller
 
     public function availableSlots(Request $request)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $data = $request->validate([
             'specialist_id' => 'required|exists:specialists,id',
             'date' => 'required|date_format:Y-m-d',
         ]);
 
-        $specialist = Specialist::with('schedules')->findOrFail($data['specialist_id']);
+        $specialist = Specialist::with(['schedules', 'branches'])->findOrFail($data['specialist_id']);
+        $this->ensureSpecialistAccessible($specialist, $branchIds);
         $date = Carbon::createFromFormat('Y-m-d', $data['date']);
         $weekStart = Carbon::create()->startOfWeek();
 
@@ -190,7 +210,8 @@ class ClinicAppointmentController extends Controller
 
     public function store(Request $request)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $data = $request->validate([
             'type' => 'required|in:regular,manual_free',
@@ -204,6 +225,7 @@ class ClinicAppointmentController extends Controller
         ]);
 
         $specialist = Specialist::with(['branch', 'branches'])->findOrFail($data['specialist_id']);
+        $this->ensureSpecialistAccessible($specialist, $branchIds);
         $date = Carbon::createFromFormat('Y-m-d', $data['appointment_date']);
         $time = Carbon::createFromFormat('H:i', $data['appointment_time']);
         $timeString = $time->format('H:i:s');
@@ -239,6 +261,7 @@ class ClinicAppointmentController extends Controller
             $user = $this->createManualUser($data['manual_name'], $data['manual_phone']);
             $userId = $user->id;
             $branchId = (int) $data['manual_branch'];
+            $this->assertBranchAccessible($branchId, $branchIds);
 
             if (! $specialist->branches->pluck('id')->contains($branchId)) {
                 return back()->withErrors(__('message.specialist_not_in_branch'))->withInput();
@@ -250,6 +273,7 @@ class ClinicAppointmentController extends Controller
         }
 
         $branchId = $branchId ?? (int) $specialist->branch_id;
+        $this->assertBranchAccessible($branchId, $branchIds);
 
         if (! $branchId) {
             return back()->withErrors(__('message.specialist_not_in_branch'))->withInput();
@@ -277,9 +301,15 @@ class ClinicAppointmentController extends Controller
 
     public function convertManualFree(Request $request, SpecialistAppointment $appointment)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         abort_unless($appointment->type === 'manual_free', 404);
+        $this->assertBranchAccessible($appointment->branch_id, $branchIds);
+        $appointment->loadMissing('specialist.branches');
+        if ($appointment->specialist) {
+            $this->ensureSpecialistAccessible($appointment->specialist, $branchIds);
+        }
 
         $data = $request->validate([
             'full_name' => 'required|string|max:255',
