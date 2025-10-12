@@ -1,6 +1,287 @@
 @push('scripts')
 {{ $dataTable->scripts() }}
     <script>
+        const dietPrintStrings = {
+            heading: @json(__('message.diet_plan_for', ['name' => $data->name ?? __('message.user')])),
+            number: @json(__('message.srno')),
+            title: @json(__('message.title')),
+            mealTimes: @json(__('message.meal_times')),
+            printedOnLabel: @json(__('message.printed_on_label')),
+            empty: @json(__('message.no_diet_assigned')),
+        };
+
+        function escapeHtml(value) {
+            return $('<div>').text(value || '').html();
+        }
+
+        function buildDietPrintRows() {
+            const rows = [];
+            let rowIndex = 0;
+
+            $('#diet-data tr').each(function () {
+                const $cells = $(this).find('td');
+
+                if ($cells.length <= 1) {
+                    const emptyText = $(this).text().trim();
+                    if (emptyText) {
+                        rows.push(`
+                            <tr>
+                                <td colspan="3" class="print-empty">${escapeHtml(emptyText)}</td>
+                            </tr>
+                        `);
+                    }
+
+                    return;
+                }
+
+                rowIndex += 1;
+
+                const $titleCell = $cells.eq(1);
+                const title = $titleCell.find('span').first().text().trim() || '-';
+                const customBadge = $titleCell.find('.badge').text().trim();
+                const imageSrc = $cells.eq(0).find('img').attr('src') || '';
+
+                const mealTimes = [];
+                $cells.eq(2).find('span').each(function () {
+                    const text = $(this).text().trim();
+                    if (text) {
+                        mealTimes.push(text);
+                    }
+                });
+
+                const mealTimesHtml = mealTimes.length
+                    ? `<ul class="print-meal-times">${mealTimes.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
+                    : `<span>-</span>`;
+
+                rows.push(`
+                    <tr>
+                        <td class="print-index">${rowIndex}</td>
+                        <td>
+                            <div class="print-diet-info">
+                                ${imageSrc ? `<img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(title)}" class="print-diet-image">` : ''}
+                                <div class="print-diet-text">
+                                    <div class="print-diet-title">${escapeHtml(title)}</div>
+                                    ${customBadge ? `<div class="print-diet-badge">${escapeHtml(customBadge)}</div>` : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td>${mealTimesHtml}</td>
+                    </tr>
+                `);
+            });
+
+            if (!rowIndex && !rows.length) {
+                rows.push(`
+                    <tr>
+                        <td colspan="3" class="print-empty">${escapeHtml(dietPrintStrings.empty)}</td>
+                    </tr>
+                `);
+            }
+
+            return rows.join('');
+        }
+
+        function openDietPrintWindow() {
+            const tableRows = buildDietPrintRows();
+            const printWindow = window.open('', '', 'width=900,height=650');
+
+            if (!printWindow) {
+                return;
+            }
+
+            const printedOn = new Date().toLocaleString();
+
+            const documentContent = `
+                <!DOCTYPE html>
+                <html lang="en">
+                    <head>
+                        <meta charset="utf-8">
+                        <title>${escapeHtml(dietPrintStrings.heading)}</title>
+                        <style>
+                            :root {
+                                color-scheme: light;
+                            }
+
+                            body {
+                                font-family: 'Helvetica Neue', Arial, sans-serif;
+                                margin: 0;
+                                padding: 32px;
+                                background-color: #f8f9fa;
+                                color: #212529;
+                            }
+
+                            .print-container {
+                                max-width: 900px;
+                                margin: 0 auto;
+                                background-color: #ffffff;
+                                border-radius: 12px;
+                                box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+                                padding: 32px;
+                            }
+
+                            .print-header {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 8px;
+                                margin-bottom: 24px;
+                                text-align: center;
+                            }
+
+                            .print-title {
+                                font-size: 24px;
+                                font-weight: 700;
+                                margin: 0;
+                            }
+
+                            .print-subtitle {
+                                font-size: 14px;
+                                color: #6c757d;
+                                margin: 0;
+                            }
+
+                            .print-table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                overflow: hidden;
+                                border-radius: 12px;
+                                box-shadow: inset 0 0 0 1px rgba(226, 232, 240, 0.8);
+                            }
+
+                            .print-table thead {
+                                background: linear-gradient(135deg, #f97316, #fb923c);
+                                color: #fff;
+                            }
+
+                            .print-table th,
+                            .print-table td {
+                                padding: 16px;
+                                text-align: left;
+                                font-size: 14px;
+                                vertical-align: top;
+                            }
+
+                            .print-table tbody tr:nth-child(even) {
+                                background-color: #fdf2e9;
+                            }
+
+                            .print-table tbody tr:nth-child(odd) {
+                                background-color: #fffaf5;
+                            }
+
+                            .print-index {
+                                font-weight: 600;
+                                width: 60px;
+                            }
+
+                            .print-diet-info {
+                                display: flex;
+                                align-items: center;
+                                gap: 16px;
+                            }
+
+                            .print-diet-image {
+                                width: 60px;
+                                height: 60px;
+                                border-radius: 12px;
+                                object-fit: cover;
+                                border: 2px solid rgba(249, 115, 22, 0.35);
+                            }
+
+                            .print-diet-title {
+                                font-weight: 600;
+                                font-size: 16px;
+                                margin-bottom: 4px;
+                            }
+
+                            .print-diet-badge {
+                                display: inline-block;
+                                padding: 4px 10px;
+                                border-radius: 999px;
+                                background-color: rgba(249, 115, 22, 0.12);
+                                color: #c2410c;
+                                font-size: 12px;
+                                font-weight: 600;
+                            }
+
+                            .print-meal-times {
+                                list-style: none;
+                                padding: 0;
+                                margin: 0;
+                                display: flex;
+                                flex-direction: column;
+                                gap: 6px;
+                            }
+
+                            .print-meal-times li {
+                                background-color: rgba(248, 250, 252, 0.9);
+                                border-left: 4px solid #fb923c;
+                                padding: 8px 12px;
+                                border-radius: 8px;
+                            }
+
+                            .print-empty {
+                                text-align: center;
+                                font-style: italic;
+                                color: #6c757d;
+                                padding: 32px 16px;
+                            }
+
+                            @media print {
+                                body {
+                                    padding: 0;
+                                    background-color: #ffffff;
+                                }
+
+                                .print-container {
+                                    box-shadow: none;
+                                    padding: 0;
+                                }
+
+                                .print-table tbody tr:nth-child(even),
+                                .print-table tbody tr:nth-child(odd) {
+                                    background-color: transparent;
+                                }
+
+                                .print-table th {
+                                    background: #f97316;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-container">
+                            <div class="print-header">
+                                <h1 class="print-title">${escapeHtml(dietPrintStrings.heading)}</h1>
+                                <p class="print-subtitle">${escapeHtml(dietPrintStrings.printedOnLabel)} ${escapeHtml(printedOn)}</p>
+                            </div>
+                            <table class="print-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 60px;">${escapeHtml(dietPrintStrings.number)}</th>
+                                        <th>${escapeHtml(dietPrintStrings.title)}</th>
+                                        <th>${escapeHtml(dietPrintStrings.mealTimes)}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </body>
+                </html>
+            `;
+
+            printWindow.document.write(documentContent);
+            printWindow.document.close();
+
+            printWindow.focus();
+
+            setTimeout(function () {
+                printWindow.print();
+                printWindow.close();
+            }, 300);
+        }
+
         function getAssignList(type = ''){
             let url = "{{ route('get.assigndietlist') }}";
             if( type == 'workout' ) {
@@ -74,6 +355,10 @@
             getAssignList('diet');
             getAssignList('workout');
             getAssignList('product');
+
+            $(document).on('click', '#print-diet-plan', function () {
+                openDietPrintWindow();
+            });
 
             let weight_chart_options = generateChartOptions( "{{__('message.weight')}}" , [], []);
             let weightChart = createChart('#apex-line-area-weight', weight_chart_options);
@@ -352,7 +637,16 @@
                     <div class="header-title">
                         <h4 class="card-title">{{__('message.assigndiet')}}</h4>
                     </div>
-                    <div class="text-center ms-3 ms-lg-0 ms-md-0">
+                    <div class="d-flex align-items-center gap-2 text-center ms-3 ms-lg-0 ms-md-0">
+                        <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" id="print-diet-plan">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17 8V4H7V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M17 16H19C20.1046 16 21 15.1046 21 14V11C21 9.89543 20.1046 9 19 9H5C3.89543 9 3 9.89543 3 11V14C3 15.1046 3.89543 16 5 16H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M7 12H7.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M17 16V20H7V16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>{{ __('message.print_diet_plan') }}</span>
+                        </button>
                         <a href="#" class="float-end btn btn-sm btn-primary" data-modal-form="form" data-size="small"
                             data--href="{{ route('add.assigndiet', $data['id']) }}"
                             data-app-title="{{ __('message.add_form_title',['form' => __('message.assigndiet')]) }}"
