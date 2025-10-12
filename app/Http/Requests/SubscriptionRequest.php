@@ -33,12 +33,14 @@ class SubscriptionRequest  extends FormRequest
                 $rules = [
                     'user_id' => 'required',
                     'package_id' => 'required',
+                    'subscription_start_date' => 'nullable|date_format:Y-m-d H:i',
                 ];
                 break;
             case 'patch':
                 $rules = [
                     'user_id' => 'required',
                     'package_id' => 'required',
+                    'subscription_start_date' => 'nullable|date_format:Y-m-d H:i',
                 ];
                 break;
         }

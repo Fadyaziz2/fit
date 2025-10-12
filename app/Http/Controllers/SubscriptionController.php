@@ -10,6 +10,7 @@ use App\Models\Package;
 use App\Helpers\AuthHelper;
 use App\Traits\SubscriptionTrait;
 use App\Http\Requests\SubscriptionRequest;
+use Carbon\Carbon;
 
 class SubscriptionController extends Controller
 {
@@ -68,16 +69,21 @@ class SubscriptionController extends Controller
         }
 
         $data = $request->all();
+        $startDateInput = $request->input('subscription_start_date');
+        $subscriptionStartDate = $startDateInput
+            ? Carbon::createFromFormat('Y-m-d H:i', $startDateInput)->format('Y-m-d H:i:s')
+            : Carbon::now()->format('Y-m-d H:i:s');
+
         $user_id = request('user_id');
         foreach ( $user_id as $value ) {
             $user = User::where('id', $value)->first();
             $package_data = Package::where('id',request('package_id'))->first();
-            
+
             $active_plan_left_days = 0;
             $data['user_id'] = $value;
             $data['status'] = config('constant.SUBSCRIPTION_STATUS.PENDING');
             $data['payment_status'] = 'paid';
-            $data['subscription_start_date'] = date('Y-m-d H:i:s');
+            $data['subscription_start_date'] = $subscriptionStartDate;
             $data['total_amount'] = $package_data->price;
             $data['transaction_detail'] = [
                 'added_by' => auth()->id(),
