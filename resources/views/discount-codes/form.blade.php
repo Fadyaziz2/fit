@@ -33,7 +33,7 @@
                             </div>
                             <div class="form-group col-md-4">
                                 {{ html()->label(__('message.discount_value') . ' <span class="text-danger">*</span>', 'discount_value')->class('form-control-label') }}
-                                {{ html()->number('discount_value')->step('0.01')->placeholder(__('message.discount_value'))->class('form-control')->attribute('required', 'required') }}
+                                {{ html()->number('discount_value')->attribute('step', '0.01')->placeholder(__('message.discount_value'))->class('form-control')->attribute('required', 'required') }}
                                 <small class="form-text text-muted">{{ __('message.discount_value_hint') }}</small>
                             </div>
                             <div class="form-group col-md-4">
@@ -46,7 +46,7 @@
                             </div>
                             <div class="form-group col-md-4">
                                 {{ html()->label(__('message.max_redemptions'), 'max_redemptions')->class('form-control-label') }}
-                                {{ html()->number('max_redemptions')->step('1')->min('1')->placeholder(__('message.max_redemptions_hint'))->class('form-control') }}
+                                {{ html()->number('max_redemptions')->attribute('step', '1')->min('1')->placeholder(__('message.max_redemptions_hint'))->class('form-control') }}
                                 <small class="form-text text-muted">{{ __('message.max_redemptions_hint') }}</small>
                             </div>
                             <div class="form-group col-md-4">
