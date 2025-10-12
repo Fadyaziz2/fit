@@ -157,6 +157,13 @@ class BaseLanguage {
   String get lblSubscriptionMsg => getContentValueFromKey(79);
   String get lblCancelSubscription => getContentValueFromKey(82);
   String get lblViewPlans => getContentValueFromKey(80);
+  String get lblFreezeSubscription => getContentValueFromKey(701);
+  String get lblSubscriptionFrozen => getContentValueFromKey(702);
+  String get lblFreezeScheduled => getContentValueFromKey(703);
+  String get lblFreezePeriodHint => getContentValueFromKey(704);
+  String get lblStartDate => getContentValueFromKey(705);
+  String get lblEndDate => getContentValueFromKey(706);
+  String get lblConfirmFreeze => getContentValueFromKey(707);
   String get lblHey => getContentValueFromKey(51);
   String get lblRepeat => getContentValueFromKey(210);
   String get lblEveryday => getContentValueFromKey(211);

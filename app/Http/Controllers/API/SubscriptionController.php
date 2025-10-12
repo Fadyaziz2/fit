@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Subscription;
 use App\Models\Package;
+use App\Models\SubscriptionFreeze;
 use App\Models\User;
+use App\Http\Resources\SubscriptionFreezeResource;
 use App\Http\Resources\SubscriptionResource;
 use App\Traits\SubscriptionTrait;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
 
 class SubscriptionController extends Controller
 {
@@ -53,9 +57,9 @@ class SubscriptionController extends Controller
         $package_data = Package::where('id',$data['package_id'])->first();
         
         $get_existing_plan = $this->get_user_active_subscription_plan($user_id);
-        
+
         $active_plan_left_days = 0;
-        
+
         $data['user_id'] = $user_id;
         $data['status'] = config('constant.SUBSCRIPTION_STATUS.PENDING');
         $data['subscription_start_date'] = date('Y-m-d H:i:s');
@@ -101,10 +105,111 @@ class SubscriptionController extends Controller
         {
             $user_subscription->status = config('constant.SUBSCRIPTION_STATUS.INACTIVE');
             $user_subscription->save();
+            $user_subscription->freezes()
+                ->whereIn('status', [
+                    SubscriptionFreeze::STATUS_SCHEDULED,
+                    SubscriptionFreeze::STATUS_ACTIVE,
+                ])
+                ->update([
+                    'status' => SubscriptionFreeze::STATUS_CANCELLED,
+                    'processed_at' => Carbon::now(),
+                ]);
             $user->is_subscribe = 0;
             $user->save();
             $message = __('message.subscription_cancelled');
         }
         return json_message_response($message);
+    }
+
+    public function freezeSubscription(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'subscription_id' => 'required|integer|exists:subscriptions,id',
+            'freeze_start_date' => 'required|date_format:Y-m-d H:i:s',
+            'freeze_end_date' => 'required|date_format:Y-m-d H:i:s|after:freeze_start_date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $user = auth()->user();
+        $subscription = Subscription::where('id', $request->subscription_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$subscription || !in_array($subscription->status, [config('constant.SUBSCRIPTION_STATUS.ACTIVE'), config('constant.SUBSCRIPTION_STATUS.PAUSED')])) {
+            return response()->json([
+                'status' => false,
+                'message' => __('message.subscription_freeze_not_allowed'),
+            ], 422);
+        }
+
+        $start = Carbon::parse($request->freeze_start_date);
+        $end = Carbon::parse($request->freeze_end_date);
+
+        if ($start->lt(Carbon::now()->startOfDay())) {
+            return response()->json([
+                'status' => false,
+                'message' => __('message.subscription_freeze_invalid_dates'),
+            ], 422);
+        }
+
+        $hasOverlap = $subscription->freezes()
+            ->whereIn('status', [SubscriptionFreeze::STATUS_SCHEDULED, SubscriptionFreeze::STATUS_ACTIVE])
+            ->where(function ($query) use ($start, $end) {
+                $query->whereBetween('freeze_start_date', [$start, $end])
+                    ->orWhereBetween('freeze_end_date', [$start, $end])
+                    ->orWhere(function ($inner) use ($start, $end) {
+                        $inner->where('freeze_start_date', '<', $start)
+                            ->where('freeze_end_date', '>', $end);
+                    });
+            })
+            ->exists();
+
+        if ($hasOverlap) {
+            return response()->json([
+                'status' => false,
+                'message' => __('message.subscription_freeze_conflict'),
+            ], 422);
+        }
+
+        $status = $start->lessThanOrEqualTo(Carbon::now())
+            ? SubscriptionFreeze::STATUS_ACTIVE
+            : SubscriptionFreeze::STATUS_SCHEDULED;
+
+        $freeze = $subscription->freezes()->create([
+            'user_id' => $user->id,
+            'freeze_start_date' => $start,
+            'freeze_end_date' => $end,
+            'status' => $status,
+        ]);
+
+        if ($status === SubscriptionFreeze::STATUS_ACTIVE) {
+            $subscription->status = config('constant.SUBSCRIPTION_STATUS.PAUSED');
+            $subscription->save();
+
+            $user->is_subscribe = 0;
+            $user->save();
+        }
+
+        $messageKey = $status === SubscriptionFreeze::STATUS_ACTIVE
+            ? 'message.subscription_freeze_active'
+            : 'message.subscription_freeze_scheduled';
+
+        $response = [
+            'status' => true,
+            'message' => __($messageKey, [
+                'start' => $start->toDateString(),
+                'end' => $end->toDateString(),
+            ]),
+            'freeze' => new SubscriptionFreezeResource($freeze),
+            'subscription_detail' => $this->subscriptionPlanDetail($user->id),
+        ];
+
+        return response()->json($response);
     }
 }

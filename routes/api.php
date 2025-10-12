@@ -105,6 +105,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('subscriptionplan-list',[ API\SubscriptionController::class, 'getList']);
     Route::post('subscribe-package',[ API\SubscriptionController::class, 'subscriptionSave']);
     Route::post('cancel-subscription',[ API\SubscriptionController::class, 'cancelSubscription']);
+    Route::post('freeze-subscription',[ API\SubscriptionController::class, 'freezeSubscription']);
 
 
     Route::get('get-setting',[ API\DashboardController::class, 'getSetting']);
