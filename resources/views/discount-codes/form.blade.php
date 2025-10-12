@@ -46,7 +46,7 @@
                             </div>
                             <div class="form-group col-md-4">
                                 {{ html()->label(__('message.max_redemptions'), 'max_redemptions')->class('form-control-label') }}
-                                {{ html()->number('max_redemptions')->attribute('step', '1')->min('1')->placeholder(__('message.max_redemptions_hint'))->class('form-control') }}
+                                {{ html()->number('max_redemptions')->attribute('step', '1')->attribute('min', '1')->placeholder(__('message.max_redemptions_hint'))->class('form-control') }}
                                 <small class="form-text text-muted">{{ __('message.max_redemptions_hint') }}</small>
                             </div>
                             <div class="form-group col-md-4">
