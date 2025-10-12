@@ -13,6 +13,7 @@ import '../extensions/widgets.dart';
 import '../main.dart';
 import '../models/cart_response.dart';
 import '../models/order_response.dart';
+import '../models/discount_response.dart';
 import '../network/rest_api.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_common.dart';
@@ -33,8 +34,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _addressController;
   late TextEditingController _noteController;
+  late TextEditingController _discountController;
 
   bool _isPlacingOrder = false;
+  bool _isApplyingDiscount = false;
+  DiscountSummary? _discountSummary;
 
   @override
   void initState() {
@@ -43,6 +47,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _phoneController = TextEditingController(text: userStore.phoneNo.validate());
     _addressController = TextEditingController();
     _noteController = TextEditingController();
+    _discountController = TextEditingController();
   }
 
   String _resolveDefaultName() {
@@ -61,6 +66,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _noteController.dispose();
+    _discountController.dispose();
     super.dispose();
   }
 
@@ -80,12 +86,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       'phone': _phoneController.text.trim(),
       'address': _addressController.text.trim(),
       'note': _noteController.text.trim(),
+      if (_discountSummary?.code.validate().isNotEmpty ?? false)
+        'discount_code': _discountSummary!.code,
     };
 
     await checkoutApi(request).then((CheckoutResponse value) {
       toast(value.message ?? languages.lblOrderPlacedSuccess);
       cartCountNotifier.value = 0;
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
+      _discountSummary = null;
+      _discountController.clear();
     }).catchError((e) {
       toast(e.toString());
     }).whenComplete(() {
@@ -97,10 +109,57 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
+  Future<void> _applyDiscountCode() async {
+    final code = _discountController.text.trim();
+
+    if (code.isEmpty) {
+      toast(languages.lblEnterDiscountCode);
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _isApplyingDiscount = true;
+    });
+
+    await applyDiscountCodeApi({'code': code}).then((value) {
+      setState(() {
+        _discountSummary = value.data;
+      });
+      toast(value.message ?? languages.lblDiscountApplied);
+    }).catchError((e) {
+      toast(e.toString().validate(value: languages.lblInvalidDiscountCode));
+    }).whenComplete(() {
+      if (mounted) {
+        setState(() {
+          _isApplyingDiscount = false;
+        });
+      }
+    });
+  }
+
+  void _removeDiscountCode() {
+    setState(() {
+      _discountSummary = null;
+      _discountController.clear();
+    });
+    toast(languages.lblDiscountRemoved);
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartItems = widget.cartResponse.data ?? [];
     final summary = widget.cartResponse.summary;
+    double resolveAmount(num? value) => value != null ? value.toDouble() : 0;
+
+    final subtotalAmount = resolveAmount(
+        _discountSummary?.subtotalAmount ?? summary?.subtotalAmount ?? summary?.totalAmount);
+    final discountAmount = resolveAmount(
+        _discountSummary?.discountAmount ?? summary?.discountAmount ?? 0);
+    final payableAmount = resolveAmount(
+        _discountSummary?.payableAmount ?? summary?.payableAmount ?? summary?.totalAmount);
+    final currency = userStore.currencySymbol.validate();
 
     return Scaffold(
       appBar: appBarWidget(languages.lblCheckout,
@@ -125,6 +184,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     ),
                     padding: EdgeInsets.all(16),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ...cartItems.map((item) => _CheckoutItemTile(item: item))
                             .toList(),
@@ -132,16 +192,80 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(languages.lblOrderTotal,
+                            Text(languages.lblSubtotal,
                                 style: secondaryTextStyle()),
                             Text(
-                              '${userStore.currencySymbol.validate()}${(summary?.totalAmount ?? 0).toStringAsFixed(2)}',
+                              '$currency${subtotalAmount.toStringAsFixed(2)}',
+                              style: boldTextStyle(),
+                            ),
+                          ],
+                        ),
+                        6.height,
+                        if (discountAmount > 0)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(languages.lblDiscount,
+                                  style: secondaryTextStyle(color: Colors.green)),
+                              Text(
+                                '-$currency${discountAmount.toStringAsFixed(2)}',
+                                style: boldTextStyle(color: Colors.green),
+                              ),
+                            ],
+                          ),
+                        if (discountAmount > 0) 6.height,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(languages.lblPayableAmount,
+                                style: boldTextStyle(size: 16)),
+                            Text(
+                              '$currency${payableAmount.toStringAsFixed(2)}',
                               style: boldTextStyle(size: 18, color: primaryColor),
                             ),
                           ],
                         ),
+                        if (_discountSummary?.code.validate().isNotEmpty ?? false) ...[
+                          8.height,
+                          Text(
+                            '${languages.lblDiscountCode}: ${_discountSummary!.code.validate()}',
+                            style: secondaryTextStyle(),
+                          ),
+                        ]
                       ],
                     ),
+                  ),
+                  24.height,
+                  Text(languages.lblDiscountCode, style: boldTextStyle(size: 18)),
+                  12.height,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          controller: _discountController,
+                          textFieldType: TextFieldType.OTHER,
+                          decoration: defaultInputDecoration(context,
+                              hint: languages.lblEnterDiscountCode,
+                              label: languages.lblEnterDiscountCode),
+                        ),
+                      ),
+                      12.width,
+                      AppButton(
+                        text: _discountSummary == null
+                            ? languages.lblApplyCode
+                            : languages.lblRemoveCode,
+                        width: 130,
+                        color: _discountSummary == null ? primaryColor : Colors.redAccent,
+                        textStyle: boldTextStyle(color: white),
+                        enabled: _discountSummary == null
+                            ? !_isApplyingDiscount
+                            : true,
+                        onTap: _discountSummary == null
+                            ? (_isApplyingDiscount ? null : _applyDiscountCode)
+                            : _removeDiscountCode,
+                      ),
+                    ],
                   ),
                   24.height,
                   Text(languages.lblShippingAddress, style: boldTextStyle(size: 18)),

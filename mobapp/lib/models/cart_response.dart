@@ -59,11 +59,23 @@ class CartItemModel {
 class CartSummary {
   int? totalItems;
   num? totalAmount;
+  num? subtotalAmount;
+  num? discountAmount;
+  num? payableAmount;
 
-  CartSummary({this.totalItems, this.totalAmount});
+  CartSummary({
+    this.totalItems,
+    this.totalAmount,
+    this.subtotalAmount,
+    this.discountAmount,
+    this.payableAmount,
+  });
 
   CartSummary.fromJson(Map<String, dynamic> json) {
     totalItems = json['total_items'];
     totalAmount = json['total_amount'] != null ? num.tryParse(json['total_amount'].toString()) : null;
+    subtotalAmount = json['subtotal_amount'] != null ? num.tryParse(json['subtotal_amount'].toString()) : totalAmount;
+    discountAmount = json['discount_amount'] != null ? num.tryParse(json['discount_amount'].toString()) : null;
+    payableAmount = json['payable_amount'] != null ? num.tryParse(json['payable_amount'].toString()) : totalAmount;
   }
 }

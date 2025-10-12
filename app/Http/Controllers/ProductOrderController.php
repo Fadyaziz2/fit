@@ -45,7 +45,7 @@ class ProductOrderController extends Controller
             return redirect()->back()->withErrors($message);
         }
 
-        $productOrder->load(['product', 'user']);
+        $productOrder->load(['product', 'user', 'discountCode']);
 
         $pageTitle = __('message.detail_form_title', ['form' => __('message.product_order')]);
         $statuses = $this->availableStatuses();

@@ -58,6 +58,18 @@
                                 <p class="mb-0 fw-semibold text-capitalize">{{ __('message.' . $productOrder->payment_method) }}</p>
                             </div>
                             <div class="col-md-6">
+                                <h6 class="text-muted mb-1">{{ __('message.subtotal_amount') }}</h6>
+                                <p class="mb-0 fw-semibold">{{ number_format($productOrder->subtotal_price ?? 0, 2) }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-1">{{ __('message.discount_amount') }}</h6>
+                                <p class="mb-0 fw-semibold">{{ number_format($productOrder->discount_amount ?? 0, 2) }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-1">{{ __('message.discount_code') }}</h6>
+                                <p class="mb-0 fw-semibold">{{ $productOrder->discount_code ?? '-' }}</p>
+                            </div>
+                            <div class="col-md-6">
                                 <h6 class="text-muted mb-1">{{ __('message.total_amount') }}</h6>
                                 <p class="mb-0 fw-semibold">{{ number_format($productOrder->total_price, 2) }}</p>
                             </div>

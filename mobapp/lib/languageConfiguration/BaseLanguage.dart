@@ -244,6 +244,16 @@ class BaseLanguage {
   String get lblNoOrdersFound => getContentValueFromKey(411);
   String get lblOrderTotal => getContentValueFromKey(412);
   String get lblComment => getContentValueFromKey(413);
+  String get lblSubtotal => getContentValueFromKey(425);
+  String get lblDiscount => getContentValueFromKey(426);
+  String get lblDiscountCode => getContentValueFromKey(427);
+  String get lblEnterDiscountCode => getContentValueFromKey(428);
+  String get lblApplyCode => getContentValueFromKey(429);
+  String get lblRemoveCode => getContentValueFromKey(430);
+  String get lblDiscountApplied => getContentValueFromKey(431);
+  String get lblDiscountRemoved => getContentValueFromKey(432);
+  String get lblInvalidDiscountCode => getContentValueFromKey(433);
+  String get lblPayableAmount => getContentValueFromKey(434);
 
   String get lblTo=> getContentValueFromKey(83);
 

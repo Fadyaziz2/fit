@@ -38,6 +38,9 @@ class CartController extends Controller
             'summary' => [
                 'total_items' => (int) $cartItems->sum('quantity'),
                 'total_amount' => round($cartItems->sum('total_price'), 2),
+                'subtotal_amount' => round($cartItems->sum('total_price'), 2),
+                'discount_amount' => 0.0,
+                'payable_amount' => round($cartItems->sum('total_price'), 2),
             ],
         ];
 

@@ -733,6 +733,35 @@ class PermissionTableSeeder extends Seeder
             'parent_id' => $exclusiveOfferPermission->id,
         ]);
 
+        $discountCodePermission = Permission::create([
+            'name' => 'discount-code',
+            'title' => 'Discount Code',
+        ]);
+
+        Permission::create([
+            'name' => 'discount-code-list',
+            'title' => 'Discount Code List',
+            'parent_id' => $discountCodePermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'discount-code-add',
+            'title' => 'Discount Code Add',
+            'parent_id' => $discountCodePermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'discount-code-edit',
+            'title' => 'Discount Code Edit',
+            'parent_id' => $discountCodePermission->id,
+        ]);
+
+        Permission::create([
+            'name' => 'discount-code-delete',
+            'title' => 'Discount Code Delete',
+            'parent_id' => $discountCodePermission->id,
+        ]);
+
         $successStoryPermission = Permission::create([
             'name' => 'successstory',
             'title' => 'Success Story',
