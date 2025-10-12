@@ -17,7 +17,7 @@ class DiscountCodeController extends Controller
     {
         $authUser = AuthHelper::authSession();
 
-        if (!$authUser->can('discount-code-list')) {
+        if (!$authUser->hasRole('admin') && !$authUser->hasAnyPermission(['discount-code-list', 'discount-code'])) {
             return redirect()->back()->withErrors(__('message.permission_denied_for_account'));
         }
 
@@ -31,7 +31,7 @@ class DiscountCodeController extends Controller
     {
         $authUser = AuthHelper::authSession();
 
-        if (!$authUser->can('discount-code-add')) {
+        if (!$authUser->hasRole('admin') && !$authUser->hasAnyPermission(['discount-code-add', 'discount-code'])) {
             return redirect()->back()->withErrors(__('message.permission_denied_for_account'));
         }
 
@@ -44,7 +44,7 @@ class DiscountCodeController extends Controller
     {
         $authUser = AuthHelper::authSession();
 
-        if (!$authUser->can('discount-code-add')) {
+        if (!$authUser->hasRole('admin') && !$authUser->hasAnyPermission(['discount-code-add', 'discount-code'])) {
             return redirect()->back()->withErrors(__('message.permission_denied_for_account'));
         }
 
@@ -60,7 +60,7 @@ class DiscountCodeController extends Controller
     {
         $authUser = AuthHelper::authSession();
 
-        if (!$authUser->can('discount-code-edit')) {
+        if (!$authUser->hasRole('admin') && !$authUser->hasAnyPermission(['discount-code-edit', 'discount-code'])) {
             return redirect()->back()->withErrors(__('message.permission_denied_for_account'));
         }
 
@@ -75,7 +75,7 @@ class DiscountCodeController extends Controller
     {
         $authUser = AuthHelper::authSession();
 
-        if (!$authUser->can('discount-code-edit')) {
+        if (!$authUser->hasRole('admin') && !$authUser->hasAnyPermission(['discount-code-edit', 'discount-code'])) {
             return redirect()->back()->withErrors(__('message.permission_denied_for_account'));
         }
 
@@ -91,7 +91,7 @@ class DiscountCodeController extends Controller
     {
         $authUser = AuthHelper::authSession();
 
-        if (!$authUser->can('discount-code-delete')) {
+        if (!$authUser->hasRole('admin') && !$authUser->hasAnyPermission(['discount-code-delete', 'discount-code'])) {
             return redirect()->back()->withErrors(__('message.permission_denied_for_account'));
         }
 
