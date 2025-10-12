@@ -34,6 +34,7 @@ use App\Http\Controllers\ExclusiveOfferController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductOrderController;
+use App\Http\Controllers\DiscountCodeController;
 use App\Http\Controllers\SuccessStoryController;
 use App\Http\Controllers\ClinicBranchController;
 use App\Http\Controllers\ClinicSpecialistController;
@@ -173,6 +174,7 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     //product
     Route::resource('product',ProductController::class);
     Route::resource('exclusive-offer', ExclusiveOfferController::class);
+    Route::resource('discount-codes', DiscountCodeController::class);
     Route::resource('banner', BannerController::class);
     Route::resource('successstory', SuccessStoryController::class);
     Route::prefix('clinic')->name('clinic.')->group(function () {

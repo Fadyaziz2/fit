@@ -200,7 +200,7 @@ class _CartScreenState extends State<CartScreen> {
                                   style: secondaryTextStyle()),
                               4.height,
                               Text(
-                                '${userStore.currencySymbol.validate()}${(summary?.totalAmount ?? 0).toStringAsFixed(2)}',
+                                '${userStore.currencySymbol.validate()}${((summary?.payableAmount ?? summary?.totalAmount) ?? 0).toStringAsFixed(2)}',
                                 style:
                                     boldTextStyle(size: 18, color: primaryColor),
                               ),

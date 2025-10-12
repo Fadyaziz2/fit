@@ -1766,6 +1766,66 @@
         "keyword_id": 413,
         "keyword_name": "lblComment",
         "keyword_value": "Comment"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 425,
+        "keyword_name": "lblSubtotal",
+        "keyword_value": "Subtotal"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 426,
+        "keyword_name": "lblDiscount",
+        "keyword_value": "Discount"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 427,
+        "keyword_name": "lblDiscountCode",
+        "keyword_value": "Discount Code"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 428,
+        "keyword_name": "lblEnterDiscountCode",
+        "keyword_value": "Enter discount code"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 429,
+        "keyword_name": "lblApplyCode",
+        "keyword_value": "Apply"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 430,
+        "keyword_name": "lblRemoveCode",
+        "keyword_value": "Remove"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 431,
+        "keyword_name": "lblDiscountApplied",
+        "keyword_value": "Discount applied successfully"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 432,
+        "keyword_name": "lblDiscountRemoved",
+        "keyword_value": "Discount removed"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 433,
+        "keyword_name": "lblInvalidDiscountCode",
+        "keyword_value": "Unable to apply this discount code"
+      },
+      {
+        "screenId": "40",
+        "keyword_id": 434,
+        "keyword_name": "lblPayableAmount",
+        "keyword_value": "Payable Amount"
       }
     ]
   }

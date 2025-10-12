@@ -145,6 +145,30 @@ class _OrderCard extends StatelessWidget {
           16.height,
           Row(
             children: [
+              Text(languages.lblSubtotal, style: secondaryTextStyle()),
+              8.width,
+              Text(
+                '${userStore.currencySymbol.validate()}${(order.subtotalPrice ?? order.totalPrice ?? 0).toStringAsFixed(2)}',
+                style: boldTextStyle(),
+              ),
+            ],
+          ),
+          8.height,
+          if ((order.discountAmount ?? 0) > 0) ...[
+            Row(
+              children: [
+                Text(languages.lblDiscount, style: secondaryTextStyle(color: Colors.green)),
+                8.width,
+                Text(
+                  '-${userStore.currencySymbol.validate()}${(order.discountAmount ?? 0).toStringAsFixed(2)}',
+                  style: boldTextStyle(color: Colors.green),
+                ),
+              ],
+            ),
+            8.height,
+          ],
+          Row(
+            children: [
               Text(languages.lblOrderTotal, style: secondaryTextStyle()),
               8.width,
               Text(
@@ -153,6 +177,16 @@ class _OrderCard extends StatelessWidget {
               ),
             ],
           ),
+          if (order.discountCode.validate().isNotEmpty) ...[
+            8.height,
+            Row(
+              children: [
+                Text(languages.lblDiscountCode, style: secondaryTextStyle()),
+                8.width,
+                Text(order.discountCode.validate(), style: boldTextStyle()),
+              ],
+            ),
+          ],
           8.height,
           Row(
             children: [

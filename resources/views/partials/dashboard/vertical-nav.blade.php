@@ -326,6 +326,16 @@
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
                 ->link->attr(['class' => activeRoute(route('exclusive-offer.create')) || request()->is('exclusive-offer/*/edit') ? 'nav-link active' : 'nav-link']);
 
+            $menu->product->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.discount_code')]).'</span>', ['route' => 'discount-codes.index'])
+                ->data('permission', 'discount-code-list')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('discount-codes.index')) ? 'nav-link active' : 'nav-link']);
+
+            $menu->product->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.discount_code')]).'</span>', ['route' => 'discount-codes.create'])
+                ->data('permission', ['discount-code-add', 'discount-code-edit'])
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('discount-codes.create')) || request()->is('discount-codes/*/edit') ? 'nav-link active' : 'nav-link']);
+
             $menu->product->add('<span class="item-name">'.__('message.list_form_title',['form' => __('message.successstory')]).'</span>', ['route' => 'successstory.index'])
                 ->data('permission', 'successstory-list')
                 ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')

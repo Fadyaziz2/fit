@@ -20,6 +20,10 @@ class ProductOrder extends Model
         'quantity',
         'status',
         'unit_price',
+        'subtotal_price',
+        'discount_amount',
+        'discount_code',
+        'discount_code_id',
         'total_price',
         'payment_method',
         'status_comment',
@@ -37,6 +41,9 @@ class ProductOrder extends Model
         'user_id' => 'integer',
         'quantity' => 'integer',
         'unit_price' => 'float',
+        'subtotal_price' => 'float',
+        'discount_amount' => 'float',
+        'discount_code_id' => 'integer',
         'total_price' => 'float',
     ];
 
@@ -54,5 +61,10 @@ class ProductOrder extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function discountCode()
+    {
+        return $this->belongsTo(DiscountCode::class);
     }
 }

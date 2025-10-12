@@ -76,6 +76,12 @@ class ProductOrderDataTable extends DataTable
 
                 return $user->email ?? '-';
             })
+            ->addColumn('discount_code', function ($order) {
+                return $order->discount_code ?? '-';
+            })
+            ->editColumn('discount_amount', function ($order) {
+                return number_format($order->discount_amount ?? 0, 2);
+            })
             ->addColumn('action', function ($order) {
                 $id = $order->id;
                 return view('product.orders.action', compact('order', 'id'))->render();
@@ -89,15 +95,17 @@ class ProductOrderDataTable extends DataTable
                     $direction = 'desc';
 
                     if ($columnIndex != 0) {
-                        $columnName = request()->columns[$columnIndex]['data'];
-                        $columnName = match ($columnName) {
-                            'product_title' => 'product_id',
-                            'user_name' => 'user_id',
-                            'status' => 'status',
-                            default => $columnName,
-                        };
-                        $direction = $order['dir'];
-                    }
+                            $columnName = request()->columns[$columnIndex]['data'];
+                            $columnName = match ($columnName) {
+                                'product_title' => 'product_id',
+                                'user_name' => 'user_id',
+                                'status' => 'status',
+                                'discount_code' => 'discount_code',
+                                'discount_amount' => 'discount_amount',
+                                default => $columnName,
+                            };
+                            $direction = $order['dir'];
+                        }
 
                     $query->orderBy('product_orders.' . $columnName, $direction);
                 }
@@ -134,6 +142,8 @@ class ProductOrderDataTable extends DataTable
             ['data' => 'user_name', 'name' => 'user.display_name', 'title' => __('message.user_name'), 'orderable' => false, 'searchable' => false],
             ['data' => 'quantity', 'name' => 'quantity', 'title' => __('message.quantity')],
             ['data' => 'status', 'name' => 'status', 'title' => __('message.status')],
+            ['data' => 'discount_code', 'name' => 'discount_code', 'title' => __('message.discount_code'), 'orderable' => false],
+            ['data' => 'discount_amount', 'name' => 'discount_amount', 'title' => __('message.discount_amount')],
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)

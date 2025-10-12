@@ -57,6 +57,8 @@ class OrderModel {
   String? statusLabel;
   String? statusComment;
   double? unitPrice;
+  double? subtotalPrice;
+  double? discountAmount;
   double? totalPrice;
   String? paymentMethod;
   String? paymentMethodLabel;
@@ -66,6 +68,7 @@ class OrderModel {
   String? customerNote;
   String? createdAt;
   String? createdAtFormatted;
+  String? discountCode;
   ProductModel? product;
 
   OrderModel({
@@ -76,6 +79,8 @@ class OrderModel {
     this.statusLabel,
     this.statusComment,
     this.unitPrice,
+    this.subtotalPrice,
+    this.discountAmount,
     this.totalPrice,
     this.paymentMethod,
     this.paymentMethodLabel,
@@ -85,6 +90,7 @@ class OrderModel {
     this.customerNote,
     this.createdAt,
     this.createdAtFormatted,
+    this.discountCode,
     this.product,
   });
 
@@ -96,6 +102,8 @@ class OrderModel {
     statusLabel = json['status_label'];
     statusComment = json['status_comment'];
     unitPrice = json['unit_price'] != null ? double.tryParse(json['unit_price'].toString()) : null;
+    subtotalPrice = json['subtotal_price'] != null ? double.tryParse(json['subtotal_price'].toString()) : null;
+    discountAmount = json['discount_amount'] != null ? double.tryParse(json['discount_amount'].toString()) : null;
     totalPrice = json['total_price'] != null ? double.tryParse(json['total_price'].toString()) : null;
     paymentMethod = json['payment_method'];
     paymentMethodLabel = json['payment_method_label'];
@@ -105,6 +113,7 @@ class OrderModel {
     customerNote = json['customer_note'];
     createdAt = json['created_at'];
     createdAtFormatted = json['created_at_formatted'];
+    discountCode = json['discount_code'];
     product = json['product'] != null ? ProductModel.fromJson(json['product']) : null;
   }
 
@@ -117,6 +126,8 @@ class OrderModel {
     data['status_label'] = statusLabel;
     data['status_comment'] = statusComment;
     data['unit_price'] = unitPrice;
+    data['subtotal_price'] = subtotalPrice;
+    data['discount_amount'] = discountAmount;
     data['total_price'] = totalPrice;
     data['payment_method'] = paymentMethod;
     data['payment_method_label'] = paymentMethodLabel;
@@ -126,6 +137,7 @@ class OrderModel {
     data['customer_note'] = customerNote;
     data['created_at'] = createdAt;
     data['created_at_formatted'] = createdAtFormatted;
+    data['discount_code'] = discountCode;
     if (product != null) {
       data['product'] = product!.toJson();
     }
