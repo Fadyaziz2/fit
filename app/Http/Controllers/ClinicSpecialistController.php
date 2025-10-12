@@ -4,40 +4,58 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\Specialist;
+use App\Traits\HandlesBranchAccess;
 use Illuminate\Http\Request;
 
 class ClinicSpecialistController extends Controller
 {
+    use HandlesBranchAccess;
+
     protected function authorizeAccess()
     {
-        if (auth()->user()?->user_type !== 'admin') {
-            abort(403, __('message.permission_denied_for_account'));
-        }
+        return $this->authorizeBranchAccess();
     }
 
     public function index()
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $pageTitle = __('message.list_form_title', ['form' => __('message.specialist')]);
-        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->paginate(15);
+        $specialists = Specialist::with(['branch', 'branches'])
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->where(function ($innerQuery) use ($branchIds) {
+                    $innerQuery->whereIn('branch_id', $branchIds)
+                        ->orWhereHas('branches', function ($branchQuery) use ($branchIds) {
+                            $branchQuery->whereIn('branches.id', $branchIds);
+                        });
+                });
+            })
+            ->orderBy('name')
+            ->paginate(15);
 
         return view('clinic.specialists.index', compact('pageTitle', 'specialists'));
     }
 
     public function create()
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $pageTitle = __('message.add_form_title', ['form' => __('message.specialist')]);
-        $branches = Branch::orderBy('name')->pluck('name', 'id');
+        $branches = Branch::orderBy('name')
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->whereIn('id', $branchIds);
+            })
+            ->pluck('name', 'id');
 
         return view('clinic.specialists.form', compact('pageTitle', 'branches'));
     }
 
     public function store(Request $request)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIdsScope = $this->getAccessibleBranchIds($user);
 
         $data = $request->validate([
             'name' => 'required|string|max:191',
@@ -52,7 +70,16 @@ class ClinicSpecialistController extends Controller
 
         $data['is_active'] = $request->boolean('is_active');
 
-        $branchIds = collect($request->input('branch_ids'))->filter()->unique()->values()->all();
+        $branchIds = collect($request->input('branch_ids'))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($branchIdsScope !== null && array_diff($branchIds, $branchIdsScope)) {
+            abort(403, __('message.permission_denied_for_account'));
+        }
         $primaryBranchId = collect($branchIds)->first();
         $primaryBranchId = $primaryBranchId !== null ? (int) $primaryBranchId : null;
 
@@ -68,10 +95,16 @@ class ClinicSpecialistController extends Controller
 
     public function edit(Specialist $specialist)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
+        $this->ensureSpecialistAccessible($specialist, $branchIds);
 
         $pageTitle = __('message.update_form_title', ['form' => __('message.specialist')]);
-        $branches = Branch::orderBy('name')->pluck('name', 'id');
+        $branches = Branch::orderBy('name')
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->whereIn('id', $branchIds);
+            })
+            ->pluck('name', 'id');
 
         $specialist->load('branches');
 
@@ -80,7 +113,9 @@ class ClinicSpecialistController extends Controller
 
     public function update(Request $request, Specialist $specialist)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIdsScope = $this->getAccessibleBranchIds($user);
+        $this->ensureSpecialistAccessible($specialist, $branchIdsScope);
 
         $data = $request->validate([
             'name' => 'required|string|max:191',
@@ -95,7 +130,16 @@ class ClinicSpecialistController extends Controller
 
         $data['is_active'] = $request->boolean('is_active');
 
-        $branchIds = collect($request->input('branch_ids'))->filter()->unique()->values()->all();
+        $branchIds = collect($request->input('branch_ids'))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($branchIdsScope !== null && array_diff($branchIds, $branchIdsScope)) {
+            abort(403, __('message.permission_denied_for_account'));
+        }
         $primaryBranchId = collect($branchIds)->first();
         $primaryBranchId = $primaryBranchId !== null ? (int) $primaryBranchId : null;
 
@@ -111,7 +155,9 @@ class ClinicSpecialistController extends Controller
 
     public function destroy(Specialist $specialist)
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
+        $this->ensureSpecialistAccessible($specialist, $branchIds);
 
         $specialist->delete();
 

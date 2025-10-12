@@ -3,23 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\Branch;
+use App\Traits\HandlesBranchAccess;
 use Illuminate\Http\Request;
 
 class ClinicBranchController extends Controller
 {
-    protected function authorizeAccess()
+    use HandlesBranchAccess;
+
+    protected function authorizeAccess(bool $allowBranchUsers = false)
     {
-        if (auth()->user()?->user_type !== 'admin') {
-            abort(403, __('message.permission_denied_for_account'));
-        }
+        return $this->authorizeBranchAccess($allowBranchUsers);
     }
 
     public function index()
     {
-        $this->authorizeAccess();
+        $user = $this->authorizeAccess(true);
+        $branchIds = $this->getAccessibleBranchIds($user);
 
         $pageTitle = __('message.list_form_title', ['form' => __('message.branch')]);
-        $branches = Branch::orderBy('name')->paginate(15);
+        $branches = Branch::orderBy('name')
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->whereIn('id', $branchIds);
+            })
+            ->paginate(15);
 
         return view('clinic.branches.index', compact('pageTitle', 'branches'));
     }

@@ -2,6 +2,15 @@
     <div>
         <?php
             $id = $id ?? null;
+            $selectedBranchIds = old('branch_ids', isset($data)
+                ? ($data->can_access_all_branches
+                    ? ['all']
+                    : $data->branches->pluck('id')->map(function ($id) {
+                        return (string) $id;
+                    })->all()
+                )
+                : []);
+            $selectedBranchIds = \Illuminate\Support\Arr::wrap($selectedBranchIds);
         ?>
         @if(isset($id))
             {{ html()->modelForm($data, 'PATCH', route('subadmin.update', $id) )->attribute('enctype', 'multipart/form-data')->open() }}
@@ -66,6 +75,16 @@
                                 ->class('select2js form-group role')
                                 ->attribute('data-placeholder', __('message.select_name', ['select' => __('message.role')]))
                                 ->attribute('required', 'required') }}
+                        </div>
+                        <div class="form-group">
+                            {{ html()->label(__('message.branch_access').' <span class="text-danger">*</span>')->class('form-control-label') }}
+                            <select name="branch_ids[]" class="select2js form-group" multiple data-placeholder="{{ __('message.select_name', ['select' => __('message.branch')]) }}" required>
+                                <option value="all" @selected(in_array('all', $selectedBranchIds, true))>{{ __('message.all_branches') }}</option>
+                                @foreach($branches ?? [] as $branch)
+                                    <option value="{{ $branch->id }}" @selected(in_array((string) $branch->id, $selectedBranchIds, true))>{{ $branch->name }}</option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">{{ __('message.branch_access_hint') }}</small>
                         </div>
                     </div>
                 </div>

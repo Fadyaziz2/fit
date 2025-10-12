@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\DataTables\SubAdminDataTable;
+use App\Models\Branch;
 use App\Models\User;
 use App\Helpers\AuthHelper;
 use App\Models\Role;
@@ -46,7 +47,9 @@ class SubAdminController extends Controller
         $assets = ['phone'];
         $pageTitle = __('message.add_form_title',[ 'form' => __('message.sub_admin')]);
         $roles = Role::where('status', 1)->whereNotIn('name', ['admin','user'])->get()->pluck('title', 'name');
-        return view('sub_admin.form', compact('pageTitle','roles','assets'));
+        $branches = Branch::orderBy('name')->get();
+
+        return view('sub_admin.form', compact('pageTitle','roles','assets','branches'));
     }
 
     /**
@@ -71,6 +74,7 @@ class SubAdminController extends Controller
         storeMediaFile($sub_admin, $request->profile_image, 'profile_image');
 
         $sub_admin->assignRole($request->user_type);
+        $this->syncBranchAccess($sub_admin, $request->input('branch_ids', []));
 
         // Save Sub Admin Profile data...
         // $sub_admin->userProfile()->create($request->userProfile);
@@ -102,14 +106,15 @@ class SubAdminController extends Controller
             return redirect()->back()->withErrors($message);
         }
 
-        $data = User::with('userProfile')->findOrFail($id);
+        $data = User::with(['userProfile', 'branches'])->findOrFail($id);
 
         $pageTitle = __('message.update_form_title',[ 'form' => __('message.sub_admin')]);
         $assets = ['phone'];
         $profileImage = getSingleMedia($data, 'profile_image');
         $roles = Role::where('status', 1)->whereNotIn('name', ['admin','user'])->get()->pluck('title', 'name');
+        $branches = Branch::orderBy('name')->get();
 
-        return view('sub_admin.form', compact('data', 'id', 'profileImage', 'pageTitle', 'roles','assets'));
+        return view('sub_admin.form', compact('data', 'id', 'profileImage', 'pageTitle', 'roles','assets','branches'));
     }
 
     /**
@@ -134,6 +139,7 @@ class SubAdminController extends Controller
         $sub_admin->fill($request->all())->update();
 
         $sub_admin->assignRole($request['user_type']);
+        $this->syncBranchAccess($sub_admin, $request->input('branch_ids', []));
         // Save user image...
         if (isset($request->profile_image) && $request->profile_image != null) {
             $sub_admin->clearMediaCollection('profile_image');
@@ -180,5 +186,28 @@ class SubAdminController extends Controller
 
         return redirect()->back()->with($status,$message);
 
+    }
+
+    protected function syncBranchAccess(User $user, array $branchInput): void
+    {
+        $branchSelection = collect($branchInput);
+        $hasAllBranches = $branchSelection->contains('all');
+        $branchIds = $branchSelection
+            ->filter(fn ($value) => $value !== 'all')
+            ->map(fn ($value) => (int) $value)
+            ->unique()
+            ->values()
+            ->all();
+
+        $user->forceFill([
+            'can_access_all_branches' => $hasAllBranches,
+        ])->save();
+
+        if ($hasAllBranches) {
+            $user->branches()->sync([]);
+            return;
+        }
+
+        $user->branches()->sync($branchIds);
     }
 }
