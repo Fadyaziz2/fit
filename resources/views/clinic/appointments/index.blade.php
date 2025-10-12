@@ -143,7 +143,16 @@
                                             $branchNames = $specialist->branches->pluck('name')->filter()->implode(', ');
                                             $branchIds = $specialist->branches->pluck('id')->implode(',');
                                         @endphp
-                                        <option value="{{ $specialist->id }}" data-branches="{{ $branchIds }}">{{ $specialist->name }}@if($branchNames) - {{ $branchNames }}@endif</option>
+                                        <option value="{{ $specialist->id }}" data-branches="{{ $branchIds }}" @selected(old('specialist_id') == $specialist->id)>{{ $specialist->name }}@if($branchNames) - {{ $branchNames }}@endif</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 d-none" id="manual-regular-branch-wrapper">
+                                <label class="form-label">{{ __('message.branch') }} <span class="text-danger manual-regular-branch-required-indicator d-none">*</span></label>
+                                <select name="branch_id" id="manual-regular-branch" class="form-select" data-placeholder="{{ __('message.select_name', ['select' => __('message.branch')]) }}">
+                                    <option value="">{{ __('message.select_name', ['select' => __('message.branch')]) }}</option>
+                                    @foreach($branches as $branch)
+                                        <option value="{{ $branch->id }}" @selected(old('branch_id') == $branch->id)>{{ $branch->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -295,6 +304,9 @@
             const manualRegular = {
                 form: document.getElementById('manual-regular-form'),
                 specialist: document.getElementById('manual-regular-specialist'),
+                branchField: document.getElementById('manual-regular-branch-wrapper'),
+                branchIndicator: document.querySelector('#manual-regular-branch-wrapper .manual-regular-branch-required-indicator'),
+                branch: document.getElementById('manual-regular-branch'),
                 date: document.getElementById('manual-regular-date'),
                 time: document.getElementById('manual-regular-time'),
                 helper: document.getElementById('manual-regular-time-helper'),
@@ -492,6 +504,7 @@
 
                 if (manualRegular.specialist) {
                     $(manualRegular.specialist).on('change', function () {
+                        updateManualRegularBranchOptions();
                         fetchSlotsFor(manualRegular.specialist, manualRegular.date, manualRegular.time, manualRegular.helper);
                     });
                 }
@@ -510,7 +523,18 @@
 
                 manualRegular.form.addEventListener('reset', function () {
                     showMessage(manualRegular.time, manualRegular.helper, messages.placeholder, '', true);
+                    if (manualRegular.branch) {
+                        manualRegular.branch.value = '';
+                        manualRegular.branch.required = false;
+                    }
+                    toggleManualRegularBranchField(false);
                 });
+
+                updateManualRegularBranchOptions();
+
+                if (manualRegular.specialist && manualRegular.specialist.value && manualRegular.date && manualRegular.date.value) {
+                    fetchSlotsFor(manualRegular.specialist, manualRegular.date, manualRegular.time, manualRegular.helper);
+                }
             }
 
             function getOptionBranches(option) {
@@ -520,6 +544,88 @@
                 }).filter(function (value) {
                     return value !== '';
                 });
+            }
+
+            function toggleManualRegularBranchField(show) {
+                if (!manualRegular.branchField) {
+                    return;
+                }
+
+                manualRegular.branchField.classList.toggle('d-none', !show);
+
+                if (manualRegular.branchIndicator) {
+                    const isRequired = Boolean(show && manualRegular.branch && manualRegular.branch.required);
+                    manualRegular.branchIndicator.classList.toggle('d-none', !isRequired);
+                }
+            }
+
+            function updateManualRegularBranchOptions() {
+                if (!manualRegular.branch) {
+                    return;
+                }
+
+                const placeholder = manualRegular.branch.getAttribute('data-placeholder') || '';
+                const selectedOption = manualRegular.specialist ? manualRegular.specialist.options[manualRegular.specialist.selectedIndex] : null;
+
+                const options = Array.from(manualRegular.branch.options);
+
+                if (!selectedOption || !selectedOption.value) {
+                    manualRegular.branch.value = '';
+                    manualRegular.branch.required = false;
+                    options.forEach(function (option) {
+                        option.hidden = false;
+                    });
+                    toggleManualRegularBranchField(false);
+                    return;
+                }
+
+                const branches = getOptionBranches(selectedOption).filter(function (value, index, array) {
+                    return value !== '' && array.indexOf(value) === index;
+                });
+
+                if (!branches.length) {
+                    manualRegular.branch.value = '';
+                    manualRegular.branch.required = false;
+                    options.forEach(function (option) {
+                        option.hidden = false;
+                    });
+                    toggleManualRegularBranchField(false);
+                    return;
+                }
+
+                const allowed = new Set(branches);
+                let firstAllowed = null;
+
+                options.forEach(function (option, index) {
+                    if (index === 0) {
+                        option.textContent = placeholder || option.textContent;
+                        option.hidden = false;
+                        return;
+                    }
+
+                    const matches = allowed.has(option.value);
+                    option.hidden = !matches;
+
+                    if (!matches && option.selected) {
+                        option.selected = false;
+                    }
+
+                    if (matches && !firstAllowed) {
+                        firstAllowed = option.value;
+                    }
+                });
+
+                manualRegular.branch.required = branches.length > 1;
+
+                if (branches.length === 1 && firstAllowed) {
+                    manualRegular.branch.value = firstAllowed;
+                }
+
+                if (manualRegular.branch.required && !allowed.has(manualRegular.branch.value)) {
+                    manualRegular.branch.value = '';
+                }
+
+                toggleManualRegularBranchField(manualRegular.branch.required);
             }
 
             function handleManualFreeBranchChange() {

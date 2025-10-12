@@ -99,6 +99,7 @@ return [
     'manual_branch_required' => 'يرجى اختيار الفرع قبل اختيار المتخصص.',
     'specialist_branch_hint' => 'حدد جميع الفروع التي يعمل بها الأخصائي.',
     'specialist_not_in_branch' => 'الأخصائي المحدد غير مرتبط بهذا الفرع.',
+    'specialist_branch_selection_required' => 'يرجى تحديد الفرع الذي سيتواجد فيه الأخصائي لهذا الموعد.',
     'full_name' => 'الاسم الكامل',
     'confirm_password' => 'تأكيد كلمة المرور',
     'free_booking_already_used' => 'تم استخدام الحجز المجاني بالفعل.',

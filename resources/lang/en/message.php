@@ -165,6 +165,7 @@ return [
     'manual_branch_required' => 'Please select a branch before choosing the specialist.',
     'specialist_branch_hint' => 'Select all branches where the specialist is available.',
     'specialist_not_in_branch' => 'The selected specialist is not assigned to the chosen branch.',
+    'specialist_branch_selection_required' => 'Please select the branch where the specialist will attend this appointment.',
     'full_name' => 'Full name',
     'confirm_password' => 'Confirm password',
     'free_booking_already_used' => 'Free booking has already been used.',
