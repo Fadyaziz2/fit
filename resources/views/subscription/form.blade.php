@@ -8,7 +8,7 @@
                 ->attribute('data-placeholder', __('message.select_name', ['select' => __('message.user')]))
                 ->attribute('required', 'required')
                 ->attribute('multiple', 'multiple')
-            }}            
+            }}
         </div>
         <div class="form-group col-md-12">
             {{ html()->label(__('message.package').' <span class="text-danger">*</span>')->class('form-control-label') }}
@@ -17,7 +17,15 @@
                 ->attribute('data-placeholder', __('message.select_name', ['select' => __('message.package')]))
                 ->attribute('data-ajax--url', route('ajax-list', ['type' => 'package']))
                 ->attribute('required', 'required')
-            }}            
+            }}
+        </div>
+        <div class="form-group col-md-12">
+            {{ html()->label(__('message.subscription_start_date'))->class('form-control-label') }}
+            {{ html()->text('subscription_start_date', old('subscription_start_date', now()->format('Y-m-d H:i')))
+                ->class('form-control datetimepicker')
+                ->attribute('data-enable-time', 'true')
+                ->attribute('data-date-format', 'Y-m-d H:i')
+            }}
         </div>
     </div>
     <div class="modal-footer">
