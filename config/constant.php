@@ -47,6 +47,7 @@ return [
         'PENDING'   => 'pending',
         'ACTIVE'    => 'active',
         'INACTIVE'  => 'inactive',
+        'PAUSED'    => 'paused',
     ],
 
 ];

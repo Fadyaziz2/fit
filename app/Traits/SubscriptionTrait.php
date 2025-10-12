@@ -2,20 +2,25 @@
 
 namespace App\Traits;
 
-use App\Models\Subscription;
 use App\Http\Resources\SubscriptionResource;
+use App\Http\Resources\SubscriptionFreezeResource;
+use App\Models\Subscription;
+use App\Models\SubscriptionFreeze;
 use Carbon\Carbon;
 
 trait SubscriptionTrait {
 
     public function get_user_active_subscription_plan($user_id)
     {
-        $get_user_plan = Subscription::where('user_id', $user_id)->where('status', config('constant.SUBSCRIPTION_STATUS.ACTIVE'))->first();
-        $activeplan = null; 
-        if(!empty($get_user_plan)){
-            $activeplan = new SubscriptionResource($get_user_plan);
-        }
-        return $activeplan;
+        $statuses = [
+            config('constant.SUBSCRIPTION_STATUS.ACTIVE'),
+            config('constant.SUBSCRIPTION_STATUS.PAUSED'),
+        ];
+
+        return Subscription::where('user_id', $user_id)
+            ->whereIn('status', $statuses)
+            ->orderByDesc('id')
+            ->first();
     }
 
     public function is_subscribed_users($user_id)
@@ -63,17 +68,47 @@ trait SubscriptionTrait {
 
     public function subscriptionPlanDetail($user_id)
     {
-        $subscription_plan = $this->get_user_active_subscription_plan($user_id);
+        $subscription_model = $this->get_user_active_subscription_plan($user_id);
+        $subscription_plan = $subscription_model ? new SubscriptionResource($subscription_model) : null;
+
         $is_subscribed_users = $this->is_subscribed_users($user_id);
-        if(!$this->is_plan_active($user_id) && !$is_subscribed_users) {
+        $activeFreezeResource = null;
+        $upcomingFreezeResources = SubscriptionFreezeResource::collection(collect());
+        $canFreeze = false;
+
+        if ($subscription_model) {
+            $activeFreeze = $subscription_model->freezes()
+                ->where('status', SubscriptionFreeze::STATUS_ACTIVE)
+                ->orderByDesc('freeze_start_date')
+                ->first();
+
+            $scheduledFreezes = $subscription_model->freezes()
+                ->where('status', SubscriptionFreeze::STATUS_SCHEDULED)
+                ->orderBy('freeze_start_date')
+                ->get();
+
+            if ($activeFreeze) {
+                $activeFreezeResource = new SubscriptionFreezeResource($activeFreeze);
+                $is_subscribed_users = 0;
+            }
+
+            $upcomingFreezeResources = SubscriptionFreezeResource::collection($scheduledFreezes);
+
+            $canFreeze = ! $subscription_model->freezes()
+                ->whereIn('status', [
+                    SubscriptionFreeze::STATUS_ACTIVE,
+                    SubscriptionFreeze::STATUS_SCHEDULED,
+                ])->exists();
+        } elseif(!$this->is_plan_active($user_id) && !$is_subscribed_users) {
             $subscription_plan = $this->user_last_plan($user_id);
         }
-        
+
         return [
             'is_subscribe' => (int) $is_subscribed_users,
             'subscription_plan' => $subscription_plan,
+            'active_freeze' => $activeFreezeResource,
+            'upcoming_freezes' => $upcomingFreezeResources,
+            'can_freeze' => (bool) $canFreeze,
         ];
-        
-        return null;
     }
 }

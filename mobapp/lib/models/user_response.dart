@@ -312,22 +312,48 @@ class SpecialistSummary {
 class SubscriptionDetail {
   int? isSubscribe;
   SubscriptionPlan? subscriptionPlan;
+  SubscriptionFreezeModel? activeFreeze;
+  List<SubscriptionFreezeModel>? upcomingFreezes;
+  bool? canFreeze;
 
-  SubscriptionDetail({this.isSubscribe, this.subscriptionPlan});
+  SubscriptionDetail({
+    this.isSubscribe,
+    this.subscriptionPlan,
+    this.activeFreeze,
+    this.upcomingFreezes,
+    this.canFreeze,
+  });
 
   SubscriptionDetail.fromJson(Map<String, dynamic> json) {
     isSubscribe = json['is_subscribe'];
     subscriptionPlan = json['subscription_plan'] != null
         ? new SubscriptionPlan.fromJson(json['subscription_plan'])
         : null;
+    activeFreeze = json['active_freeze'] != null
+        ? SubscriptionFreezeModel.fromJson(json['active_freeze'])
+        : null;
+    if (json['upcoming_freezes'] != null) {
+      upcomingFreezes = <SubscriptionFreezeModel>[];
+      (json['upcoming_freezes'] as List).forEach((v) {
+        upcomingFreezes!.add(SubscriptionFreezeModel.fromJson(v));
+      });
+    }
+    canFreeze = json['can_freeze'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['is_subscribe'] = this.isSubscribe;
-    if (this.subscriptionPlan != null) {
-      data['subscription_plan'] = this.subscriptionPlan!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['is_subscribe'] = isSubscribe;
+    if (subscriptionPlan != null) {
+      data['subscription_plan'] = subscriptionPlan!.toJson();
     }
+    if (activeFreeze != null) {
+      data['active_freeze'] = activeFreeze!.toJson();
+    }
+    if (upcomingFreezes != null) {
+      data['upcoming_freezes'] = upcomingFreezes!.map((v) => v.toJson()).toList();
+    }
+    data['can_freeze'] = canFreeze;
     return data;
   }
 }
@@ -349,6 +375,8 @@ class SubscriptionPlan {
   String? subscriptionEndDate;
   String? createdAt;
   String? updatedAt;
+  SubscriptionFreezeModel? activeFreeze;
+  List<SubscriptionFreezeModel>? upcomingFreezes;
 
   SubscriptionPlan(
       {this.id,
@@ -366,7 +394,9 @@ class SubscriptionPlan {
         this.subscriptionStartDate,
         this.subscriptionEndDate,
         this.createdAt,
-        this.updatedAt});
+        this.updatedAt,
+        this.activeFreeze,
+        this.upcomingFreezes});
 
   SubscriptionPlan.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -389,30 +419,83 @@ class SubscriptionPlan {
     subscriptionEndDate = json['subscription_end_date'];
     createdAt = json['created_at'];
     updatedAt = json['updated_at'];
+    activeFreeze = json['active_freeze'] != null
+        ? SubscriptionFreezeModel.fromJson(json['active_freeze'])
+        : null;
+    if (json['upcoming_freezes'] != null) {
+      upcomingFreezes = <SubscriptionFreezeModel>[];
+      (json['upcoming_freezes'] as List).forEach((v) {
+        upcomingFreezes!.add(SubscriptionFreezeModel.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['user_id'] = this.userId;
-    data['user_name'] = this.userName;
-    data['package_id'] = this.packageId;
-    data['package_name'] = this.packageName;
-    data['total_amount'] = this.totalAmount;
-    data['payment_type'] = this.paymentType;
-    data['txn_id'] = this.txnId;
-    if (this.transactionDetail != null) {
-      data['transaction_detail'] = this.transactionDetail!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['user_id'] = userId;
+    data['user_name'] = userName;
+    data['package_id'] = packageId;
+    data['package_name'] = packageName;
+    data['total_amount'] = totalAmount;
+    data['payment_type'] = paymentType;
+    data['txn_id'] = txnId;
+    if (transactionDetail != null) {
+      data['transaction_detail'] = transactionDetail!.toJson();
     }
-    data['payment_status'] = this.paymentStatus;
-    data['status'] = this.status;
-    if (this.packageData != null) {
-      data['package_data'] = this.packageData!.toJson();
+    data['payment_status'] = paymentStatus;
+    data['status'] = status;
+    if (packageData != null) {
+      data['package_data'] = packageData!.toJson();
     }
-    data['subscription_start_date'] = this.subscriptionStartDate;
-    data['subscription_end_date'] = this.subscriptionEndDate;
-    data['created_at'] = this.createdAt;
-    data['updated_at'] = this.updatedAt;
+    data['subscription_start_date'] = subscriptionStartDate;
+    data['subscription_end_date'] = subscriptionEndDate;
+    data['created_at'] = createdAt;
+    data['updated_at'] = updatedAt;
+    if (activeFreeze != null) {
+      data['active_freeze'] = activeFreeze!.toJson();
+    }
+    if (upcomingFreezes != null) {
+      data['upcoming_freezes'] = upcomingFreezes!.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
+
+class SubscriptionFreezeModel {
+  int? id;
+  int? subscriptionId;
+  int? userId;
+  String? freezeStartDate;
+  String? freezeEndDate;
+  String? status;
+
+  SubscriptionFreezeModel({
+    this.id,
+    this.subscriptionId,
+    this.userId,
+    this.freezeStartDate,
+    this.freezeEndDate,
+    this.status,
+  });
+
+  SubscriptionFreezeModel.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    subscriptionId = json['subscription_id'];
+    userId = json['user_id'];
+    freezeStartDate = json['freeze_start_date'];
+    freezeEndDate = json['freeze_end_date'];
+    status = json['status'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['subscription_id'] = subscriptionId;
+    data['user_id'] = userId;
+    data['freeze_start_date'] = freezeStartDate;
+    data['freeze_end_date'] = freezeEndDate;
+    data['status'] = status;
     return data;
   }
 }

@@ -14,7 +14,13 @@ class SubscriptionResource  extends JsonResource
      */
     public function toArray($request)
     {
-        
+        $activeFreeze = $this->resource->relationLoaded('activeFreeze')
+            ? $this->resource->activeFreeze
+            : $this->resource->activeFreeze()->first();
+        $upcomingFreezes = $this->resource->relationLoaded('scheduledFreezes')
+            ? $this->resource->scheduledFreezes
+            : $this->resource->scheduledFreezes()->get();
+
         return [
             'id'                  => $this->id,
             'user_id'             => $this->user_id,
@@ -32,6 +38,8 @@ class SubscriptionResource  extends JsonResource
             'subscription_end_date'    => $this->subscription_end_date,
             'created_at'          => $this->created_at,
             'updated_at'          => $this->updated_at,
+            'active_freeze'       => $activeFreeze ? new SubscriptionFreezeResource($activeFreeze) : null,
+            'upcoming_freezes'    => SubscriptionFreezeResource::collection($upcomingFreezes),
         ];
     }
 }

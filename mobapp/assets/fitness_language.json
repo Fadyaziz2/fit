@@ -653,6 +653,48 @@
       },
       {
         "screenId": "12",
+        "keyword_id": 701,
+        "keyword_name": "lblFreezeSubscription",
+        "keyword_value": "Freeze Subscription"
+      },
+      {
+        "screenId": "12",
+        "keyword_id": 702,
+        "keyword_name": "lblSubscriptionFrozen",
+        "keyword_value": "Subscription frozen"
+      },
+      {
+        "screenId": "12",
+        "keyword_id": 703,
+        "keyword_name": "lblFreezeScheduled",
+        "keyword_value": "Freeze scheduled"
+      },
+      {
+        "screenId": "12",
+        "keyword_id": 704,
+        "keyword_name": "lblFreezePeriodHint",
+        "keyword_value": "Choose when you want to pause your membership."
+      },
+      {
+        "screenId": "12",
+        "keyword_id": 705,
+        "keyword_name": "lblStartDate",
+        "keyword_value": "Start date"
+      },
+      {
+        "screenId": "12",
+        "keyword_id": 706,
+        "keyword_name": "lblEndDate",
+        "keyword_value": "End date"
+      },
+      {
+        "screenId": "12",
+        "keyword_id": 707,
+        "keyword_name": "lblConfirmFreeze",
+        "keyword_value": "Confirm freeze"
+      },
+      {
+        "screenId": "12",
         "keyword_id": 83,
         "keyword_name": "lblTo",
         "keyword_value": "Top Fitness Reads"

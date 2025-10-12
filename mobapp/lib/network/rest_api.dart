@@ -451,6 +451,11 @@ Future<SubscribePackageResponse> subscribePackageApi(Map req) async {
   return SubscribePackageResponse.fromJson(await handleResponse(await buildHttpResponse('subscribe-package', request: req, method: HttpMethod.POST)));
 }
 
+Future<Map<String, dynamic>> freezeSubscriptionApi(Map<String, dynamic> req) async {
+  return await handleResponse(
+      await buildHttpResponse('freeze-subscription', request: req, method: HttpMethod.POST));
+}
+
 Future<SubscriptionPlanResponse> getSubScriptionPlanList({int page = 2}) async {
   return SubscriptionPlanResponse.fromJson(await (handleResponse(await buildHttpResponse("subscriptionplan-list?page=$page", method: HttpMethod.GET))));
 }
