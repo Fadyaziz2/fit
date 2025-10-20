@@ -21,7 +21,7 @@ class SmsService
             return false;
         }
 
-        $text = trim(preg_replace("/\r\n?/, "\n", $message));
+        $text = trim(str_replace(["\r\n", "\r"], "\n", $message));
 
         if ($text === '') {
             return false;
