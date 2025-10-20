@@ -122,8 +122,13 @@
                     selectedIngredients: "{{ __('message.selected_ingredients') }}",
                     noIngredientsSelected: "{{ __('message.no_ingredients_selected') }}",
                     mealTotals: "{{ __('message.meal_totals') }}",
-                    quantity: "{{ __('message.quantity') }}"
+                    quantity: "{{ __('message.quantity') }}",
+                    unit: "{{ __('message.unit') }}"
                 };
+
+                const unitDatalistId = 'diet-unit-options';
+                let unitDatalist = null;
+                const unitOptions = new Set();
 
                 const planInput = $('#meal-plan-input');
                 const daysField = $('#days');
@@ -152,6 +157,7 @@
                 let currentSelection = { day: null, meal: null };
                 let modalSelection = [];
                 let currentQuantities = {};
+                let currentUnits = {};
 
                 function sanitizeCount(value) {
                     const number = parseInt(value, 10);
@@ -174,6 +180,65 @@
                     }
 
                     return Math.round(number * 100) / 100;
+                }
+
+                function sanitizeUnitLabel(value) {
+                    if (value === null || value === undefined) {
+                        return '';
+                    }
+
+                    if (typeof value !== 'string') {
+                        value = String(value);
+                    }
+
+                    const trimmed = value.trim();
+
+                    if (!trimmed) {
+                        return '';
+                    }
+
+                    return trimmed.length > 50 ? trimmed.substring(0, 50) : trimmed;
+                }
+
+                function ensureUnitDatalist() {
+                    if (unitDatalist && unitDatalist.length) {
+                        return unitDatalist;
+                    }
+
+                    const existing = document.getElementById(unitDatalistId);
+
+                    if (existing) {
+                        unitDatalist = $(existing);
+                        return unitDatalist;
+                    }
+
+                    unitDatalist = $('<datalist />').attr('id', unitDatalistId).appendTo('body');
+
+                    return unitDatalist;
+                }
+
+                function updateUnitDatalist() {
+                    const datalist = ensureUnitDatalist();
+                    datalist.empty();
+
+                    Array.from(unitOptions)
+                        .sort(function (a, b) {
+                            return a.localeCompare(b);
+                        })
+                        .forEach(function (unit) {
+                            datalist.append($('<option />').attr('value', unit));
+                        });
+                }
+
+                function registerUnit(unit) {
+                    const sanitized = sanitizeUnitLabel(unit);
+
+                    if (!sanitized || unitOptions.has(sanitized)) {
+                        return;
+                    }
+
+                    unitOptions.add(sanitized);
+                    updateUnitDatalist();
                 }
 
                 function extractEntryId(source) {
@@ -216,18 +281,44 @@
                     return 1;
                 }
 
+                function extractEntryUnit(source) {
+                    if (!source || typeof source !== 'object') {
+                        return '';
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(source, 'unit')) {
+                        return source.unit;
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(source, 'measurement_unit')) {
+                        return source.measurement_unit;
+                    }
+
+                    if (Object.prototype.hasOwnProperty.call(source, 'measure')) {
+                        return source.measure;
+                    }
+
+                    return '';
+                }
+
                 function normalizeMealValue(value) {
                     const normalized = [];
                     const seen = new Set();
 
-                    function addEntry(id, quantity) {
+                    function addEntry(id, quantity, unit) {
                         if (!Number.isInteger(id) || id <= 0 || seen.has(id)) {
                             return;
                         }
 
                         const sanitizedQuantity = sanitizeQuantity(quantity);
+                        const sanitizedUnit = sanitizeUnitLabel(unit);
+
                         seen.add(id);
-                        normalized.push({ id: id, quantity: sanitizedQuantity });
+                        normalized.push({ id: id, quantity: sanitizedQuantity, unit: sanitizedUnit });
+
+                        if (sanitizedUnit) {
+                            registerUnit(sanitizedUnit);
+                        }
                     }
 
                     if (Array.isArray(value)) {
@@ -239,12 +330,13 @@
                             if (typeof item === 'object') {
                                 const id = extractEntryId(item);
                                 const quantity = extractEntryQuantity(item);
-                                addEntry(id, quantity);
+                                const unit = extractEntryUnit(item);
+                                addEntry(id, quantity, unit);
                                 return;
                             }
 
                             const id = parseInt(item, 10);
-                            addEntry(id, 1);
+                            addEntry(id, 1, null);
                         });
 
                         return normalized;
@@ -253,13 +345,14 @@
                     if (value && typeof value === 'object') {
                         const id = extractEntryId(value);
                         const quantity = extractEntryQuantity(value);
-                        addEntry(id, quantity);
+                        const unit = extractEntryUnit(value);
+                        addEntry(id, quantity, unit);
 
                         return normalized;
                     }
 
                     const id = parseInt(value, 10);
-                    addEntry(id, 1);
+                    addEntry(id, 1, null);
 
                     return normalized;
                 }
@@ -282,6 +375,8 @@
 
                 function parseInitialPlan() {
                     const raw = planInput.val();
+                    unitOptions.clear();
+                    updateUnitDatalist();
                     if (!raw) {
                         mealPlan = [];
                         return;
@@ -473,9 +568,17 @@
                     container.append(selectButton, content);
 
                     const mealEntries = getMealSelection(dayIndex, mealIndex).map(function (entry) {
+                        const quantityValue = sanitizeQuantity(entry.quantity);
+                        const unitValue = sanitizeUnitLabel(entry.unit);
+
+                        if (unitValue) {
+                            registerUnit(unitValue);
+                        }
+
                         return {
                             id: entry.id,
-                            quantity: sanitizeQuantity(entry.quantity),
+                            quantity: quantityValue,
+                            unit: unitValue,
                         };
                     });
 
@@ -507,7 +610,9 @@
                             textWrapper.append($('<div />').addClass('fw-semibold').text(ingredient.title));
 
                             const quantityValue = sanitizeQuantity(entry.quantity);
+                            const unitValue = sanitizeUnitLabel(entry.unit);
                             mealPlan[dayIndex][mealIndex][entryIndex].quantity = quantityValue;
+                            mealPlan[dayIndex][mealIndex][entryIndex].unit = unitValue;
 
                             const ingredientProtein = (Number(ingredient.protein) || 0) * quantityValue;
                             const ingredientCarbs = (Number(ingredient.carbs) || 0) * quantityValue;
@@ -543,6 +648,25 @@
                                 });
 
                             quantityGroup.append(quantityInput);
+                            quantityGroup.append($('<span />').addClass('text-muted small').text(translations.unit));
+
+                            const unitInput = $('<input />')
+                                .attr({
+                                    type: 'text',
+                                    list: unitDatalistId,
+                                })
+                                .addClass('form-control form-control-sm')
+                                .css('max-width', '140px')
+                                .val(unitValue)
+                                .on('change blur', function () {
+                                    const sanitizedUnit = sanitizeUnitLabel($(this).val());
+                                    $(this).val(sanitizedUnit);
+                                    mealPlan[dayIndex][mealIndex][entryIndex].unit = sanitizedUnit;
+                                    registerUnit(sanitizedUnit);
+                                    updatePlanInput();
+                                });
+
+                            quantityGroup.append(unitInput);
                             textWrapper.append(quantityGroup);
                             info.append(textWrapper);
                             list.append(info);
@@ -662,9 +786,14 @@
                         if (!Object.prototype.hasOwnProperty.call(currentQuantities, ingredientId)) {
                             currentQuantities[ingredientId] = 1;
                         }
+
+                        if (!Object.prototype.hasOwnProperty.call(currentUnits, ingredientId)) {
+                            currentUnits[ingredientId] = '';
+                        }
                     } else if (index !== -1) {
                         modalSelection.splice(index, 1);
                         delete currentQuantities[ingredientId];
+                        delete currentUnits[ingredientId];
                     }
                 }
 
@@ -694,11 +823,19 @@
                         const quantity = Object.prototype.hasOwnProperty.call(currentQuantities, ingredientId)
                             ? currentQuantities[ingredientId]
                             : 1;
+                        const unit = Object.prototype.hasOwnProperty.call(currentUnits, ingredientId)
+                            ? sanitizeUnitLabel(currentUnits[ingredientId])
+                            : '';
+
+                        currentUnits[ingredientId] = unit;
 
                         badge.append(
                             $('<small />')
                                 .addClass('d-block text-muted')
-                                .text(translations.quantity + ': ' + formatNumber(quantity))
+                                .text(
+                                    translations.quantity + ': ' + formatNumber(quantity)
+                                    + (unit ? ' | ' + translations.unit + ': ' + unit : '')
+                                )
                         );
 
                         selectionSummary.append(badge);
@@ -786,8 +923,10 @@
                     });
 
                     currentQuantities = {};
+                    currentUnits = {};
                     currentEntries.forEach(function (entry) {
                         currentQuantities[entry.id] = sanitizeQuantity(entry.quantity);
+                        currentUnits[entry.id] = sanitizeUnitLabel(entry.unit);
                     });
                     ingredientSearch.val('');
                     renderIngredientList('');
@@ -808,6 +947,7 @@
 
                     modalSelection = [];
                     currentQuantities = {};
+                    currentUnits = {};
                     setMealSelection(currentSelection.day, currentSelection.meal, []);
                     renderTable();
                     closeModal();
@@ -822,10 +962,16 @@
                         const quantity = Object.prototype.hasOwnProperty.call(currentQuantities, ingredientId)
                             ? currentQuantities[ingredientId]
                             : 1;
+                        const unit = Object.prototype.hasOwnProperty.call(currentUnits, ingredientId)
+                            ? sanitizeUnitLabel(currentUnits[ingredientId])
+                            : '';
+
+                        currentUnits[ingredientId] = unit;
 
                         return {
                             id: ingredientId,
                             quantity: sanitizeQuantity(quantity),
+                            unit: unit,
                         };
                     });
 
@@ -844,6 +990,7 @@
                         ingredientSearch.val('');
                         modalSelection = [];
                         currentQuantities = {};
+                        currentUnits = {};
                         if (selectionSummary.length) {
                             selectionSummary.empty();
                         }

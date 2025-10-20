@@ -132,6 +132,7 @@ return [
     'diet_plan_for' => 'Diet Plan for :name',
     'ingredient' => 'Ingredient',
     'quantity' => 'Quantity',
+    'unit' => 'Unit',
     'customer_name' => 'Customer Name',
     'customer_phone' => 'Customer Phone',
     'shipping_address' => 'Shipping Address',
