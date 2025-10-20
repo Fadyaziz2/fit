@@ -46,6 +46,15 @@
                 </svg></i>')
             ->link->attr(['class' => activeRoute(route('sms.index')) ? 'nav-link active' : 'nav-link']);
 
+        $menu->add('<span class="item-name">'.__('message.email_center').'</span>', ['route' => 'emails.index'])
+            ->data('role', 'admin')
+            ->prepend('<i class="icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 5.5C3.17157 5.5 2.5 6.17157 2.5 7V17C2.5 17.8284 3.17157 18.5 4 18.5H20C20.8284 18.5 21.5 17.8284 21.5 17V7C21.5 6.17157 20.8284 5.5 20 5.5H4Z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M3 7L10.553 11.7831C11.4185 12.3367 12.5815 12.3367 13.447 11.7831L21 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg></i>')
+            ->link->attr(['class' => activeRoute(route('emails.index')) ? 'nav-link active' : 'nav-link']);
+
         $menu->add('<span class="item-name">'.__('message.sub_admin').'</span>', ['class' => ''])
             ->prepend('<i class="icon">
                 <svg class="icon-24" width="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
