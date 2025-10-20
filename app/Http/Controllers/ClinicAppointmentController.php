@@ -9,18 +9,22 @@ use App\Models\SpecialistAppointment;
 use App\Models\SpecialistSchedule;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Services\SmsService;
 use App\Traits\HandlesBranchAccess;
 use App\Traits\SubscriptionTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class ClinicAppointmentController extends Controller
 {
     use SubscriptionTrait, HandlesBranchAccess;
+
+    public function __construct(protected SmsService $smsService)
+    {
+    }
 
     protected function authorizeAccess(): User
     {
@@ -417,12 +421,6 @@ class ClinicAppointmentController extends Controller
 
     protected function sendAppointmentConfirmationSms(?string $phoneNumber, Carbon $date, Carbon $time): void
     {
-        $normalizedPhone = $this->normalizeJordanPhone($phoneNumber);
-
-        if (! $normalizedPhone) {
-            return;
-        }
-
         $dayName = $date->copy()->locale('ar')->translatedFormat('l');
         $formattedDate = $this->convertToArabicNumerals($date->format('j-n-Y'));
 
@@ -433,50 +431,7 @@ class ClinicAppointmentController extends Controller
             $time->format('H:i')
         );
 
-        try {
-            Http::timeout(10)
-                ->get('https://smsapi.theblunet.com:8441/websmpp/websms', [
-                    'user' => 'microjo',
-                    'pass' => 'Mic0@25!',
-                    'sid' => 'micro jo',
-                    'mno' => $normalizedPhone,
-                    'type' => 4,
-                    'text' => $message,
-                ]);
-        } catch (\Throwable $exception) {
-            report($exception);
-        }
-    }
-
-    protected function normalizeJordanPhone(?string $phone): ?string
-    {
-        if (! $phone) {
-            return null;
-        }
-
-        $digits = preg_replace('/\D+/', '', $phone);
-
-        if ($digits === '') {
-            return null;
-        }
-
-        if (Str::startsWith($digits, '00')) {
-            $digits = substr($digits, 2);
-        }
-
-        if (Str::startsWith($digits, '962')) {
-            return $digits;
-        }
-
-        if (Str::startsWith($digits, '0')) {
-            return '962' . substr($digits, 1);
-        }
-
-        if (Str::startsWith($digits, '7') && strlen($digits) === 9) {
-            return '962' . $digits;
-        }
-
-        return $digits;
+        $this->smsService->send($message, $phoneNumber);
     }
 
     protected function convertToArabicNumerals(string $value): string
