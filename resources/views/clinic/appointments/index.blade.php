@@ -21,19 +21,44 @@
                             <div class="alert alert-success">{{ session('success') }}</div>
                         @endif
                         <form method="GET" class="row g-2 align-items-end mb-4">
-                            <div class="col-sm-6 col-md-4 col-lg-3">
-                                <label class="form-label" for="filter-type">{{ __('message.type') }}</label>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <label class="form-label" for="filter-from-date">{{ __('message.from_date') }}</label>
+                                <input type="date" class="form-control" id="filter-from-date" name="from_date" value="{{ request('from_date') }}">
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <label class="form-label" for="filter-to-date">{{ __('message.to_date') }}</label>
+                                <input type="date" class="form-control" id="filter-to-date" name="to_date" value="{{ request('to_date') }}">
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <label class="form-label" for="filter-branch">{{ __('message.branch') }}</label>
+                                <select class="form-select" id="filter-branch" name="branch_id">
+                                    <option value="">{{ __('message.all_branches') }}</option>
+                                    @foreach($branches as $branch)
+                                        <option value="{{ $branch->id }}" @selected((string) $branch->id === request('branch_id'))>{{ $branch->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <label class="form-label" for="filter-specialist">{{ __('message.specialist') }}</label>
+                                <select class="form-select" id="filter-specialist" name="specialist_id">
+                                    <option value="">{{ __('message.all_specialists') }}</option>
+                                    @foreach($specialists as $specialist)
+                                        <option value="{{ $specialist->id }}" @selected((string) $specialist->id === request('specialist_id'))>{{ $specialist->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-lg-2">
+                                <label class="form-label" for="filter-type">{{ __('message.exam_type') }}</label>
                                 <select class="form-select" id="filter-type" name="type">
                                     <option value="">{{ __('message.all_types') }}</option>
                                     <option value="regular" @selected(request('type') === 'regular')>{{ __('message.regular_appointment') }}</option>
                                     <option value="free" @selected(request('type') === 'free')>{{ __('message.free_appointment') }}</option>
-                                    <option value="manual_free" @selected(request('type') === 'manual_free')>{{ __('message.manual_free_appointment') }}</option>
                                 </select>
                             </div>
-                            <div class="col-sm-6 col-md-4 col-lg-2">
+                            <div class="col-sm-6 col-md-4 col-lg-1">
                                 <button type="submit" class="btn btn-primary w-100">{{ __('message.apply_filter') }}</button>
                             </div>
-                            <div class="col-sm-6 col-md-4 col-lg-2">
+                            <div class="col-sm-6 col-md-4 col-lg-1">
                                 <a href="{{ route('clinic.appointments.index') }}" class="btn btn-outline-secondary w-100">{{ __('message.reset_filter') }}</a>
                             </div>
                         </form>
