@@ -88,7 +88,7 @@ class BookingController extends Controller
                 $exists = SpecialistAppointment::where('specialist_id', $specialist->id)
                     ->where('appointment_date', $date->toDateString())
                     ->where('appointment_time', $slotTime)
-                    ->whereIn('status', ['pending', 'confirmed', 'completed'])
+                    ->whereIn('status', SpecialistAppointment::BLOCKING_STATUSES)
                     ->exists();
 
                 $slots[] = [
@@ -141,7 +141,7 @@ class BookingController extends Controller
         $alreadyBooked = SpecialistAppointment::where('specialist_id', $request->specialist_id)
             ->where('appointment_date', $date->toDateString())
             ->where('appointment_time', $time)
-            ->whereIn('status', ['pending', 'confirmed', 'completed'])
+            ->whereIn('status', SpecialistAppointment::BLOCKING_STATUSES)
             ->exists();
 
         if ($alreadyBooked) {
