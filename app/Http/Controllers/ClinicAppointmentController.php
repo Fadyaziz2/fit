@@ -38,20 +38,58 @@ class ClinicAppointmentController extends Controller
 
         $request->validate([
             'type' => 'nullable|in:regular,free,manual_free',
+            'branch_id' => 'nullable|integer|exists:branches,id',
+            'specialist_id' => 'nullable|integer|exists:specialists,id',
+            'from_date' => 'nullable|date',
+            'to_date' => 'nullable|date|after_or_equal:from_date',
         ]);
+
+        if ($request->filled('branch_id')) {
+            $this->assertBranchAccessible((int) $request->input('branch_id'), $branchIds);
+        }
 
         $pageTitle = __('message.list_form_title', ['form' => __('message.appointment')]);
         $appointments = SpecialistAppointment::with(['user', 'specialist.branch', 'branch'])
             ->when($branchIds !== null, function ($query) use ($branchIds) {
                 $query->whereIn('branch_id', $branchIds);
             })
+            ->when($request->filled('from_date'), function ($query) use ($request) {
+                $query->whereDate('appointment_date', '>=', $request->input('from_date'));
+            })
+            ->when($request->filled('to_date'), function ($query) use ($request) {
+                $query->whereDate('appointment_date', '<=', $request->input('to_date'));
+            })
+            ->when($request->filled('branch_id'), function ($query) use ($request) {
+                $branchId = (int) $request->input('branch_id');
+
+                $query->where(function ($branchQuery) use ($branchId) {
+                    $branchQuery->where('branch_id', $branchId)
+                        ->orWhereHas('specialist', function ($specialistQuery) use ($branchId) {
+                            $specialistQuery->where('branch_id', $branchId)
+                                ->orWhereHas('branches', function ($relationQuery) use ($branchId) {
+                                    $relationQuery->where('branches.id', $branchId);
+                                });
+                        });
+                });
+            })
+            ->when($request->filled('specialist_id'), function ($query) use ($request) {
+                $query->where('specialist_id', $request->input('specialist_id'));
+            })
             ->when($request->filled('type'), function ($query) use ($request) {
-                $query->where('type', $request->input('type'));
+                $type = $request->input('type');
+
+                if ($type === 'free') {
+                    $query->whereIn('type', ['free', 'manual_free']);
+                } elseif ($type === 'manual_free') {
+                    $query->where('type', 'manual_free');
+                } else {
+                    $query->where('type', $type);
+                }
             })
             ->orderByDesc('appointment_date')
             ->orderByDesc('appointment_time')
             ->paginate(20)
-            ->appends($request->only('type'));
+            ->appends($request->only('type', 'branch_id', 'specialist_id', 'from_date', 'to_date'));
 
         $users = User::where('user_type', 'user')
             ->orderBy('display_name')
