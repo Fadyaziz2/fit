@@ -177,6 +177,8 @@ return [
     'day' => 'يوم',
     'meal_plan' => 'خطة الوجبات',
     'meal_times' => 'مواعيد الوجبات',
+    'day_number_label' => 'اليوم :number',
+    'meal_number_label' => 'الوجبة :number',
     'print_diet_plan' => 'طباعة خطة الدايت',
     'printed_on_label' => 'تاريخ الطباعة:',
     'no_diet_assigned' => 'لم يتم تعيين أي أنظمة غذائية لهذا المستخدم بعد.',

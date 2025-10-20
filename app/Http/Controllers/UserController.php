@@ -24,6 +24,7 @@ use App\Models\UserProductRecommendation;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Models\Specialist;
 use App\Support\MealPlan;
+use Illuminate\Support\Collection;
 
 class UserController extends Controller
 {
@@ -306,7 +307,9 @@ class UserController extends Controller
             }])
             ->orderBy('id', 'desc')
             ->get();
-        $view = view('users.assign-diet-list',compact('user_id', 'data'))->render();
+        $dietPrintPlans = $this->prepareDietPrintPlans($data);
+
+        $view = view('users.assign-diet-list', compact('user_id', 'data', 'dietPrintPlans'))->render();
         return response()->json([ 'data' => $view, 'status' => true ]);
     }
  
@@ -518,6 +521,197 @@ class UserController extends Controller
             'maxMeals' => $maxMeals,
             'days' => $daysCount,
         ];
+    }
+
+    protected function prepareDietPrintPlans(Collection $diets): array
+    {
+        if ($diets->isEmpty()) {
+            return [];
+        }
+
+        $plans = [];
+        $allIngredientIds = [];
+
+        foreach ($diets as $diet) {
+            $structure = $this->buildDietPlanStructure($diet);
+            $basePlan = $structure['plan'];
+
+            $assignment = $diet->userAssignDiet->first();
+            $customPlan = [];
+            $serveTimes = [];
+
+            if ($assignment) {
+                if (is_array($assignment->custom_plan)) {
+                    $customPlan = MealPlan::normalizePlan($assignment->custom_plan, false, true);
+                }
+
+                $serveTimes = $this->normalizeServeTimes($assignment->serve_times ?? []);
+            }
+
+            $mergedPlan = MealPlan::mergeNormalizedPlans($basePlan, $customPlan);
+
+            $plans[$diet->id] = [
+                'plan' => $mergedPlan,
+                'serve_times' => $serveTimes,
+            ];
+
+            foreach ($mergedPlan as $dayMeals) {
+                if (!is_array($dayMeals)) {
+                    continue;
+                }
+
+                foreach ($dayMeals as $mealEntries) {
+                    if (!is_array($mealEntries)) {
+                        continue;
+                    }
+
+                    foreach ($mealEntries as $entry) {
+                        if (!is_array($entry)) {
+                            continue;
+                        }
+
+                        $ingredientId = (int) ($entry['id'] ?? 0);
+
+                        if ($ingredientId > 0) {
+                            $allIngredientIds[] = $ingredientId;
+                        }
+                    }
+                }
+            }
+        }
+
+        $allIngredientIds = array_values(array_unique($allIngredientIds));
+        $ingredients = !empty($allIngredientIds)
+            ? Ingredient::whereIn('id', $allIngredientIds)->get()->keyBy('id')
+            : collect();
+
+        foreach ($plans as $dietId => $planInfo) {
+            $plans[$dietId] = $this->transformPlanForPrint(
+                $planInfo['plan'] ?? [],
+                $planInfo['serve_times'] ?? [],
+                $ingredients
+            );
+        }
+
+        return $plans;
+    }
+
+    protected function normalizeServeTimes($serveTimes): array
+    {
+        $normalized = [];
+
+        if (!is_array($serveTimes)) {
+            return $normalized;
+        }
+
+        foreach ($serveTimes as $index => $time) {
+            if ($time instanceof \DateTimeInterface) {
+                $normalized[(int) $index] = $time->format('H:i');
+                continue;
+            }
+
+            if (is_string($time) || (is_numeric($time) && !is_bool($time))) {
+                $value = trim((string) $time);
+
+                if ($value !== '') {
+                    $normalized[(int) $index] = $value;
+                }
+            }
+        }
+
+        return $normalized;
+    }
+
+    protected function transformPlanForPrint(array $plan, array $serveTimes, Collection $ingredients): array
+    {
+        if (empty($plan)) {
+            return [];
+        }
+
+        $details = [];
+
+        foreach ($plan as $dayIndex => $dayMeals) {
+            $meals = [];
+
+            if (!is_array($dayMeals)) {
+                $details[] = [
+                    'day_number' => (int) $dayIndex + 1,
+                    'meals' => [],
+                ];
+
+                continue;
+            }
+
+            foreach ($dayMeals as $mealIndex => $mealEntries) {
+                $ingredientsList = [];
+
+                if (is_array($mealEntries)) {
+                    foreach ($mealEntries as $entry) {
+                        if (!is_array($entry)) {
+                            continue;
+                        }
+
+                        $ingredientId = (int) ($entry['id'] ?? 0);
+
+                        if ($ingredientId <= 0) {
+                            continue;
+                        }
+
+                        $ingredient = $ingredients->get($ingredientId);
+
+                        if (! $ingredient) {
+                            continue;
+                        }
+
+                        $ingredientsList[] = [
+                            'id' => $ingredientId,
+                            'title' => $ingredient->title ?? '',
+                            'quantity' => $this->formatPrintQuantity($entry['quantity'] ?? null),
+                        ];
+                    }
+                }
+
+                $meals[] = [
+                    'meal_number' => (int) $mealIndex + 1,
+                    'time' => $serveTimes[$mealIndex] ?? null,
+                    'ingredients' => $ingredientsList,
+                ];
+            }
+
+            $details[] = [
+                'day_number' => (int) $dayIndex + 1,
+                'meals' => $meals,
+            ];
+        }
+
+        return $details;
+    }
+
+    protected function formatPrintQuantity($value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        if (is_string($value)) {
+            $value = str_replace(',', '.', $value);
+        }
+
+        if (!is_numeric($value)) {
+            return '';
+        }
+
+        $number = (float) $value;
+
+        if ($number <= 0) {
+            return '';
+        }
+
+        if (abs($number - round($number)) < 0.01) {
+            return (string) (int) round($number);
+        }
+
+        return rtrim(rtrim(number_format($number, 2, '.', ''), '0'), '.');
     }
 
     public function editAssignDietMeals($userId, $dietId)

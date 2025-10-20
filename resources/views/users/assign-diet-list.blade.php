@@ -3,8 +3,9 @@
         @php
             $assignment = $assigndiet->userAssignDiet->first();
             $serveTimes = collect(optional($assignment)->serve_times)->filter()->values();
+            $planDetails = $dietPrintPlans[$assigndiet->id] ?? [];
         @endphp
-        <tr>
+        <tr data-plan='@json($planDetails, JSON_UNESCAPED_UNICODE)'>
             <td><img src="{{ getSingleMedia($assigndiet, 'diet_image') }}" alt="diet-image" class="bg-soft-primary rounded img-fluid avatar-40 me-3"></td>
             <td>
                 <div class="d-flex flex-column">

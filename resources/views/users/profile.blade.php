@@ -6,6 +6,12 @@
             number: @json(__('message.srno')),
             title: @json(__('message.title')),
             mealTimes: @json(__('message.meal_times')),
+            ingredients: @json(__('message.ingredients')),
+            dayLabel: @json(__('message.day_number_label')),
+            mealLabel: @json(__('message.meal_number_label')),
+            quantityLabel: @json(__('message.quantity')),
+            noIngredients: @json(__('message.no_ingredients_selected')),
+            noMeals: @json(__('message.no_meal_selected')),
             printedOnLabel: @json(__('message.printed_on_label')),
             empty: @json(__('message.no_diet_assigned')),
         };
@@ -14,19 +20,119 @@
             return $('<div>').text(value || '').html();
         }
 
+        function parsePlanData(value) {
+            if (!value) {
+                return [];
+            }
+
+            if (Array.isArray(value)) {
+                return value;
+            }
+
+            if (typeof value === 'string') {
+                const trimmed = value.trim();
+
+                if (trimmed === '') {
+                    return [];
+                }
+
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (error) {
+                    return [];
+                }
+            }
+
+            if (typeof value === 'object') {
+                return Array.isArray(value) ? value : [];
+            }
+
+            return [];
+        }
+
+        function buildPlanHtml(planDetails) {
+            if (!Array.isArray(planDetails) || planDetails.length === 0) {
+                return `<span class="print-empty-value">${escapeHtml(dietPrintStrings.noMeals)}</span>`;
+            }
+
+            const dayTemplate = dietPrintStrings.dayLabel || '';
+            const mealTemplate = dietPrintStrings.mealLabel || '';
+            const quantityLabel = dietPrintStrings.quantityLabel || '';
+
+            const buildLabel = (template, number) => {
+                const numberValue = number !== undefined && number !== null && number !== '' ? String(number) : '';
+
+                if (!template) {
+                    return numberValue;
+                }
+
+                if (template.indexOf(':number') !== -1) {
+                    return template.replace(':number', numberValue);
+                }
+
+                return `${template} ${numberValue}`.trim();
+            };
+
+            const daysHtml = planDetails.map((day) => {
+                const dayMeals = day && Array.isArray(day.meals) ? day.meals : [];
+                const dayNumber = day && Object.prototype.hasOwnProperty.call(day, 'day_number') ? day.day_number : '';
+                const dayLabel = buildLabel(dayTemplate, dayNumber);
+
+                const mealsHtml = dayMeals.map((meal) => {
+                    const mealNumber = meal && Object.prototype.hasOwnProperty.call(meal, 'meal_number') ? meal.meal_number : '';
+                    const mealLabel = buildLabel(mealTemplate, mealNumber);
+                    const mealTimeValue = meal && meal.time ? String(meal.time) : '';
+                    const mealTime = mealTimeValue ? `<span class="print-meal-time">(${escapeHtml(mealTimeValue)})</span>` : '';
+                    const mealIngredients = meal && Array.isArray(meal.ingredients) ? meal.ingredients : [];
+
+                    const ingredientsHtml = mealIngredients.length
+                        ? `<ul class="print-ingredients">${mealIngredients.map((ingredient) => {
+                            const titleValue = ingredient && ingredient.title ? String(ingredient.title) : '-';
+                            const quantityValue = ingredient && ingredient.quantity ? String(ingredient.quantity) : '';
+                            const quantityHtml = quantityValue !== ''
+                                ? ` <span class="print-ingredient-quantity">(${escapeHtml(quantityLabel)}: ${escapeHtml(quantityValue)})</span>`
+                                : '';
+
+                            return `<li>${escapeHtml(titleValue)}${quantityHtml}</li>`;
+                        }).join('')}</ul>`
+                        : `<span class="print-empty-value">${escapeHtml(dietPrintStrings.noIngredients)}</span>`;
+
+                    return `
+                        <div class="print-meal">
+                            <div class="print-meal-header">${escapeHtml(mealLabel)}${mealTime}</div>
+                            ${ingredientsHtml}
+                        </div>
+                    `;
+                }).join('');
+
+                const mealsContent = mealsHtml || `<span class="print-empty-value">${escapeHtml(dietPrintStrings.noIngredients)}</span>`;
+
+                return `
+                    <div class="print-day">
+                        <div class="print-day-header">${escapeHtml(dayLabel)}</div>
+                        ${mealsContent}
+                    </div>
+                `;
+            }).join('');
+
+            return `<div class="print-plan">${daysHtml}</div>`;
+        }
+
         function buildDietPrintRows() {
             const rows = [];
             let rowIndex = 0;
 
             $('#diet-data tr').each(function () {
-                const $cells = $(this).find('td');
+                const $row = $(this);
+                const $cells = $row.find('td');
 
                 if ($cells.length <= 1) {
                     const emptyText = $(this).text().trim();
                     if (emptyText) {
                         rows.push(`
                             <tr>
-                                <td colspan="3" class="print-empty">${escapeHtml(emptyText)}</td>
+                                <td colspan="4" class="print-empty">${escapeHtml(emptyText)}</td>
                             </tr>
                         `);
                     }
@@ -40,6 +146,8 @@
                 const title = $titleCell.find('span').first().text().trim() || '-';
                 const customBadge = $titleCell.find('.badge').text().trim();
                 const imageSrc = $cells.eq(0).find('img').attr('src') || '';
+                const planDetails = parsePlanData($row.attr('data-plan'));
+                const planHtml = buildPlanHtml(planDetails);
 
                 const mealTimes = [];
                 $cells.eq(2).find('span').each(function () {
@@ -66,6 +174,7 @@
                             </div>
                         </td>
                         <td>${mealTimesHtml}</td>
+                        <td>${planHtml}</td>
                     </tr>
                 `);
             });
@@ -73,7 +182,7 @@
             if (!rowIndex && !rows.length) {
                 rows.push(`
                     <tr>
-                        <td colspan="3" class="print-empty">${escapeHtml(dietPrintStrings.empty)}</td>
+                        <td colspan="4" class="print-empty">${escapeHtml(dietPrintStrings.empty)}</td>
                     </tr>
                 `);
             }
@@ -219,6 +328,80 @@
                                 border-radius: 8px;
                             }
 
+                            .print-plan {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 16px;
+                            }
+
+                            .print-day {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 12px;
+                                padding: 12px;
+                                border-radius: 10px;
+                                background-color: rgba(254, 215, 170, 0.35);
+                                border: 1px solid rgba(251, 146, 60, 0.25);
+                            }
+
+                            .print-day-header {
+                                font-weight: 600;
+                                font-size: 15px;
+                                color: #c2410c;
+                                margin-bottom: 4px;
+                            }
+
+                            .print-meal {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 8px;
+                                background-color: rgba(255, 255, 255, 0.85);
+                                border-radius: 8px;
+                                padding: 10px 12px;
+                                box-shadow: inset 0 0 0 1px rgba(251, 146, 60, 0.15);
+                            }
+
+                            .print-meal-header {
+                                font-weight: 600;
+                                font-size: 14px;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                color: #b45309;
+                            }
+
+                            .print-meal-time {
+                                font-weight: 500;
+                                color: #92400e;
+                                font-size: 13px;
+                                margin-left: 8px;
+                            }
+
+                            .print-ingredients {
+                                list-style: disc;
+                                padding-left: 20px;
+                                margin: 0;
+                                display: flex;
+                                flex-direction: column;
+                                gap: 4px;
+                            }
+
+                            .print-ingredients li {
+                                font-size: 13px;
+                                color: #374151;
+                            }
+
+                            .print-ingredient-quantity {
+                                font-size: 12px;
+                                color: #6b7280;
+                            }
+
+                            .print-empty-value {
+                                font-size: 13px;
+                                color: #6c757d;
+                                font-style: italic;
+                            }
+
                             .print-empty {
                                 text-align: center;
                                 font-style: italic;
@@ -260,6 +443,7 @@
                                         <th style="width: 60px;">${escapeHtml(dietPrintStrings.number)}</th>
                                         <th>${escapeHtml(dietPrintStrings.title)}</th>
                                         <th>${escapeHtml(dietPrintStrings.mealTimes)}</th>
+                                        <th>${escapeHtml(dietPrintStrings.ingredients)}</th>
                                     </tr>
                                 </thead>
                                 <tbody>

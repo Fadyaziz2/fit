@@ -150,6 +150,8 @@ return [
     'day' => 'Day',
     'meal_plan' => 'Meal Plan',
     'meal_times' => 'Meal times',
+    'day_number_label' => 'Day :number',
+    'meal_number_label' => 'Meal :number',
     'print_diet_plan' => 'Print Diet Plan',
     'printed_on_label' => 'Printed on',
     'no_diet_assigned' => 'No diets have been assigned to this user yet.',
