@@ -372,6 +372,22 @@ mixin _$UserStore on UserStoreBase, Store {
     });
   }
 
+  late final _$bodyCompositionsAtom =
+      Atom(name: 'UserStoreBase.bodyCompositions', context: context);
+
+  @override
+  ObservableList<BodyComposition> get bodyCompositions {
+    _$bodyCompositionsAtom.reportRead();
+    return super.bodyCompositions;
+  }
+
+  @override
+  set bodyCompositions(ObservableList<BodyComposition> value) {
+    _$bodyCompositionsAtom.reportWrite(value, super.bodyCompositions, () {
+      super.bodyCompositions = value;
+    });
+  }
+
   late final _$healthNotesAtom =
       Atom(name: 'UserStoreBase.healthNotes', context: context);
 
@@ -843,6 +859,15 @@ mixin _$UserStore on UserStoreBase, Store {
   @override
   Future<void> setSubscription(String val, {bool isInitialization = false}) {
     return _$setSubscriptionAsyncAction.run(() => super.setSubscription(val, isInitialization: isInitialization));
+  }
+
+  late final _$setBodyCompositionsAsyncAction =
+      AsyncAction('UserStoreBase.setBodyCompositions', context: context);
+
+  @override
+  Future<void> setBodyCompositions(List<BodyComposition> items) {
+    return _$setBodyCompositionsAsyncAction
+        .run(() => super.setBodyCompositions(items));
   }
 
   late final _$setAdsBannerDetailShowAdsOnDietDetailAsyncAction = AsyncAction('UserStoreBase.setAdsBannerDetailShowAdsOnDietDetail', context: context);

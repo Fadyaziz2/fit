@@ -119,6 +119,8 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     Route::resource('users', UserController::class);
     Route::post('users/{user}/attachments', [UserController::class, 'storeAttachments'])->name('users.attachments.store');
     Route::delete('users/{user}/attachments/{media}', [UserController::class, 'destroyAttachment'])->name('users.attachments.destroy');
+    Route::post('users/{user}/body-compositions', [UserController::class, 'storeBodyComposition'])->name('users.body-compositions.store');
+    Route::delete('users/{user}/body-compositions/{composition}', [UserController::class, 'destroyBodyComposition'])->name('users.body-compositions.destroy');
     Route::get('sms', [SmsController::class, 'index'])->name('sms.index');
     Route::post('sms', [SmsController::class, 'send'])->name('sms.send');
     Route::get('emails', [EmailController::class, 'index'])->name('emails.index');

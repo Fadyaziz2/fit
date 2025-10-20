@@ -100,6 +100,7 @@ class UserController extends Controller
             'cartItems.product.productcategory',
             'dislikedIngredients.media',
             'userDiseases',
+            'bodyCompositions',
         ])->where('id',$id)->where('user_type', 'user')->first();
         
         if(empty($user)) {
@@ -173,7 +174,18 @@ class UserController extends Controller
             $user->addMediaFromRequest('profile_image')->toMediaCollection('profile_image');
         }
 
-        $user_data = User::find($user->id);
+        $user_data = User::with([
+            'userProfile.specialist',
+            'userProfile.specialist.branches',
+            'userFavouriteDiet.diet.media',
+            'userFavouriteWorkout.workout.media',
+            'userFavouriteProducts.product.media',
+            'cartItems.product.media',
+            'cartItems.product.productcategory',
+            'dislikedIngredients.media',
+            'userDiseases',
+            'bodyCompositions',
+        ])->find($user->id);
         
         if($user_data->userProfile != null && $request->has('user_profile') ) {
             $user_data->userProfile->fill($request->user_profile)->update();
@@ -453,6 +465,7 @@ class UserController extends Controller
             'cartItems.product.productcategory',
             'dislikedIngredients.media',
             'userDiseases',
+            'bodyCompositions',
         ])->where('id',$user->id)->where('user_type', 'user')->first();
 
         if(empty($user)) {
@@ -555,6 +568,7 @@ class UserController extends Controller
             'cartItems.product.productcategory',
             'dislikedIngredients.media',
             'userDiseases',
+            'bodyCompositions',
         ]);
 
         $response = [

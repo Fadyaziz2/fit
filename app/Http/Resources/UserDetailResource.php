@@ -9,6 +9,7 @@ use App\Http\Resources\DietResource;
 use App\Http\Resources\ProductResource;
 use App\Http\Resources\CartItemResource;
 use Illuminate\Support\Collection;
+use App\Http\Resources\UserBodyCompositionResource;
 
 class UserDetailResource extends JsonResource
 {
@@ -92,6 +93,7 @@ class UserDetailResource extends JsonResource
             'health_conditions' => $this->formatHealthConditions(),
             'health_profile_notes' => optional($this->userProfile)->notes,
             'attachments' => $this->formatAttachments(),
+            'body_compositions' => $this->formatBodyCompositions(),
         ];
     }
 
@@ -122,5 +124,14 @@ class UserDetailResource extends JsonResource
                 'size' => $media->size,
             ];
         })->values()->all();
+    }
+
+    protected function formatBodyCompositions(): array
+    {
+        if (! $this->relationLoaded('bodyCompositions')) {
+            return [];
+        }
+
+        return UserBodyCompositionResource::collection($this->bodyCompositions)->toArray(request());
     }
 }

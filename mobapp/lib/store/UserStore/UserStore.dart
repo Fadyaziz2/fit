@@ -7,6 +7,7 @@ import '../../utils/app_constants.dart';
 import '../../models/ingredient_model.dart';
 import '../../models/health_condition_model.dart';
 import '../../models/user_attachment.dart';
+import '../../models/body_composition.dart';
 
 part 'UserStore.g.dart';
 
@@ -85,6 +86,10 @@ abstract class UserStoreBase with Store {
 
   @observable
   String healthNotes = '';
+
+  @observable
+  ObservableList<BodyComposition> bodyCompositions =
+      ObservableList<BodyComposition>();
 
   @observable
   String heightUnit = 'feet';
@@ -428,6 +433,13 @@ abstract class UserStoreBase with Store {
   @action
   Future<void> setAttachments(List<UserAttachment> items) async {
     attachments
+      ..clear()
+      ..addAll(items);
+  }
+
+  @action
+  Future<void> setBodyCompositions(List<BodyComposition> items) async {
+    bodyCompositions
       ..clear()
       ..addAll(items);
   }
