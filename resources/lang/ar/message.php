@@ -159,6 +159,7 @@ return [
     'diet_plan_for' => 'خطة الدايت لـ :name',
     'ingredient' => 'مكون',
     'quantity' => 'الكمية',
+    'unit' => 'الوحدة',
     'customer_name' => 'اسم العميل',
     'customer_phone' => 'هاتف العميل',
     'shipping_address' => 'عنوان الشحن',

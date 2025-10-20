@@ -89,6 +89,7 @@ class MealPlan
         if (is_array($value)) {
             $id = $value['id'] ?? $value['ingredient_id'] ?? $value['ingredient'] ?? null;
             $quantity = $value['quantity'] ?? $value['qty'] ?? $value['amount'] ?? 1;
+            $unit = $value['unit'] ?? $value['measurement_unit'] ?? $value['measure'] ?? null;
 
             if ($id === null) {
                 if ($strict) {
@@ -100,6 +101,7 @@ class MealPlan
 
             $id = (int) $id;
             $quantity = self::sanitizeQuantity($quantity, $strict);
+            $unit = self::sanitizeUnit($unit);
 
             if ($id <= 0 || $quantity === null || in_array($id, $seen, true)) {
                 return null;
@@ -110,6 +112,7 @@ class MealPlan
             return [
                 'id' => $id,
                 'quantity' => $quantity,
+                'unit' => $unit,
             ];
         }
 
@@ -132,6 +135,7 @@ class MealPlan
         return [
             'id' => $id,
             'quantity' => 1.0,
+            'unit' => null,
         ];
     }
 
@@ -212,5 +216,35 @@ class MealPlan
         }
 
         return round($quantity, 2);
+    }
+
+    protected static function sanitizeUnit($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_array($value) || is_object($value) || is_bool($value)) {
+            return null;
+        }
+
+        if (!is_string($value) && !is_numeric($value)) {
+            return null;
+        }
+
+        $unit = trim((string) $value);
+
+        if ($unit === '') {
+            return null;
+        }
+
+        $lengthFunc = function_exists('mb_strlen') ? 'mb_strlen' : 'strlen';
+        $substrFunc = function_exists('mb_substr') ? 'mb_substr' : 'substr';
+
+        if ($lengthFunc($unit) > 50) {
+            $unit = $substrFunc($unit, 0, 50);
+        }
+
+        return $unit;
     }
 }
