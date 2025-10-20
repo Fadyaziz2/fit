@@ -34,8 +34,17 @@
 
             $menu->user->add('<span class="item-name">'.__('message.add_form_title',['form' => __('message.user')]).'</span>', ['route' => 'users.create'])
                 ->data('permission', [ 'user-add', 'user-edit'])
-                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')          
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
                 ->link->attr(['class' => activeRoute(route('users.create')) || request()->is('users/*/edit') ? 'nav-link active' : 'nav-link']);
+
+        $menu->add('<span class="item-name">'.__('message.sms_center').'</span>', ['route' => 'sms.index'])
+            ->data('role', 'admin')
+            ->prepend('<i class="icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M4 7L11.1056 11.7369C11.6609 12.106 12.3391 12.106 12.8944 11.7369L20 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg></i>')
+            ->link->attr(['class' => activeRoute(route('sms.index')) ? 'nav-link active' : 'nav-link']);
 
         $menu->add('<span class="item-name">'.__('message.sub_admin').'</span>', ['class' => ''])
             ->prepend('<i class="icon">
