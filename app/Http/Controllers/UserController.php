@@ -563,8 +563,8 @@ class UserController extends Controller
 
         $validator = Validator::make($request->all(), [
             'subscription_id' => ['required', 'integer'],
-            'freeze_start_date' => ['required', 'date_format:Y-m-d\TH:i'],
-            'freeze_end_date' => ['required', 'date_format:Y-m-d\TH:i', 'after:freeze_start_date'],
+            'freeze_start_date' => ['required', 'date_format:Y-m-d H:i'],
+            'freeze_end_date' => ['required', 'date_format:Y-m-d H:i', 'after:freeze_start_date'],
         ], [], [
             'freeze_start_date' => __('message.subscription_freeze_form_start'),
             'freeze_end_date' => __('message.subscription_freeze_form_end'),
