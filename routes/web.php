@@ -42,6 +42,7 @@ use App\Http\Controllers\ClinicSpecialistScheduleController;
 use App\Http\Controllers\ClinicFreeBookingRequestController;
 use App\Http\Controllers\ClinicAppointmentController;
 use App\Http\Controllers\SmsController;
+use App\Http\Controllers\EmailController;
 
 use App\Http\Controllers\PushNotificationController;
 
@@ -120,6 +121,8 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     Route::delete('users/{user}/attachments/{media}', [UserController::class, 'destroyAttachment'])->name('users.attachments.destroy');
     Route::get('sms', [SmsController::class, 'index'])->name('sms.index');
     Route::post('sms', [SmsController::class, 'send'])->name('sms.send');
+    Route::get('emails', [EmailController::class, 'index'])->name('emails.index');
+    Route::post('emails', [EmailController::class, 'send'])->name('emails.send');
     Route::resource('equipment', EquipmentController::class);
 
     Route::resource('subadmin', SubAdminController::class);
