@@ -1135,6 +1135,97 @@
         </div>
     </div>
     <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="header-title">
+                        <h4 class="card-title mb-0">{{ __('message.body_composition_history') }}</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @can('user-edit')
+                        <form method="POST" action="{{ route('users.body-compositions.store', $data->id) }}" class="row g-3 align-items-end">
+                            @csrf
+                            <div class="col-md-3">
+                                <label class="form-label" for="composition-date">{{ __('message.body_composition_date') }}</label>
+                                <input type="date" name="recorded_at" id="composition-date" class="form-control" value="{{ old('recorded_at', now()->format('Y-m-d')) }}">
+                                @error('recorded_at')
+                                    <div class="text-danger mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="composition-fat">{{ __('message.fat_weight') }}</label>
+                                <input type="number" step="0.01" min="0" name="fat_weight" id="composition-fat" class="form-control" inputmode="decimal" value="{{ old('fat_weight') }}" placeholder="0.00">
+                                @error('fat_weight')
+                                    <div class="text-danger mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="composition-water">{{ __('message.water_weight') }}</label>
+                                <input type="number" step="0.01" min="0" name="water_weight" id="composition-water" class="form-control" inputmode="decimal" value="{{ old('water_weight') }}" placeholder="0.00">
+                                @error('water_weight')
+                                    <div class="text-danger mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label" for="composition-muscle">{{ __('message.muscle_weight') }}</label>
+                                <input type="number" step="0.01" min="0" name="muscle_weight" id="composition-muscle" class="form-control" inputmode="decimal" value="{{ old('muscle_weight') }}" placeholder="0.00">
+                                @error('muscle_weight')
+                                    <div class="text-danger mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-1 text-md-end">
+                                <button type="submit" class="btn btn-primary w-100">{{ __('message.add_body_composition') }}</button>
+                            </div>
+                        </form>
+                        <hr class="my-4">
+                    @endcan
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('message.body_composition_date') }}</th>
+                                    <th>{{ __('message.fat_weight') }}</th>
+                                    <th>{{ __('message.water_weight') }}</th>
+                                    <th>{{ __('message.muscle_weight') }}</th>
+                                    @can('user-edit')
+                                        <th class="text-end">{{ __('message.action') }}</th>
+                                    @endcan
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($data->bodyCompositions as $composition)
+                                    <tr>
+                                        <td class="align-middle">
+                                            <div class="fw-semibold">{{ optional($composition->recorded_at)->format('Y-m-d') ?? '-' }}</div>
+                                            <small class="text-muted">{{ optional($composition->recorded_at)->translatedFormat('F j, Y') }}</small>
+                                        </td>
+                                        <td class="align-middle">{{ is_null($composition->fat_weight) ? '-' : number_format($composition->fat_weight, 2) }}</td>
+                                        <td class="align-middle">{{ is_null($composition->water_weight) ? '-' : number_format($composition->water_weight, 2) }}</td>
+                                        <td class="align-middle">{{ is_null($composition->muscle_weight) ? '-' : number_format($composition->muscle_weight, 2) }}</td>
+                                        @can('user-edit')
+                                            <td class="align-middle text-end">
+                                                <form method="POST" action="{{ route('users.body-compositions.destroy', [$data->id, $composition->id]) }}" onsubmit="return confirm('{{ __('message.delete_msg') }}');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">{{ __('message.delete') }}</button>
+                                                </form>
+                                            </td>
+                                        @endcan
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="{{ auth()->user()->can('user-edit') ? 5 : 4 }}" class="text-center text-muted py-4">{{ __('message.no_body_compositions') }}</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
         <div class="col-lg-12">
             {{ html()->form('POST', route('users.health.update', $data->id))->attribute('data-toggle', 'validator')->open() }}
                 <div class="row">

@@ -40,6 +40,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('delete-user-account', [ API\UserController::class, 'deleteUserAccount']);
     Route::get('logout',[ API\UserController::class, 'logout']);
     Route::post('user/health-profile',[ API\UserController::class, 'updateHealthProfile']);
+    Route::get('user/body-compositions', [API\UserBodyCompositionController::class, 'index']);
+    Route::post('user/body-compositions', [API\UserBodyCompositionController::class, 'store']);
     Route::post('user/attachments',[ API\UserController::class, 'uploadAttachments']);
     Route::delete('user/attachments/{media}',[ API\UserController::class, 'destroyAttachment']);
 

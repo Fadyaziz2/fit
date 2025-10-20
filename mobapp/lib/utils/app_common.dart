@@ -286,6 +286,7 @@ Future<void> getUSerDetail(BuildContext context, int? id) async {
     await userStore.setDislikedIngredients(value.data?.dislikedIngredients ?? []);
     await userStore.setHealthConditions(value.data?.healthConditions ?? []);
     await userStore.setAttachments(value.data?.attachments ?? []);
+    await userStore.setBodyCompositions(value.data?.bodyCompositions ?? []);
     userStore.setSubscribe(value.subscriptionDetail!.isSubscribe.validate());
     userStore.setSubscriptionDetail(value.subscriptionDetail!);
     print("user data->" + value.toJson().toString());

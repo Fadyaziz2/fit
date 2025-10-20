@@ -22,6 +22,7 @@ use App\Models\UserFavouriteWorkout;
 use App\Models\CartItem;
 use App\Models\SpecialistAppointment;
 use App\Models\FreeBookingRequest;
+use App\Models\UserBodyComposition;
 
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
@@ -109,6 +110,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return $this->hasMany(UserDisease::class);
     }
 
+    public function bodyCompositions()
+    {
+        return $this->hasMany(UserBodyComposition::class)->orderByDesc('recorded_at')->orderByDesc('id');
+    }
+
     public function userNotification(){
         return $this->hasMany(Notification::class, 'notifiable_id', 'id');
     }
@@ -170,6 +176,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
                     $row->cartItems()->delete();
                     $row->dislikedIngredients()->detach();
                     $row->userDiseases()->delete();
+                    $row->bodyCompositions()->delete();
                     $row->userNotification()->delete();
                     $row->chatgptFitBot()->delete();
                     $row->specialistAppointments()->delete();

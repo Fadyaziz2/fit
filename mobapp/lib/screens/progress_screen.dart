@@ -203,6 +203,7 @@ class ProgressScreenState extends State<ProgressScreen> {
       await userStore.setDislikedIngredients(response.data?.dislikedIngredients ?? []);
       await userStore.setHealthConditions(response.data?.healthConditions ?? []);
       await userStore.setAttachments(response.data?.attachments ?? []);
+      await userStore.setBodyCompositions(response.data?.bodyCompositions ?? []);
       await userStore.setHealthNotes(response.data?.userProfile?.notes.validate() ?? '');
     }).catchError((e) {
       toast(e.toString());

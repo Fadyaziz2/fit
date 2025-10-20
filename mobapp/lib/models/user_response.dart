@@ -5,6 +5,7 @@ import 'workout_detail_response.dart';
 import 'ingredient_model.dart';
 import 'health_condition_model.dart';
 import 'user_attachment.dart';
+import 'body_composition.dart';
 
 class UserResponse {
   Data? data;
@@ -58,6 +59,7 @@ class Data {
   List<IngredientModel>? dislikedIngredients;
   List<HealthConditionModel>? healthConditions;
   List<UserAttachment>? attachments;
+  List<BodyComposition>? bodyCompositions;
 
   Data(
       {this.id,
@@ -85,7 +87,8 @@ class Data {
         this.cartTotalAmount,
         this.dislikedIngredients,
         this.healthConditions,
-        this.attachments});
+        this.attachments,
+        this.bodyCompositions});
 
   Data.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -153,6 +156,12 @@ class Data {
         attachments!.add(UserAttachment.fromJson(v));
       });
     }
+    if (json['body_compositions'] != null) {
+      bodyCompositions = <BodyComposition>[];
+      json['body_compositions'].forEach((v) {
+        bodyCompositions!.add(BodyComposition.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -203,6 +212,10 @@ class Data {
     }
     if (this.attachments != null) {
       data['attachments'] = this.attachments!.map((v) => v.toJson()).toList();
+    }
+    if (this.bodyCompositions != null) {
+      data['body_compositions'] =
+          this.bodyCompositions!.map((v) => v.toJson()).toList();
     }
     return data;
   }

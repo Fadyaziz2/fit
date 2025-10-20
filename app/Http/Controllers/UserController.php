@@ -17,6 +17,7 @@ use App\DataTables\SubscriptionDataTable;
 use App\Models\UserGraph;
 use Carbon\Carbon;
 use App\Models\Ingredient;
+use App\Models\UserBodyComposition;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
@@ -118,6 +119,7 @@ class UserController extends Controller
             'userFavouriteProducts.product.media',
             'cartItems.product.media',
             'cartItems.product.productcategory',
+            'bodyCompositions',
         ])->findOrFail($id);
         $data->load('media');
 
@@ -289,6 +291,55 @@ class UserController extends Controller
         $media->delete();
 
         return redirect()->back()->withSuccess(__('message.delete_form', ['form' => __('message.attachments')]));
+    }
+
+    public function storeBodyComposition(Request $request, User $user)
+    {
+        if (! auth()->user()->can('user-edit')) {
+            $message = __('message.permission_denied_for_account');
+
+            return redirect()->back()->withErrors($message);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'recorded_at' => ['required', 'date'],
+            'fat_weight' => ['nullable', 'numeric', 'min:0'],
+            'water_weight' => ['nullable', 'numeric', 'min:0'],
+            'muscle_weight' => ['nullable', 'numeric', 'min:0'],
+        ], [], [
+            'recorded_at' => __('message.body_composition_date'),
+            'fat_weight' => __('message.fat_weight'),
+            'water_weight' => __('message.water_weight'),
+            'muscle_weight' => __('message.muscle_weight'),
+        ]);
+
+        $validated = $validator->validate();
+
+        $user->bodyCompositions()->updateOrCreate(
+            ['recorded_at' => $validated['recorded_at']],
+            [
+                'fat_weight' => $validated['fat_weight'],
+                'water_weight' => $validated['water_weight'],
+                'muscle_weight' => $validated['muscle_weight'],
+            ]
+        );
+
+        return redirect()->back()->withSuccess(__('message.body_composition_saved'));
+    }
+
+    public function destroyBodyComposition(User $user, UserBodyComposition $composition)
+    {
+        if (! auth()->user()->can('user-edit')) {
+            $message = __('message.permission_denied_for_account');
+
+            return redirect()->back()->withErrors($message);
+        }
+
+        abort_if($composition->user_id !== $user->id, 404);
+
+        $composition->delete();
+
+        return redirect()->back()->withSuccess(__('message.delete_form', ['form' => __('message.body_composition_entry')]));
     }
 
     public function assignDietForm(Request $request)
