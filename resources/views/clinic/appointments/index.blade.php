@@ -101,13 +101,20 @@
                                                 <span class="badge bg-info text-dark">{{ $typeLabels[$appointment->type] ?? ucfirst($appointment->type) }}</span>
                                             </td>
                                             <td>
-                                                <span class="badge {{ $appointment->status === 'completed' ? 'bg-success' : ($appointment->status === 'cancelled' ? 'bg-danger' : 'bg-secondary') }}">
-                                                    {{ ucfirst($appointment->status) }}
+                                                @php
+                                                    $statusLabel = $statusLabels[$appointment->status] ?? ucfirst(str_replace('_', ' ', $appointment->status));
+                                                    $statusClass = $statusBadgeClasses[$appointment->status] ?? 'bg-secondary';
+                                                @endphp
+                                                <span class="badge {{ $statusClass }}">
+                                                    {{ $statusLabel }}
                                                 </span>
+                                                @if($appointment->status === 'other' && $appointment->admin_comment)
+                                                    <div class="small text-muted mt-1">{{ $appointment->admin_comment }}</div>
+                                                @endif
                                             </td>
                                             <td class="text-end">
                                                 <a href="{{ route('clinic.appointments.edit', $appointment) }}" class="btn btn-sm btn-outline-primary">{{ __('message.update') }}</a>
-                                                @if($appointment->type === 'manual_free' && $appointment->status !== 'completed')
+                                                @if($appointment->type === 'manual_free' && $appointment->status !== 'subscribed')
                                                     <button type="button"
                                                         class="btn btn-sm btn-outline-success mt-1 convert-manual-free"
                                                         data-bs-toggle="modal"

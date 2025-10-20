@@ -34,20 +34,22 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">{{ __('message.status') }}</label>
-                                    <select name="status" class="form-select" required>
-                                        <option value="pending" {{ old('status', $appointment->status) === 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="confirmed" {{ old('status', $appointment->status) === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-                                        <option value="completed" {{ old('status', $appointment->status) === 'completed' ? 'selected' : '' }}>Completed</option>
-                                        <option value="cancelled" {{ old('status', $appointment->status) === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                    <select name="status" class="form-select" id="appointment-status" required>
+                                        @foreach($statusOptions as $value => $label)
+                                            <option value="{{ $value }}" @selected(old('status', $appointment->status) === $value)>{{ $label }}</option>
+                                        @endforeach
                                     </select>
                                     @error('status')
                                         <small class="text-danger">{{ $message }}</small>
                                     @enderror
                                 </div>
                             </div>
-                            <div class="mb-3">
+                            @php
+                                $showStatusComment = old('status', $appointment->status) === 'other';
+                            @endphp
+                            <div class="mb-3 {{ $showStatusComment ? '' : 'd-none' }}" data-status-comment>
                                 <label class="form-label">{{ __('message.notes') }}</label>
-                                <textarea name="admin_comment" class="form-control" rows="3">{{ old('admin_comment', $appointment->admin_comment) }}</textarea>
+                                <textarea name="admin_comment" class="form-control" rows="3" placeholder="{{ __('message.appointment_status_other_placeholder') }}">{{ old('admin_comment', $appointment->admin_comment) }}</textarea>
                                 @error('admin_comment')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
@@ -62,3 +64,26 @@
         </form>
     </div>
 </x-app-layout>
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const statusSelect = document.getElementById('appointment-status');
+            const commentWrapper = document.querySelector('[data-status-comment]');
+            const commentField = commentWrapper ? commentWrapper.querySelector('textarea[name="admin_comment"]') : null;
+
+            if (!statusSelect || !commentWrapper || !commentField) {
+                return;
+            }
+
+            const toggleComment = () => {
+                const isOther = statusSelect.value === 'other';
+                commentWrapper.classList.toggle('d-none', !isOther);
+                commentField.toggleAttribute('required', isOther);
+            };
+
+            toggleComment();
+            statusSelect.addEventListener('change', toggleComment);
+        });
+    </script>
+@endpush

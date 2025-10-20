@@ -101,11 +101,31 @@ class _AppointmentTile extends StatelessWidget {
       if (summary.specialistName != null) summary.specialistName!,
     ].join(' • ');
 
-    final statusColor = summary.status == 'completed'
-        ? Colors.green
-        : summary.status == 'cancelled'
-            ? Colors.red
-            : primaryColor;
+    final isArabic = appStore.selectedLanguageCode == 'ar';
+    final statusLabels = {
+      'confirmed': isArabic ? 'مثبت' : 'Confirmed',
+      'pending': isArabic ? 'لم يتم الرد' : 'No Response',
+      'rescheduled': isArabic ? 'تم التأجيل' : 'Rescheduled',
+      'cancelled': isArabic ? 'إلغاء' : 'Cancelled',
+      'wrong_number': isArabic ? 'رقم خاطئ' : 'Wrong Number',
+      'not_subscribed': isArabic ? 'لم يشترك' : 'Not Subscribed',
+      'subscribed': isArabic ? 'اشترك' : 'Subscribed',
+      'other': isArabic ? 'أخرى' : 'Other',
+    };
+
+    final statusColors = {
+      'confirmed': Colors.green,
+      'pending': Colors.orange,
+      'rescheduled': Colors.blue,
+      'cancelled': Colors.red,
+      'wrong_number': Colors.grey,
+      'not_subscribed': Colors.grey,
+      'subscribed': primaryColor,
+      'other': Colors.teal,
+    };
+
+    final statusColor = statusColors[summary.status] ?? primaryColor;
+    final statusLabel = statusLabels[summary.status] ?? summary.status;
 
     return Container(
       decoration: BoxDecoration(
@@ -129,7 +149,7 @@ class _AppointmentTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  summary.status,
+                  statusLabel,
                   style: primaryTextStyle(color: statusColor, size: 12),
                 ),
               ),

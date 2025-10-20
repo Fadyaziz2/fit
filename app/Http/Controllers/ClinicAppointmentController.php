@@ -113,8 +113,10 @@ class ClinicAppointmentController extends Controller
             ->orderBy('name')
             ->get();
         $packages = Package::where('status', 'active')->orderBy('name')->get();
+        $statusLabels = SpecialistAppointment::statusLabels();
+        $statusBadgeClasses = SpecialistAppointment::statusBadgeClasses();
 
-        return view('clinic.appointments.index', compact('pageTitle', 'appointments', 'users', 'branches', 'specialists', 'packages'));
+        return view('clinic.appointments.index', compact('pageTitle', 'appointments', 'users', 'branches', 'specialists', 'packages', 'statusLabels', 'statusBadgeClasses'));
     }
 
     public function edit(SpecialistAppointment $appointment)
@@ -122,8 +124,9 @@ class ClinicAppointmentController extends Controller
         $this->authorizeAccess();
 
         $pageTitle = __('message.update_form_title', ['form' => __('message.appointment')]);
+        $statusOptions = SpecialistAppointment::statusLabels();
 
-        return view('clinic.appointments.form', compact('pageTitle', 'appointment'));
+        return view('clinic.appointments.form', compact('pageTitle', 'appointment', 'statusOptions'));
     }
 
     public function update(Request $request, SpecialistAppointment $appointment)
@@ -131,8 +134,8 @@ class ClinicAppointmentController extends Controller
         $this->authorizeAccess();
 
         $data = $request->validate([
-            'status' => 'required|in:pending,confirmed,completed,cancelled',
-            'admin_comment' => 'nullable|string',
+            'status' => 'required|' . SpecialistAppointment::statusValidationRule(),
+            'admin_comment' => ['nullable', 'string', 'required_if:status,other'],
         ]);
 
         $appointment->update($data);
@@ -205,7 +208,7 @@ class ClinicAppointmentController extends Controller
                 $isBooked = SpecialistAppointment::where('specialist_id', $specialist->id)
                     ->where('appointment_date', $date->toDateString())
                     ->where('appointment_time', $slotTime)
-                    ->whereIn('status', ['pending', 'confirmed', 'completed'])
+                    ->whereIn('status', SpecialistAppointment::BLOCKING_STATUSES)
                     ->exists();
 
                 $available = ! $isBooked;
@@ -288,7 +291,7 @@ class ClinicAppointmentController extends Controller
         $alreadyBooked = SpecialistAppointment::where('specialist_id', $specialist->id)
             ->where('appointment_date', $date->toDateString())
             ->where('appointment_time', $timeString)
-            ->whereIn('status', ['pending', 'confirmed', 'completed'])
+            ->whereIn('status', SpecialistAppointment::BLOCKING_STATUSES)
             ->exists();
 
         if ($alreadyBooked) {
@@ -424,7 +427,7 @@ class ClinicAppointmentController extends Controller
             $user->update(['is_subscribe' => 1]);
 
             $appointment->update([
-                'status' => 'completed',
+                'status' => 'subscribed',
                 'notes' => __('message.manual_free_converted_notes', ['subscription' => $subscription->id]),
             ]);
         });
