@@ -1382,6 +1382,110 @@
     </div>
     <div class="row">
         <div class="col-lg-12">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                    <div class="header-title">
+                        <h4 class="card-title mb-0">{{ __('message.subscription_freeze_title') }}</h4>
+                        <p class="mb-0 text-muted small">{{ __('message.subscription_freeze_description') }}</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if($activeSubscription)
+                        @php
+                            $subscriptionStart = $activeSubscription->subscription_start_date
+                                ? \Carbon\Carbon::parse($activeSubscription->subscription_start_date)->format('Y-m-d H:i')
+                                : null;
+                            $subscriptionEnd = $activeSubscription->subscription_end_date
+                                ? \Carbon\Carbon::parse($activeSubscription->subscription_end_date)->format('Y-m-d H:i')
+                                : null;
+                            $activeFreezeStart = $activeFreeze?->freeze_start_date?->format('Y-m-d H:i');
+                            $activeFreezeEnd = $activeFreeze?->freeze_end_date?->format('Y-m-d H:i');
+                            $nextFreeze = $upcomingFreezes->first();
+                            $nextFreezeStart = $nextFreeze?->freeze_start_date?->format('Y-m-d H:i');
+                            $nextFreezeEnd = $nextFreeze?->freeze_end_date?->format('Y-m-d H:i');
+                        @endphp
+                        <div class="row g-4 mb-4">
+                            <div class="col-lg-4">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="text-muted small mb-2">{{ __('message.subscription') }}</div>
+                                    <h6 class="mb-2">{{ optional($activeSubscription->package)->title ?? __('message.subscription') }}</h6>
+                                    <ul class="list-unstyled mb-3 small text-muted">
+                                        <li class="mb-1">{{ __('message.subscription_start_date') }}: <span class="text-dark">{{ $subscriptionStart ?? '-' }}</span></li>
+                                        <li class="mb-1">{{ __('message.subscription_end_date') }}: <span class="text-dark">{{ $subscriptionEnd ?? '-' }}</span></li>
+                                    </ul>
+                                    <span class="badge bg-primary text-capitalize">{{ $activeSubscription->status }}</span>
+                                </div>
+                            </div>
+                            <div class="col-lg-8">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="text-muted small mb-2">{{ __('message.subscription_freeze_current') }}</div>
+                                    @if($activeFreeze)
+                                        <div class="d-flex flex-column gap-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge bg-warning text-dark">{{ __('message.active') }}</span>
+                                                <span class="fw-semibold">{{ __('message.subscription_freeze_active_label', ['end' => $activeFreezeEnd ?? '-']) }}</span>
+                                            </div>
+                                            <p class="mb-0 small text-muted">{{ $activeFreezeStart ?? '-' }} → {{ $activeFreezeEnd ?? '-' }}</p>
+                                        </div>
+                                    @elseif($upcomingFreezes->isNotEmpty())
+                                        <div class="d-flex flex-column gap-2">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge bg-info text-dark">{{ __('message.subscription_freeze_upcoming') }}</span>
+                                                <span class="fw-semibold">{{ __('message.subscription_freeze_upcoming_label', ['start' => $nextFreezeStart ?? '-', 'end' => $nextFreezeEnd ?? '-']) }}</span>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <p class="mb-0 text-muted">{{ __('message.subscription_freeze_none') }}</p>
+                                    @endif
+                                    @if($upcomingFreezes->count() > 0)
+                                        <div class="mt-3">
+                                            <h6 class="text-muted small fw-semibold mb-2">{{ __('message.subscription_freeze_upcoming') }}</h6>
+                                            <ul class="list-group list-group-flush">
+                                                @foreach($upcomingFreezes as $freeze)
+                                                    @php
+                                                        $freezeStart = optional($freeze->freeze_start_date)->format('Y-m-d H:i');
+                                                        $freezeEnd = optional($freeze->freeze_end_date)->format('Y-m-d H:i');
+                                                    @endphp
+                                                    <li class="list-group-item px-0 border-0 d-flex flex-column flex-lg-row justify-content-between align-items-lg-center">
+                                                        <span class="fw-semibold">{{ __('message.subscription_freeze_scheduled_label', ['start' => $freezeStart ?? '-', 'end' => $freezeEnd ?? '-']) }}</span>
+                                                        <span class="text-muted small">{{ $freezeStart ?? '-' }} → {{ $freezeEnd ?? '-' }}</span>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        @if($canFreezeSubscription)
+                            <form method="POST" action="{{ route('users.freeze-subscription', $data->id) }}" class="row g-3 align-items-end">
+                                @csrf
+                                <input type="hidden" name="subscription_id" value="{{ $activeSubscription->id }}">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="freeze-start-date">{{ __('message.subscription_freeze_form_start') }}</label>
+                                    <input type="text" class="form-control datetimepicker" id="freeze-start-date" name="freeze_start_date" placeholder="{{ __('message.subscription_freeze_form_start') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="freeze-end-date">{{ __('message.subscription_freeze_form_end') }}</label>
+                                    <input type="text" class="form-control datetimepicker" id="freeze-end-date" name="freeze_end_date" placeholder="{{ __('message.subscription_freeze_form_end') }}">
+                                </div>
+                                <div class="col-12">
+                                    <p class="text-muted small mb-3">{{ __('message.subscription_freeze_form_help') }}</p>
+                                    <button type="submit" class="btn btn-primary" data-form="ajax">{{ __('message.subscription_freeze_submit') }}</button>
+                                </div>
+                            </form>
+                        @else
+                            <div class="alert alert-warning mb-0">{{ __('message.subscription_freeze_unavailable') }}</div>
+                        @endif
+                    @else
+                        <div class="alert alert-secondary mb-0">{{ __('message.subscription_freeze_no_subscription') }}</div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
             <div class="card card-block">
                 <div class="card-header d-flex justify-content-between">
                     <div class="header-title">
