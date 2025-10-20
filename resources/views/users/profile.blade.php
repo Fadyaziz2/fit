@@ -1527,8 +1527,89 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="chart">
+                @can('user-edit')
+                    @php
+                        $selectedWeightUnit = old('weight_unit', optional($data->userProfile)->weight_unit ?? 'kg');
+                    @endphp
+                    <form method="POST" action="{{ route('users.weights.store', $data->id) }}" class="row g-3 align-items-end mb-4">
+                        @csrf
+                        <div class="col-md-4">
+                            <label class="form-label" for="weight-date">{{ __('message.weight_entry_date') }}</label>
+                            <input type="date" name="weight_date" id="weight-date" class="form-control" value="{{ old('weight_date', now()->format('Y-m-d')) }}">
+                            @error('weight_date')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="weight-value">{{ __('message.weight_value') }}</label>
+                            <input type="number" step="0.01" min="0" name="weight_value" id="weight-value" class="form-control" inputmode="decimal" value="{{ old('weight_value') }}" placeholder="0.00">
+                            @error('weight_value')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="weight-unit">{{ __('message.weight_unit') }}</label>
+                            <select name="weight_unit" id="weight-unit" class="form-select">
+                                <option value="kg" {{ $selectedWeightUnit === 'kg' ? 'selected' : '' }}>{{ __('message.weight_unit_kg') }}</option>
+                                <option value="lbs" {{ $selectedWeightUnit === 'lbs' ? 'selected' : '' }}>{{ __('message.weight_unit_lbs') }}</option>
+                            </select>
+                            @error('weight_unit')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-1 text-md-end">
+                            <button type="submit" class="btn btn-primary w-100">{{ __('message.add_weight_entry') }}</button>
+                        </div>
+                    </form>
+                @endcan
+                <div class="chart mb-4">
                     <div id="apex-line-area-weight"></div>
+                </div>
+                <h5 class="mb-3">{{ __('message.weight_history') }}</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>{{ __('message.date') }}</th>
+                                <th>{{ __('message.weight_value') }}</th>
+                                <th>{{ __('message.weight_unit') }}</th>
+                                @can('user-edit')
+                                    <th class="text-end">{{ __('message.action') }}</th>
+                                @endcan
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($weightEntries as $entry)
+                                @php
+                                    $entryDate = $entry->date ? \Illuminate\Support\Carbon::parse($entry->date) : null;
+                                    $formattedValue = is_numeric($entry->value) ? number_format((float) $entry->value, 2) : $entry->value;
+                                @endphp
+                                <tr>
+                                    <td class="align-middle">
+                                        <div class="fw-semibold">{{ $entryDate ? $entryDate->format('Y-m-d') : '-' }}</div>
+                                        @if($entryDate)
+                                            <small class="text-muted">{{ $entryDate->translatedFormat('F j, Y') }}</small>
+                                        @endif
+                                    </td>
+                                    <td class="align-middle">{{ $formattedValue }}</td>
+                                    <td class="align-middle">{{ $entry->unit ? strtoupper($entry->unit) : '-' }}</td>
+                                    @can('user-edit')
+                                        <td class="align-middle text-end">
+                                            <form method="POST" action="{{ route('users.weights.destroy', [$data->id, $entry->id]) }}" onsubmit="return confirm('{{ __('message.delete_msg') }}');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">{{ __('message.delete') }}</button>
+                                            </form>
+                                        </td>
+                                    @endcan
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="{{ auth()->user()->can('user-edit') ? 4 : 3 }}" class="text-center text-muted py-4">{{ __('message.no_weight_entries') }}</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
          </div>

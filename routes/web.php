@@ -121,6 +121,8 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     Route::delete('users/{user}/attachments/{media}', [UserController::class, 'destroyAttachment'])->name('users.attachments.destroy');
     Route::post('users/{user}/body-compositions', [UserController::class, 'storeBodyComposition'])->name('users.body-compositions.store');
     Route::delete('users/{user}/body-compositions/{composition}', [UserController::class, 'destroyBodyComposition'])->name('users.body-compositions.destroy');
+    Route::post('users/{user}/weights', [UserController::class, 'storeWeightEntry'])->name('users.weights.store');
+    Route::delete('users/{user}/weights/{weightEntry}', [UserController::class, 'destroyWeightEntry'])->name('users.weights.destroy');
     Route::post('users/{user}/freeze-subscription', [UserController::class, 'freezeSubscription'])->name('users.freeze-subscription');
     Route::get('sms', [SmsController::class, 'index'])->name('sms.index');
     Route::post('sms', [SmsController::class, 'send'])->name('sms.send');
