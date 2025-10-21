@@ -9,14 +9,14 @@ use Illuminate\Support\Facades\Mail;
 
 class EmailController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:email-center-list')->only('index');
+        $this->middleware('permission:email-center-send')->only('send');
+    }
+
     public function index()
     {
-        if (! auth()->user()->hasRole('admin')) {
-            $message = __('message.permission_denied_for_account');
-
-            return redirect()->back()->withErrors($message);
-        }
-
         $pageTitle = __('message.email_center');
         $assets = ['select2'];
         $users = User::where('user_type', 'user')
@@ -31,12 +31,6 @@ class EmailController extends Controller
 
     public function send(Request $request)
     {
-        if (! auth()->user()->hasRole('admin')) {
-            $message = __('message.permission_denied_for_account');
-
-            return redirect()->back()->withErrors($message);
-        }
-
         $data = $request->validate([
             'target' => 'required|in:all,selected',
             'subject' => 'required|string|max:255',

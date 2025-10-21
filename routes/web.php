@@ -124,10 +124,10 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     Route::post('users/{user}/weights', [UserController::class, 'storeWeightEntry'])->name('users.weights.store');
     Route::delete('users/{user}/weights/{weightEntry}', [UserController::class, 'destroyWeightEntry'])->name('users.weights.destroy');
     Route::post('users/{user}/freeze-subscription', [UserController::class, 'freezeSubscription'])->name('users.freeze-subscription');
-    Route::get('sms', [SmsController::class, 'index'])->name('sms.index');
-    Route::post('sms', [SmsController::class, 'send'])->name('sms.send');
-    Route::get('emails', [EmailController::class, 'index'])->name('emails.index');
-    Route::post('emails', [EmailController::class, 'send'])->name('emails.send');
+    Route::get('sms', [SmsController::class, 'index'])->name('sms.index')->middleware('permission:sms-center-list');
+    Route::post('sms', [SmsController::class, 'send'])->name('sms.send')->middleware('permission:sms-center-send');
+    Route::get('emails', [EmailController::class, 'index'])->name('emails.index')->middleware('permission:email-center-list');
+    Route::post('emails', [EmailController::class, 'send'])->name('emails.send')->middleware('permission:email-center-send');
     Route::resource('equipment', EquipmentController::class);
 
     Route::resource('subadmin', SubAdminController::class);

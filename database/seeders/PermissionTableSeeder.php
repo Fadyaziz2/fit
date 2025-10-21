@@ -15,6 +15,20 @@ class PermissionTableSeeder extends Seeder
      */
     public function run()
     {
+        $guardName = config('auth.defaults.guard');
+
+        $createPermission = function (array $attributes) use ($guardName) {
+            $attributes['guard_name'] = $attributes['guard_name'] ?? $guardName;
+
+            return Permission::query()->updateOrCreate(
+                [
+                    'name' => $attributes['name'],
+                    'guard_name' => $attributes['guard_name'],
+                ],
+                $attributes
+            );
+        };
+
         $permissions = [
             [
                 'name' => 'role',
@@ -643,120 +657,124 @@ class PermissionTableSeeder extends Seeder
         ];
 
         foreach ($permissions as $value) {
-            Permission::create($value);
+            $createPermission($value);
         }
 
-        $ingredientPermission = Permission::create([
+        $ingredientPermission = $createPermission([
             'name' => 'ingredient',
             'title' => 'Ingredient',
+            'parent_id' => null,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'ingredient-list',
             'title' => 'Ingredient List',
             'parent_id' => $ingredientPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'ingredient-add',
             'title' => 'Ingredient Add',
             'parent_id' => $ingredientPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'ingredient-edit',
             'title' => 'Ingredient Edit',
             'parent_id' => $ingredientPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'ingredient-delete',
             'title' => 'Ingredient Delete',
             'parent_id' => $ingredientPermission->id,
         ]);
 
-        $bannerPermission = Permission::create([
+        $bannerPermission = $createPermission([
             'name' => 'banner',
             'title' => 'Banner',
+            'parent_id' => null,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'banner-list',
             'title' => 'Banner List',
             'parent_id' => $bannerPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'banner-add',
             'title' => 'Banner Add',
             'parent_id' => $bannerPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'banner-edit',
             'title' => 'Banner Edit',
             'parent_id' => $bannerPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'banner-delete',
             'title' => 'Banner Delete',
             'parent_id' => $bannerPermission->id,
         ]);
 
-        $exclusiveOfferPermission = Permission::create([
+        $exclusiveOfferPermission = $createPermission([
             'name' => 'exclusive-offer',
             'title' => 'Exclusive Offer',
+            'parent_id' => null,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'exclusive-offer-list',
             'title' => 'Exclusive Offer List',
             'parent_id' => $exclusiveOfferPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'exclusive-offer-add',
             'title' => 'Exclusive Offer Add',
             'parent_id' => $exclusiveOfferPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'exclusive-offer-edit',
             'title' => 'Exclusive Offer Edit',
             'parent_id' => $exclusiveOfferPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'exclusive-offer-delete',
             'title' => 'Exclusive Offer Delete',
             'parent_id' => $exclusiveOfferPermission->id,
         ]);
 
-        $discountCodePermission = Permission::create([
+        $discountCodePermission = $createPermission([
             'name' => 'discount-code',
             'title' => 'Discount Code',
+            'parent_id' => null,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'discount-code-list',
             'title' => 'Discount Code List',
             'parent_id' => $discountCodePermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'discount-code-add',
             'title' => 'Discount Code Add',
             'parent_id' => $discountCodePermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'discount-code-edit',
             'title' => 'Discount Code Edit',
             'parent_id' => $discountCodePermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'discount-code-delete',
             'title' => 'Discount Code Delete',
             'parent_id' => $discountCodePermission->id,
@@ -908,27 +926,28 @@ class PermissionTableSeeder extends Seeder
         $successStoryPermission = Permission::create([
             'name' => 'successstory',
             'title' => 'Success Story',
+            'parent_id' => null,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'successstory-list',
             'title' => 'Success Story List',
             'parent_id' => $successStoryPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'successstory-add',
             'title' => 'Success Story Add',
             'parent_id' => $successStoryPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'successstory-edit',
             'title' => 'Success Story Edit',
             'parent_id' => $successStoryPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'successstory-delete',
             'title' => 'Success Story Delete',
             'parent_id' => $successStoryPermission->id,

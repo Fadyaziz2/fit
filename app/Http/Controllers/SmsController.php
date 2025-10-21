@@ -10,16 +10,12 @@ class SmsController extends Controller
 {
     public function __construct(protected SmsService $smsService)
     {
+        $this->middleware('permission:sms-center-list')->only('index');
+        $this->middleware('permission:sms-center-send')->only('send');
     }
 
     public function index()
     {
-        if (! auth()->user()->hasRole('admin')) {
-            $message = __('message.permission_denied_for_account');
-
-            return redirect()->back()->withErrors($message);
-        }
-
         $pageTitle = __('message.sms_center');
         $assets = ['select2'];
         $users = User::where('user_type', 'user')
@@ -34,12 +30,6 @@ class SmsController extends Controller
 
     public function send(Request $request)
     {
-        if (! auth()->user()->hasRole('admin')) {
-            $message = __('message.permission_denied_for_account');
-
-            return redirect()->back()->withErrors($message);
-        }
-
         $data = $request->validate([
             'target' => 'required|in:all,selected',
             'message' => 'required|string|max:612',
