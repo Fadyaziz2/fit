@@ -15,6 +15,20 @@ class PermissionTableSeeder extends Seeder
      */
     public function run()
     {
+        $guardName = config('auth.defaults.guard');
+
+        $createPermission = function (array $attributes) use ($guardName) {
+            $attributes['guard_name'] = $attributes['guard_name'] ?? $guardName;
+
+            return Permission::query()->updateOrCreate(
+                [
+                    'name' => $attributes['name'],
+                    'guard_name' => $attributes['guard_name'],
+                ],
+                $attributes
+            );
+        };
+
         $permissions = [
             [
                 'name' => 'role',
@@ -643,149 +657,334 @@ class PermissionTableSeeder extends Seeder
         ];
 
         foreach ($permissions as $value) {
-            Permission::create($value);
+            $createPermission($value);
         }
 
-        $ingredientPermission = Permission::create([
+        $ingredientPermission = $createPermission([
             'name' => 'ingredient',
             'title' => 'Ingredient',
+            'parent_id' => null,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'ingredient-list',
             'title' => 'Ingredient List',
             'parent_id' => $ingredientPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'ingredient-add',
             'title' => 'Ingredient Add',
             'parent_id' => $ingredientPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'ingredient-edit',
             'title' => 'Ingredient Edit',
             'parent_id' => $ingredientPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'ingredient-delete',
             'title' => 'Ingredient Delete',
             'parent_id' => $ingredientPermission->id,
         ]);
 
-        $bannerPermission = Permission::create([
+        $bannerPermission = $createPermission([
             'name' => 'banner',
             'title' => 'Banner',
+            'parent_id' => null,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'banner-list',
             'title' => 'Banner List',
             'parent_id' => $bannerPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'banner-add',
             'title' => 'Banner Add',
             'parent_id' => $bannerPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'banner-edit',
             'title' => 'Banner Edit',
             'parent_id' => $bannerPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'banner-delete',
             'title' => 'Banner Delete',
             'parent_id' => $bannerPermission->id,
         ]);
 
-        $exclusiveOfferPermission = Permission::create([
+        $exclusiveOfferPermission = $createPermission([
             'name' => 'exclusive-offer',
             'title' => 'Exclusive Offer',
+            'parent_id' => null,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'exclusive-offer-list',
             'title' => 'Exclusive Offer List',
             'parent_id' => $exclusiveOfferPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'exclusive-offer-add',
             'title' => 'Exclusive Offer Add',
             'parent_id' => $exclusiveOfferPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'exclusive-offer-edit',
             'title' => 'Exclusive Offer Edit',
             'parent_id' => $exclusiveOfferPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'exclusive-offer-delete',
             'title' => 'Exclusive Offer Delete',
             'parent_id' => $exclusiveOfferPermission->id,
         ]);
 
-        $discountCodePermission = Permission::create([
+        $discountCodePermission = $createPermission([
             'name' => 'discount-code',
             'title' => 'Discount Code',
+            'parent_id' => null,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'discount-code-list',
             'title' => 'Discount Code List',
             'parent_id' => $discountCodePermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'discount-code-add',
             'title' => 'Discount Code Add',
             'parent_id' => $discountCodePermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'discount-code-edit',
             'title' => 'Discount Code Edit',
             'parent_id' => $discountCodePermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'discount-code-delete',
             'title' => 'Discount Code Delete',
             'parent_id' => $discountCodePermission->id,
         ]);
 
-        $successStoryPermission = Permission::create([
-            'name' => 'successstory',
-            'title' => 'Success Story',
+        $smsCenterPermission = $createPermission([
+            'name' => 'sms-center',
+            'title' => 'SMS Center',
+            'parent_id' => null,
         ]);
 
-        Permission::create([
+        $createPermission([
+            'name' => 'sms-center-list',
+            'title' => 'SMS Center List',
+            'parent_id' => $smsCenterPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'sms-center-send',
+            'title' => 'SMS Center Send',
+            'parent_id' => $smsCenterPermission->id,
+        ]);
+
+        $emailCenterPermission = $createPermission([
+            'name' => 'email-center',
+            'title' => 'Email Center',
+            'parent_id' => null,
+        ]);
+
+        $createPermission([
+            'name' => 'email-center-list',
+            'title' => 'Email Center List',
+            'parent_id' => $emailCenterPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'email-center-send',
+            'title' => 'Email Center Send',
+            'parent_id' => $emailCenterPermission->id,
+        ]);
+
+        $clinicManagementPermission = $createPermission([
+            'name' => 'clinic-management',
+            'title' => 'Clinic Management',
+            'parent_id' => null,
+        ]);
+
+        $clinicBranchPermission = $createPermission([
+            'name' => 'clinic-branch',
+            'title' => 'Clinic Branch',
+            'parent_id' => $clinicManagementPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-branch-list',
+            'title' => 'Clinic Branch List',
+            'parent_id' => $clinicBranchPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-branch-add',
+            'title' => 'Clinic Branch Add',
+            'parent_id' => $clinicBranchPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-branch-edit',
+            'title' => 'Clinic Branch Edit',
+            'parent_id' => $clinicBranchPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-branch-delete',
+            'title' => 'Clinic Branch Delete',
+            'parent_id' => $clinicBranchPermission->id,
+        ]);
+
+        $clinicSpecialistPermission = $createPermission([
+            'name' => 'clinic-specialist',
+            'title' => 'Clinic Specialist',
+            'parent_id' => $clinicManagementPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-specialist-list',
+            'title' => 'Clinic Specialist List',
+            'parent_id' => $clinicSpecialistPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-specialist-add',
+            'title' => 'Clinic Specialist Add',
+            'parent_id' => $clinicSpecialistPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-specialist-edit',
+            'title' => 'Clinic Specialist Edit',
+            'parent_id' => $clinicSpecialistPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-specialist-delete',
+            'title' => 'Clinic Specialist Delete',
+            'parent_id' => $clinicSpecialistPermission->id,
+        ]);
+
+        $clinicSchedulePermission = $createPermission([
+            'name' => 'clinic-specialist-schedule',
+            'title' => 'Clinic Specialist Schedule',
+            'parent_id' => $clinicManagementPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-specialist-schedule-list',
+            'title' => 'Clinic Specialist Schedule List',
+            'parent_id' => $clinicSchedulePermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-specialist-schedule-add',
+            'title' => 'Clinic Specialist Schedule Add',
+            'parent_id' => $clinicSchedulePermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-specialist-schedule-edit',
+            'title' => 'Clinic Specialist Schedule Edit',
+            'parent_id' => $clinicSchedulePermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-specialist-schedule-delete',
+            'title' => 'Clinic Specialist Schedule Delete',
+            'parent_id' => $clinicSchedulePermission->id,
+        ]);
+
+        $clinicFreeRequestPermission = $createPermission([
+            'name' => 'clinic-free-request',
+            'title' => 'Clinic Free Request',
+            'parent_id' => $clinicManagementPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-free-request-list',
+            'title' => 'Clinic Free Request List',
+            'parent_id' => $clinicFreeRequestPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-free-request-edit',
+            'title' => 'Clinic Free Request Edit',
+            'parent_id' => $clinicFreeRequestPermission->id,
+        ]);
+
+        $clinicAppointmentPermission = $createPermission([
+            'name' => 'clinic-appointment',
+            'title' => 'Clinic Appointment',
+            'parent_id' => $clinicManagementPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-appointment-list',
+            'title' => 'Clinic Appointment List',
+            'parent_id' => $clinicAppointmentPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-appointment-add',
+            'title' => 'Clinic Appointment Add',
+            'parent_id' => $clinicAppointmentPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-appointment-edit',
+            'title' => 'Clinic Appointment Edit',
+            'parent_id' => $clinicAppointmentPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'clinic-appointment-convert',
+            'title' => 'Clinic Appointment Convert',
+            'parent_id' => $clinicAppointmentPermission->id,
+        ]);
+
+        $successStoryPermission = $createPermission([
+            'name' => 'successstory',
+            'title' => 'Success Story',
+            'parent_id' => null,
+        ]);
+
+        $createPermission([
             'name' => 'successstory-list',
             'title' => 'Success Story List',
             'parent_id' => $successStoryPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'successstory-add',
             'title' => 'Success Story Add',
             'parent_id' => $successStoryPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'successstory-edit',
             'title' => 'Success Story Edit',
             'parent_id' => $successStoryPermission->id,
         ]);
 
-        Permission::create([
+        $createPermission([
             'name' => 'successstory-delete',
             'title' => 'Success Story Delete',
             'parent_id' => $successStoryPermission->id,
