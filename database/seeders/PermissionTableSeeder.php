@@ -780,187 +780,150 @@ class PermissionTableSeeder extends Seeder
             'parent_id' => $discountCodePermission->id,
         ]);
 
-        $smsCenterPermission = $createPermission([
-            'name' => 'sms-center',
-            'title' => 'SMS Center',
-            'parent_id' => null,
-        ]);
-
-        $createPermission([
-            'name' => 'sms-center-list',
-            'title' => 'SMS Center List',
-            'parent_id' => $smsCenterPermission->id,
-        ]);
-
-        $createPermission([
-            'name' => 'sms-center-send',
-            'title' => 'SMS Center Send',
-            'parent_id' => $smsCenterPermission->id,
-        ]);
-
-        $emailCenterPermission = $createPermission([
-            'name' => 'email-center',
-            'title' => 'Email Center',
-            'parent_id' => null,
-        ]);
-
-        $createPermission([
-            'name' => 'email-center-list',
-            'title' => 'Email Center List',
-            'parent_id' => $emailCenterPermission->id,
-        ]);
-
-        $createPermission([
-            'name' => 'email-center-send',
-            'title' => 'Email Center Send',
-            'parent_id' => $emailCenterPermission->id,
-        ]);
-
-        $clinicManagementPermission = $createPermission([
+        $clinicManagementPermission = Permission::create([
             'name' => 'clinic-management',
             'title' => 'Clinic Management',
-            'parent_id' => null,
         ]);
 
-        $clinicBranchPermission = $createPermission([
+        $clinicBranchPermission = Permission::create([
             'name' => 'clinic-branch',
             'title' => 'Clinic Branch',
             'parent_id' => $clinicManagementPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-branch-list',
             'title' => 'Clinic Branch List',
             'parent_id' => $clinicBranchPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-branch-add',
             'title' => 'Clinic Branch Add',
             'parent_id' => $clinicBranchPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-branch-edit',
             'title' => 'Clinic Branch Edit',
             'parent_id' => $clinicBranchPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-branch-delete',
             'title' => 'Clinic Branch Delete',
             'parent_id' => $clinicBranchPermission->id,
         ]);
 
-        $clinicSpecialistPermission = $createPermission([
+        $clinicSpecialistPermission = Permission::create([
             'name' => 'clinic-specialist',
             'title' => 'Clinic Specialist',
             'parent_id' => $clinicManagementPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-specialist-list',
             'title' => 'Clinic Specialist List',
             'parent_id' => $clinicSpecialistPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-specialist-add',
             'title' => 'Clinic Specialist Add',
             'parent_id' => $clinicSpecialistPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-specialist-edit',
             'title' => 'Clinic Specialist Edit',
             'parent_id' => $clinicSpecialistPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-specialist-delete',
             'title' => 'Clinic Specialist Delete',
             'parent_id' => $clinicSpecialistPermission->id,
         ]);
 
-        $clinicSchedulePermission = $createPermission([
+        $clinicSchedulePermission = Permission::create([
             'name' => 'clinic-specialist-schedule',
             'title' => 'Clinic Specialist Schedule',
             'parent_id' => $clinicManagementPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-specialist-schedule-list',
             'title' => 'Clinic Specialist Schedule List',
             'parent_id' => $clinicSchedulePermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-specialist-schedule-add',
             'title' => 'Clinic Specialist Schedule Add',
             'parent_id' => $clinicSchedulePermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-specialist-schedule-edit',
             'title' => 'Clinic Specialist Schedule Edit',
             'parent_id' => $clinicSchedulePermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-specialist-schedule-delete',
             'title' => 'Clinic Specialist Schedule Delete',
             'parent_id' => $clinicSchedulePermission->id,
         ]);
 
-        $clinicFreeRequestPermission = $createPermission([
+        $clinicFreeRequestPermission = Permission::create([
             'name' => 'clinic-free-request',
             'title' => 'Clinic Free Request',
             'parent_id' => $clinicManagementPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-free-request-list',
             'title' => 'Clinic Free Request List',
             'parent_id' => $clinicFreeRequestPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-free-request-edit',
             'title' => 'Clinic Free Request Edit',
             'parent_id' => $clinicFreeRequestPermission->id,
         ]);
 
-        $clinicAppointmentPermission = $createPermission([
+        $clinicAppointmentPermission = Permission::create([
             'name' => 'clinic-appointment',
             'title' => 'Clinic Appointment',
             'parent_id' => $clinicManagementPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-appointment-list',
             'title' => 'Clinic Appointment List',
             'parent_id' => $clinicAppointmentPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-appointment-add',
             'title' => 'Clinic Appointment Add',
             'parent_id' => $clinicAppointmentPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-appointment-edit',
             'title' => 'Clinic Appointment Edit',
             'parent_id' => $clinicAppointmentPermission->id,
         ]);
 
-        $createPermission([
+        Permission::create([
             'name' => 'clinic-appointment-convert',
             'title' => 'Clinic Appointment Convert',
             'parent_id' => $clinicAppointmentPermission->id,
         ]);
 
-        $successStoryPermission = $createPermission([
+        $successStoryPermission = Permission::create([
             'name' => 'successstory',
             'title' => 'Success Story',
             'parent_id' => null,

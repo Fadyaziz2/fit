@@ -21,6 +21,7 @@ use App\Models\Ingredient;
 use App\Models\UserBodyComposition;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use InvalidArgumentException;
 use App\Models\UserProductRecommendation;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -163,6 +164,12 @@ class UserController extends Controller
 
         $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
 
+        $weightEntries = $data->userGraph()
+            ->where('type', 'weight')
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->get();
+
         return $dataTable->with('user_id',$id)->render('users.profile', compact(
             'data',
             'profileImage',
@@ -176,7 +183,8 @@ class UserController extends Controller
             'activeSubscription',
             'activeFreeze',
             'upcomingFreezes',
-            'canFreezeSubscription'
+            'canFreezeSubscription',
+            'weightEntries'
         ));
     }
 
@@ -364,6 +372,56 @@ class UserController extends Controller
         $composition->delete();
 
         return redirect()->back()->withSuccess(__('message.delete_form', ['form' => __('message.body_composition_entry')]));
+    }
+
+    public function storeWeightEntry(Request $request, User $user)
+    {
+        if (! auth()->user()->can('user-edit')) {
+            $message = __('message.permission_denied_for_account');
+
+            return redirect()->back()->withErrors($message);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'weight_date' => ['required', 'date'],
+            'weight_value' => ['required', 'numeric', 'min:0'],
+            'weight_unit' => ['required', Rule::in(['kg', 'lbs'])],
+        ], [], [
+            'weight_date' => __('message.weight_entry_date'),
+            'weight_value' => __('message.weight_value'),
+            'weight_unit' => __('message.weight_unit'),
+        ]);
+
+        $validated = $validator->validate();
+
+        UserGraph::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'type' => 'weight',
+                'date' => $validated['weight_date'],
+            ],
+            [
+                'value' => $validated['weight_value'],
+                'unit' => $validated['weight_unit'],
+            ]
+        );
+
+        return redirect()->back()->withSuccess(__('message.weight_entry_saved'));
+    }
+
+    public function destroyWeightEntry(User $user, UserGraph $weightEntry)
+    {
+        if (! auth()->user()->can('user-edit')) {
+            $message = __('message.permission_denied_for_account');
+
+            return redirect()->back()->withErrors($message);
+        }
+
+        abort_if($weightEntry->user_id !== $user->id || $weightEntry->type !== 'weight', 404);
+
+        $weightEntry->delete();
+
+        return redirect()->back()->withSuccess(__('message.delete_form', ['form' => __('message.weight_entry')]));
     }
 
     public function assignDietForm(Request $request)
