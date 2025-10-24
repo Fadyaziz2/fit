@@ -7,6 +7,7 @@
             title: @json(__('message.title')),
             mealTimes: @json(__('message.meal_times')),
             ingredients: @json(__('message.ingredients')),
+            dayColumn: @json(__('message.day')),
             dayLabel: @json(__('message.day_number_label')),
             mealLabel: @json(__('message.meal_number_label')),
             quantityLabel: @json(__('message.quantity')),
@@ -59,6 +60,8 @@
             const dayTemplate = dietPrintStrings.dayLabel || '';
             const mealTemplate = dietPrintStrings.mealLabel || '';
             const quantityLabel = dietPrintStrings.quantityLabel || '';
+            const dayHeading = dietPrintStrings.dayColumn || '';
+            const emptyMealHtml = `<span class="print-empty-value">${escapeHtml(dietPrintStrings.noMeals)}</span>`;
 
             const buildLabel = (template, number) => {
                 const numberValue = number !== undefined && number !== null && number !== '' ? String(number) : '';
@@ -74,16 +77,57 @@
                 return `${template} ${numberValue}`.trim();
             };
 
-            const daysHtml = planDetails.map((day) => {
-                const dayMeals = day && Array.isArray(day.meals) ? day.meals : [];
-                const dayNumber = day && Object.prototype.hasOwnProperty.call(day, 'day_number') ? day.day_number : '';
-                const dayLabel = buildLabel(dayTemplate, dayNumber);
+            const normalizedDays = planDetails.map((day) => {
+                const meals = day && Array.isArray(day.meals) ? day.meals.slice() : [];
 
-                const mealsHtml = dayMeals.map((meal) => {
-                    const mealNumber = meal && Object.prototype.hasOwnProperty.call(meal, 'meal_number') ? meal.meal_number : '';
-                    const mealLabel = buildLabel(mealTemplate, mealNumber);
+                meals.sort((first, second) => {
+                    const firstNumber = first && Object.prototype.hasOwnProperty.call(first, 'meal_number') ? Number(first.meal_number) : NaN;
+                    const secondNumber = second && Object.prototype.hasOwnProperty.call(second, 'meal_number') ? Number(second.meal_number) : NaN;
+
+                    if (!Number.isNaN(firstNumber) && !Number.isNaN(secondNumber)) {
+                        return firstNumber - secondNumber;
+                    }
+
+                    return 0;
+                });
+
+                return {
+                    label: buildLabel(dayTemplate, day && Object.prototype.hasOwnProperty.call(day, 'day_number') ? day.day_number : ''),
+                    meals,
+                };
+            });
+
+            const columnCount = normalizedDays.reduce((max, day) => Math.max(max, day.meals.length), 0);
+
+            if (columnCount === 0) {
+                return `<span class="print-empty-value">${escapeHtml(dietPrintStrings.noMeals)}</span>`;
+            }
+
+            const columnHeaders = Array.from({ length: columnCount }, (_, index) => {
+                const fallbackNumber = index + 1;
+
+                const matchingMeal = normalizedDays.map((day) => day.meals[index])
+                    .find((meal) => meal && Object.prototype.hasOwnProperty.call(meal, 'meal_number') && meal.meal_number !== '');
+
+                const mealNumber = matchingMeal && matchingMeal.meal_number !== undefined
+                    ? matchingMeal.meal_number
+                    : fallbackNumber;
+
+                return buildLabel(mealTemplate, mealNumber);
+            });
+
+            const rowsHtml = normalizedDays.map((day) => {
+                const mealCells = Array.from({ length: columnCount }, (_, index) => {
+                    const meal = day.meals[index];
+
+                    if (!meal) {
+                        return `<td class="print-plan-meal-cell">${emptyMealHtml}</td>`;
+                    }
+
                     const mealTimeValue = meal && meal.time ? String(meal.time) : '';
-                    const mealTime = mealTimeValue ? `<span class="print-meal-time">(${escapeHtml(mealTimeValue)})</span>` : '';
+                    const mealTime = mealTimeValue
+                        ? `<div class="print-plan-meal-time">${escapeHtml(mealTimeValue)}</div>`
+                        : '';
                     const mealIngredients = meal && Array.isArray(meal.ingredients) ? meal.ingredients : [];
 
                     const ingredientsHtml = mealIngredients.length
@@ -99,24 +143,40 @@
                         : `<span class="print-empty-value">${escapeHtml(dietPrintStrings.noIngredients)}</span>`;
 
                     return `
-                        <div class="print-meal">
-                            <div class="print-meal-header">${escapeHtml(mealLabel)}${mealTime}</div>
-                            ${ingredientsHtml}
-                        </div>
+                        <td class="print-plan-meal-cell">
+                            <div class="print-plan-meal-content">
+                                ${mealTime}
+                                ${ingredientsHtml}
+                            </div>
+                        </td>
                     `;
                 }).join('');
 
-                const mealsContent = mealsHtml || `<span class="print-empty-value">${escapeHtml(dietPrintStrings.noIngredients)}</span>`;
-
                 return `
-                    <div class="print-day">
-                        <div class="print-day-header">${escapeHtml(dayLabel)}</div>
-                        ${mealsContent}
-                    </div>
+                    <tr>
+                        <th scope="row" class="print-plan-day-cell">${escapeHtml(day.label)}</th>
+                        ${mealCells}
+                    </tr>
                 `;
             }).join('');
 
-            return `<div class="print-plan">${daysHtml}</div>`;
+            const headerHtml = columnHeaders.map((label) => `<th class="print-plan-header-cell">${escapeHtml(label)}</th>`).join('');
+
+            return `
+                <div class="print-plan-wrapper">
+                    <table class="print-plan-table">
+                        <thead>
+                            <tr>
+                                <th class="print-plan-header-cell">${escapeHtml(dayHeading || dietPrintStrings.dayLabel || '')}</th>
+                                ${headerHtml}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
 
         function buildDietPrintRows() {
@@ -328,53 +388,62 @@
                                 border-radius: 8px;
                             }
 
-                            .print-plan {
-                                display: flex;
-                                flex-direction: column;
-                                gap: 16px;
+                            .print-plan-wrapper {
+                                margin-top: 8px;
+                                overflow-x: auto;
                             }
 
-                            .print-day {
-                                display: flex;
-                                flex-direction: column;
-                                gap: 12px;
-                                padding: 12px;
-                                border-radius: 10px;
-                                background-color: rgba(254, 215, 170, 0.35);
-                                border: 1px solid rgba(251, 146, 60, 0.25);
+                            .print-plan-table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                min-width: 400px;
                             }
 
-                            .print-day-header {
+                            .print-plan-table thead th {
+                                background-color: rgba(249, 115, 22, 0.12);
+                                color: #b45309;
                                 font-weight: 600;
-                                font-size: 15px;
-                                color: #c2410c;
-                                margin-bottom: 4px;
+                                font-size: 14px;
+                                text-align: center;
                             }
 
-                            .print-meal {
+                            .print-plan-table th,
+                            .print-plan-table td {
+                                border: 1px solid rgba(251, 146, 60, 0.25);
+                                padding: 12px;
+                                vertical-align: top;
+                            }
+
+                            .print-plan-header-cell:first-child {
+                                text-align: left;
+                            }
+
+                            .print-plan-day-cell {
+                                background-color: rgba(254, 215, 170, 0.35);
+                                color: #c2410c;
+                                font-weight: 600;
+                                min-width: 140px;
+                            }
+
+                            .print-plan-meal-cell {
+                                min-width: 180px;
+                            }
+
+                            .print-plan-meal-content {
                                 display: flex;
                                 flex-direction: column;
                                 gap: 8px;
-                                background-color: rgba(255, 255, 255, 0.85);
+                                background-color: rgba(255, 255, 255, 0.92);
                                 border-radius: 8px;
                                 padding: 10px 12px;
                                 box-shadow: inset 0 0 0 1px rgba(251, 146, 60, 0.15);
                             }
 
-                            .print-meal-header {
+                            .print-plan-meal-time {
                                 font-weight: 600;
-                                font-size: 14px;
-                                display: flex;
-                                justify-content: space-between;
-                                align-items: center;
                                 color: #b45309;
-                            }
-
-                            .print-meal-time {
-                                font-weight: 500;
-                                color: #92400e;
                                 font-size: 13px;
-                                margin-left: 8px;
+                                display: block;
                             }
 
                             .print-ingredients {
