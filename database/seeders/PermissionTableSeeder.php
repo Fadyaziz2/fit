@@ -660,6 +660,42 @@ class PermissionTableSeeder extends Seeder
             $createPermission($value);
         }
 
+        $smsCenterPermission = $createPermission([
+            'name' => 'sms-center',
+            'title' => 'Sms Center',
+            'parent_id' => null,
+        ]);
+
+        $createPermission([
+            'name' => 'sms-center-list',
+            'title' => 'Sms Center List',
+            'parent_id' => $smsCenterPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'sms-center-send',
+            'title' => 'Sms Center Send',
+            'parent_id' => $smsCenterPermission->id,
+        ]);
+
+        $emailCenterPermission = $createPermission([
+            'name' => 'email-center',
+            'title' => 'Email Center',
+            'parent_id' => null,
+        ]);
+
+        $createPermission([
+            'name' => 'email-center-list',
+            'title' => 'Email Center List',
+            'parent_id' => $emailCenterPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'email-center-send',
+            'title' => 'Email Center Send',
+            'parent_id' => $emailCenterPermission->id,
+        ]);
+
         $ingredientPermission = $createPermission([
             'name' => 'ingredient',
             'title' => 'Ingredient',
