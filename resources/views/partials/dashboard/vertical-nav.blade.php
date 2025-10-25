@@ -55,6 +55,28 @@
                 </svg></i>')
             ->link->attr(['class' => activeRoute(route('emails.index')) ? 'nav-link active' : 'nav-link']);
 
+        $menu->add('<span class="item-name">'.__('message.chat_center').'</span>', ['class' => ''])
+            ->prepend('<i class="icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.5 5.5C3.11929 5.5 2 6.61929 2 8V14C2 15.3807 3.11929 16.5 4.5 16.5H6V20L10.2 16.5H19.5C20.8807 16.5 22 15.3807 22 14V8C22 6.61929 20.8807 5.5 19.5 5.5H4.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M7 10H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M7 13H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg></i>')
+            ->nickname('chat_center')
+            ->data('permission', ['chat-center-list', 'chat-center-reply'])
+            ->link->attr(['class' => 'nav-link' ])
+            ->href('#chat_center');
+
+            $menu->chat_center->add('<span class="item-name">'.__('message.chat_thread_list').'</span>', ['route' => 'chat.index'])
+                ->data('permission', 'chat-center-list')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('chat.index')) ? 'nav-link active' : 'nav-link']);
+
+            $menu->chat_center->add('<span class="item-name">'.__('message.chat_thread_reply').'</span>', ['route' => ['chat.index', 'view' => 'reply']])
+                ->data('permission', 'chat-center-reply')
+                ->prepend('<i class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="10" viewBox="0 0 24 24" fill="currentColor"><g><circle cx="12" cy="12" r="8" fill="currentColor"></circle></g></svg></i>')
+                ->link->attr(['class' => activeRoute(route('chat.index', ['view' => 'reply'])) ? 'nav-link active' : 'nav-link']);
+
         $menu->add('<span class="item-name">'.__('message.sub_admin').'</span>', ['class' => ''])
             ->prepend('<i class="icon">
                 <svg class="icon-24" width="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
