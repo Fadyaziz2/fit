@@ -122,9 +122,14 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::get('user-profile-detail',[ API\UserController::class, 'userProfileDetail']); 
 
-    Route::get('chatgpt-fit-bot-list',[ API\ChatgptFitBotController::class, 'getList']); 
-    Route::post('chatgpt-fit-bot-save',[ API\ChatgptFitBotController::class, 'store']); 
-    Route::post('chatgpt-fit-bot-delete',[ API\ChatgptFitBotController::class, 'destroy']); 
+    Route::get('chatgpt-fit-bot-list',[ API\ChatgptFitBotController::class, 'getList']);
+    Route::post('chatgpt-fit-bot-save',[ API\ChatgptFitBotController::class, 'store']);
+    Route::post('chatgpt-fit-bot-delete',[ API\ChatgptFitBotController::class, 'destroy']);
+
+    Route::get('chat/threads', [API\ChatController::class, 'index']);
+    Route::get('chat/threads/{thread}', [API\ChatController::class, 'show']);
+    Route::post('chat/messages', [API\ChatController::class, 'sendToSelf']);
+    Route::post('chat/threads/{thread}/messages', [API\ChatController::class, 'sendToThread']);
 
     Route::get('class-schedule-list',[ API\ClassScheduleController::class, 'getList']); 
 

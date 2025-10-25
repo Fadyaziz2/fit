@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:ui';
 
-import 'package:crisp_chat/crisp_chat.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mighty_fitness/components/CircularButton.dart';
@@ -51,7 +50,6 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
   int mCurrentIndex = 0;
   int mCounter = 0;
-  late CrispConfig configData;
 
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -212,18 +210,6 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         }
       }
       getSettingData().whenComplete(() {
-        print("-----------211>>>${getStringAsync(CRISP_CHAT_WEB_SITE_ID)}");
-        print("-----------212>>>${getBoolAsync(CRISP_CHAT_ENABLED)}");
-
-        if (getStringAsync(CRISP_CHAT_WEB_SITE_ID) != null && getStringAsync(CRISP_CHAT_WEB_SITE_ID).isNotEmpty) {
-          User user = User(email: userStore.email, nickName: "${userStore.displayName}", avatar: userStore.profileImage ?? "");
-          configData = CrispConfig(
-            user: user,
-            tokenId: userStore.userId.toString(),
-            enableNotifications: true,
-            websiteID: getStringAsync(CRISP_CHAT_WEB_SITE_ID),
-          );
-        }
         if (app_update_check != null) {
           VersionService().getVersionData(context, app_update_check);
         }
@@ -330,7 +316,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       );
                     },
                   ),
-                  getBoolAsync(CRISP_CHAT_ENABLED)==true?AnimatedBuilder(
+                  getBoolAsync(PUSHER_ENABLED)==true?AnimatedBuilder(
                     animation: _animation,
                     builder: (context, child) {
                       return Transform.translate(
@@ -343,10 +329,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                             color: primaryColor,
                             onClick: _isExpanded
                                 ? () async {
-                                    configureCrispChat();
-                                    String? sessionId = await FlutterCrispChat.getSessionIdentifier();
                                     LiveChatScreen().launch(context);
-                                    await FlutterCrispChat.openCrispChat(config: configData);
                                     _toggleExpand();
                                   }
                                 : null,
@@ -447,23 +430,4 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
       ),
     );
   }
-}
-
-configureCrispChat() async {
-  FlutterCrispChat.setSessionString(
-    key: userStore.userId.toString(),
-    value: userStore.userId.toString(),
-  );
-
-  /// Checking session ID After 5 sec
-  await Future.delayed(const Duration(seconds: 5), () async {
-    String? sessionId = await FlutterCrispChat.getSessionIdentifier();
-    if (sessionId != null) {
-      if (kDebugMode) {
-        print("Session ID::: $sessionId");
-      }
-    } else {
-      if (kDebugMode) {}
-    }
-  });
 }

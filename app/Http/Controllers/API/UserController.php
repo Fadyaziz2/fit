@@ -431,8 +431,15 @@ class UserController extends Controller
             'is_crisp_chat_enabled' => SettingData('CRISP_CHAT_CONFIGURATION', 'CRISP_CHAT_CONFIGURATION_ENABLE/DISABLE') ? true : false,
         ];
 
+        $pusher = [
+            'enabled' => config('broadcasting.default') === 'pusher',
+            'key' => config('broadcasting.connections.pusher.key'),
+            'cluster' => config('broadcasting.connections.pusher.options.cluster'),
+        ];
+
         $data['app_version'] = $app_version;
         $data['crisp_chat'] = $crisp_chat;
+        $data['pusher'] = $pusher;
 
         return json_custom_response($data);
     }
