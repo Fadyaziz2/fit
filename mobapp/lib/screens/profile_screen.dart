@@ -1,3 +1,5 @@
+import 'dart:ui' as ui show TextDirection;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -251,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       activeFreeze?.freezeEndDate ?? upcomingFreeze?.freezeEndDate,
     );
 
-    final bool isRtl = Directionality.of(context) == TextDirection.rtl;
+    final bool isRtl = Directionality.of(context) == ui.TextDirection.rtl;
 
     return SettingItemWidget(
       padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
