@@ -16,6 +16,9 @@ import 'package:mighty_fitness/network/rest_api.dart';
 import 'package:mighty_fitness/utils/app_colors.dart';
 import 'package:mighty_fitness/utils/app_config.dart';
 import 'package:mighty_fitness/utils/app_constants.dart';
+import 'package:mighty_fitness/utils/app_common.dart';
+import 'package:mighty_fitness/extensions/widgets.dart';
+import 'package:mighty_fitness/extensions/constants.dart';
 import 'package:pusher_channels_flutter/pusher_channels_flutter.dart';
 
 class LiveChatScreen extends StatefulWidget {
@@ -179,7 +182,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> {
         elevation: 1,
       ),
       body: _isLoading
-          ? const Center(child: Loader())
+          ? Center(child: Loader())
           : Column(
               children: [
                 Expanded(child: _buildMessages()),
