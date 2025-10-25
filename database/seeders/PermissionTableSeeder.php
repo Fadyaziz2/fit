@@ -696,6 +696,24 @@ class PermissionTableSeeder extends Seeder
             'parent_id' => $emailCenterPermission->id,
         ]);
 
+        $chatCenterPermission = $createPermission([
+            'name' => 'chat-center',
+            'title' => 'Chat Center',
+            'parent_id' => null,
+        ]);
+
+        $createPermission([
+            'name' => 'chat-center-list',
+            'title' => 'Chat Center List',
+            'parent_id' => $chatCenterPermission->id,
+        ]);
+
+        $createPermission([
+            'name' => 'chat-center-reply',
+            'title' => 'Chat Center Reply',
+            'parent_id' => $chatCenterPermission->id,
+        ]);
+
         $ingredientPermission = $createPermission([
             'name' => 'ingredient',
             'title' => 'Ingredient',
