@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 use App\Http\Controllers\EquipmentController;
+use App\Http\Controllers\ChatThreadController;
 use App\Http\Controllers\CategoryDietController;
 use App\Http\Controllers\WorkoutTypeController;
 use App\Http\Controllers\DietController;
@@ -131,6 +132,11 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     Route::resource('equipment', EquipmentController::class);
 
     Route::resource('subadmin', SubAdminController::class);
+
+    Route::get('chat-center', [ChatThreadController::class, 'index'])->name('chat.index');
+    Route::get('chat-center/threads', [ChatThreadController::class, 'threads'])->name('chat.threads.index');
+    Route::get('chat-center/threads/{thread}', [ChatThreadController::class, 'show'])->name('chat.threads.show');
+    Route::post('chat-center/threads/{thread}/messages', [ChatThreadController::class, 'send'])->name('chat.threads.messages.store');
 
     Route::get('users-graph',[ UserController::class, 'fetchUserGraph' ])->name('user.fetchGraph');
     

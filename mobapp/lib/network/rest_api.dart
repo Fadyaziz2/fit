@@ -29,6 +29,7 @@ import '../models/diet_response.dart';
 import '../models/equipment_response.dart';
 import '../models/exclusive_offer_response.dart';
 import '../models/exercise_detail_response.dart';
+import '../models/live_chat_models.dart';
 import '../models/get_setting_response.dart';
 import '../models/login_response.dart';
 import '../models/notification_response.dart';
@@ -487,6 +488,18 @@ Future<NotificationResponse> notificationApi() async {
 
 Future<NotificationResponse> notificationStatusApi(String? id) async {
   return NotificationResponse.fromJson(await handleResponse(await buildHttpResponse('notification-detail?id=$id', method: HttpMethod.GET)));
+}
+
+Future<LiveChatThread> fetchLiveChatThread({int limit = 50}) async {
+  final response = await handleResponse(await buildHttpResponse('chat/threads?limit=$limit', method: HttpMethod.GET));
+  final data = response is Map<String, dynamic> ? (response['data'] ?? response) : response;
+  return LiveChatThread.fromJson(Map<String, dynamic>.from(data));
+}
+
+Future<LiveChatMessage> sendLiveChatMessage({required String message}) async {
+  final response = await handleResponse(await buildHttpResponse('chat/messages', request: {'message': message}, method: HttpMethod.POST));
+  final data = response is Map<String, dynamic> ? (response['data'] ?? response) : response;
+  return LiveChatMessage.fromJson(Map<String, dynamic>.from(data));
 }
 
 Future<BlogResponse> getVideoApi({int? page = 1}) async {

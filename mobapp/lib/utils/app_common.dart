@@ -250,6 +250,9 @@ Future<void> getSettingData() async {
       CRISP_CHAT_WEB_SITE_ID,
       (value.crisp_chat?.crispChatWebsiteId).validate(),
     );
+    setValue(PUSHER_ENABLED, value.pusher?.enabled ?? false);
+    setValue(PUSHER_KEY, value.pusher?.key.validate());
+    setValue(PUSHER_CLUSTER, value.pusher?.cluster.validate());
 
   });
 }

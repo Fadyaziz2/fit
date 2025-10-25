@@ -16,6 +16,7 @@ class AppSettingResponse {
   String? updatedAt;
   AppVersion? appVersion;
   CrispChat? crisp_chat;
+  PusherConfig? pusher;
 
   AppSettingResponse(
       {this.id,
@@ -35,6 +36,7 @@ class AppSettingResponse {
       this.updatedAt,
       this.appVersion,
       this.crisp_chat,
+      this.pusher,
 
       });
 
@@ -60,6 +62,9 @@ class AppSettingResponse {
     crisp_chat = json['crisp_chat'] != null
         ? new CrispChat.fromJson(json['crisp_chat'])
         : null;
+    pusher = json['pusher'] != null
+        ? PusherConfig.fromJson(json['pusher'])
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -84,6 +89,9 @@ class AppSettingResponse {
     }
     if (this.crisp_chat != null) {
       data['crisp_chat'] = this.crisp_chat!.toJson();
+    }
+    if (this.pusher != null) {
+      data['pusher'] = this.pusher!.toJson();
     }
     return data;
   }
@@ -137,6 +145,30 @@ class CrispChat {
     data['crisp_chat_website_id'] = this.crispChatWebsiteId;
     data['is_crisp_chat_enabled'] = this.isCrispChatEnabled;
     return data;
+  }
+}
+
+class PusherConfig {
+  bool enabled;
+  String? key;
+  String? cluster;
+
+  PusherConfig({required this.enabled, this.key, this.cluster});
+
+  factory PusherConfig.fromJson(Map<String, dynamic> json) {
+    return PusherConfig(
+      enabled: json['enabled'] ?? false,
+      key: json['key'],
+      cluster: json['cluster'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'enabled': enabled,
+      'key': key,
+      'cluster': cluster,
+    };
   }
 }
 
