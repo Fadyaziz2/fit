@@ -49,8 +49,15 @@ class _SignUpStep1ComponentState extends State<SignUpStep1Component> {
   @override
   void initState() {
     super.initState();
-    print("------------51>>>${getStringAsync(COUNTRY_CODE)}");
-    print("------------52>>>${countryCode}");
+    dialCode = getStringAsync(COUNTRY_DIAL_CODE, defaultValue: countryDail.validate());
+    const placeholderToken = 'your_country_dail';
+    if (dialCode.validate().toLowerCase().contains(placeholderToken)) {
+      dialCode = '';
+    }
+    if (countryDail.validate().toLowerCase().contains(placeholderToken)) {
+      countryDail = '';
+    }
+    countryDail = dialCode.validate(value: countryDail.validate());
   }
 
   @override
@@ -145,7 +152,14 @@ class _SignUpStep1ComponentState extends State<SignUpStep1Component> {
                           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           textStyle:primaryTextStyle(),
                           onInit: (c) {
-                            setValue(COUNTRY_CODE,c!.code);
+                            if (c != null) {
+                              if (dialCode.isEmptyOrNull) {
+                                dialCode = c.dialCode;
+                              }
+                              countryDail = dialCode.validate(value: c.dialCode.validate());
+                              setValue(COUNTRY_CODE, c.code);
+                              setValue(COUNTRY_DIAL_CODE, dialCode.validate(value: c.dialCode.validate()));
+                            }
                           },
                           dialogTextStyle: TextStyle(
                             color: appStore.isDarkMode
@@ -158,8 +172,10 @@ class _SignUpStep1ComponentState extends State<SignUpStep1Component> {
                                 : Colors.black,
                           ),
                           onChanged: (c) {
-                            dialCode=c.dialCode;
+                            dialCode = c.dialCode;
+                            countryDail = dialCode;
                             setValue(COUNTRY_CODE, c.code);
+                            setValue(COUNTRY_DIAL_CODE, dialCode.validate());
                           },
                         ),
                         VerticalDivider(color: Colors.grey.withOpacity(0.5)),
@@ -222,7 +238,7 @@ class _SignUpStep1ComponentState extends State<SignUpStep1Component> {
                   userStore.setFirstName(mFNameCont.text);
                   userStore.setLastName(mLNameCont.text);
                   if (getBoolAsync(IS_OTP) != true) {
-                    userStore.setPhoneNo("${dialCode??countryDail}${mMobileNumberCont.text}");
+                    userStore.setPhoneNo("${(dialCode ?? countryDail).validate()}${mMobileNumberCont.text}");
                   //  userStore.setPhoneNo(mMobileNumberCont.text);
                     userStore.setUserPassword(mPassCont.text);
                   }
