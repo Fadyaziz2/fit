@@ -38,7 +38,7 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
   );
 
   final AudioPlayer _audioPlayer = AudioPlayer();
-  final now = DateTime.now();
+  static const Duration _playCooldown = Duration(seconds: 1);
 
   Future<void> _playSound(String filePath) async {
     await _audioPlayer.play(AssetSource(filePath));
@@ -51,35 +51,23 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
     print("----------73>>>Saved: $now");
   }
 
-  Future<bool> _canClick() async {
+  Future<Duration> _timeUntilNextPlay() async {
     final lastClickTimeString = sharedPreferences.getString('lastClickTime');
 
     if (lastClickTimeString == null) {
-      return true;
+      return Duration.zero;
     }
 
     final lastClickTime = DateTime.parse(lastClickTimeString);
     final now = DateTime.now();
     final difference = now.difference(lastClickTime);
-    final hours = difference.inMinutes / 60;
+    final remaining = _playCooldown - difference;
 
-    return hours >= 24;
-  }
-
-
-
-
-  Future<double?> _getHoursSinceLastClick() async {
-    final lastClickTimeString = sharedPreferences.getString('lastClickTime');
-
-    if (lastClickTimeString != null) {
-      final lastClickTime = DateTime.parse(lastClickTimeString);
-      final now = DateTime.now();
-      final difference = now.difference(lastClickTime);
-      final hours = difference.inMinutes / 60;
-      return hours;
+    if (remaining.isNegative) {
+      return Duration.zero;
     }
-    return null;
+
+    return remaining;
   }
 
   @override
@@ -137,20 +125,19 @@ class _GameHomeScreenState extends State<GameHomeScreen> {
               ElevatedButton(
                 child: Text('Start', style: primaryTextStyle(weight: FontWeight.bold, size: 18, color: appStore.isDarkMode ? Colors.white : scaffoldColorDark)),
                 onPressed: () async {
-                  final canClick = await _canClick();
-                  if (canClick) {
+                  final remainingCooldown = await _timeUntilNextPlay();
+                  if (remainingCooldown.inMilliseconds <= 0) {
                     await _saveClickTime();
                     _playSound('sounds/startplay.mp3');
                   } else {
-                    final hoursSinceLastClick = await _getHoursSinceLastClick();
-                    final hoursRemaining = 24 - (hoursSinceLastClick ?? 0);
-                    print("---------121>>>${hoursRemaining}");
+                    final secondsRemaining =
+                        (remainingCooldown.inMilliseconds / 1000).ceil();
                     showTopSnackBar(
                       Overlay.of(context),
                       CustomSnackBar.success(
                         backgroundColor: primaryColor,
                         message:
-                        "Please wait ${hoursRemaining.floor()} hours after play again.",
+                            "Please wait $secondsRemaining second${secondsRemaining > 1 ? 's' : ''} before playing again.",
                       ),
                     );
                   }
