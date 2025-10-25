@@ -54,6 +54,7 @@ class _GameState extends State<Game> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    unawaited(removeKey('lastClickTime'));
     timer.cancel();
     _audioPlayer.dispose();
     super.dispose();
