@@ -1,5 +1,6 @@
 {
     "/js/libs.min.js": "/js/libs.min.js",
+    "/js/chat-dashboard.js": "/js/chat-dashboard.js",
     "/css/libs.min.css": "/css/libs.min.css",
     "/css/hope-ui.css": "/css/hope-ui.css",
     "/css/rtl.css": "/css/rtl.css",
