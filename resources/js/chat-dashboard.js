@@ -3,14 +3,22 @@ require('./bootstrap');
 let EchoInstance = null;
 
 const ensureEcho = (root) => {
-    if (EchoInstance || !root || root.dataset.pusherEnabled !== '1') {
+    if (EchoInstance !== null) {
         return EchoInstance;
     }
 
-    const Echo = require('laravel-echo');
-    window.Pusher = require('pusher-js');
+    if (!root || root.dataset.pusherEnabled !== '1') {
+        EchoInstance = false;
+        return EchoInstance;
+    }
 
-    EchoInstance = new Echo({
+    if (typeof window.Echo === 'undefined' || typeof window.Pusher === 'undefined') {
+        console.warn('Real-time chat dependencies are not loaded.');
+        EchoInstance = false;
+        return EchoInstance;
+    }
+
+    EchoInstance = new window.Echo({
         broadcaster: 'pusher',
         key: root.dataset.pusherKey,
         cluster: root.dataset.pusherCluster || 'mt1',
