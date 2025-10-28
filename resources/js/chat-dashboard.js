@@ -87,6 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const startSubmitBtn = startForm?.querySelector('button[type="submit"]');
     let startSearchTimeout = null;
 
+    const resolveThreadSortDate = (thread) => {
+        const candidate = thread.last_message_at || thread.updated_at || thread.created_at || 0;
+        return new Date(candidate);
+    };
+
     const renderThreads = () => {
         listEl.innerHTML = '';
 
@@ -200,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             state.threads.unshift(thread);
         }
-        state.threads.sort((a, b) => new Date(b.last_message_at || 0) - new Date(a.last_message_at || 0));
+        state.threads.sort((a, b) => resolveThreadSortDate(b) - resolveThreadSortDate(a));
     };
 
     const subscribeToThread = (threadId) => {
