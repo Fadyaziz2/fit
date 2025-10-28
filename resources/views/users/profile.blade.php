@@ -173,8 +173,11 @@
                         ? `<ul class="print-ingredients">${mealIngredients.map((ingredient) => {
                             const titleValue = ingredient && ingredient.title ? String(ingredient.title) : '-';
                             const quantityValue = ingredient && ingredient.quantity ? String(ingredient.quantity) : '';
-                            const quantityHtml = quantityValue !== ''
-                                ? ` <span class="print-ingredient-quantity">(${escapeHtml(quantityLabel)}: ${escapeHtml(quantityValue)})</span>`
+                            const unitValue = ingredient && ingredient.unit ? String(ingredient.unit) : '';
+                            const quantityParts = [quantityValue, unitValue].filter((part) => part !== '');
+                            const quantityText = quantityParts.join(' ');
+                            const quantityHtml = quantityText !== ''
+                                ? ` <span class="print-ingredient-quantity">(${escapeHtml(quantityText)})</span>`
                                 : '';
 
                             return `<li>${escapeHtml(titleValue)}${quantityHtml}</li>`;
