@@ -459,6 +459,7 @@
                                 width: 100%;
                                 border-collapse: collapse;
                                 min-width: 400px;
+                                table-layout: fixed;
                             }
 
                             .print-plan-table thead th {
@@ -474,6 +475,7 @@
                                 border: 1px solid rgba(251, 146, 60, 0.25);
                                 padding: 12px;
                                 vertical-align: top;
+                                word-break: break-word;
                             }
 
                             .print-plan-header-cell:first-child {
@@ -541,6 +543,11 @@
                             }
 
                             @media print {
+                                @page {
+                                    size: A4 portrait;
+                                    margin: 12mm;
+                                }
+
                                 body {
                                     padding: 0;
                                     background-color: #ffffff;
@@ -549,6 +556,7 @@
                                 .print-container {
                                     box-shadow: none;
                                     padding: 0;
+                                    max-width: 100%;
                                 }
 
                                 .print-table tbody tr:nth-child(even),
@@ -558,6 +566,26 @@
 
                                 .print-table th {
                                     background: #f97316;
+                                }
+
+                                .print-plan-wrapper {
+                                    overflow: visible;
+                                }
+
+                                .print-plan-table {
+                                    min-width: 0;
+                                }
+
+                                .print-plan-day-cell,
+                                .print-plan-meal-cell {
+                                    min-width: auto;
+                                    width: auto;
+                                }
+
+                                .print-plan-table th,
+                                .print-plan-table td {
+                                    padding: 8px;
+                                    font-size: 12px;
                                 }
                             }
                         </style>
