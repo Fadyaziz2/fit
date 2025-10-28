@@ -431,6 +431,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateThreadInState(data);
                 renderThreads();
                 hideStartForm();
+                if (!data.last_message_at) {
+                    const threadData = {
+                        ...data,
+                        messages: Array.isArray(data.messages) ? data.messages : [],
+                    };
+                    renderActiveThread(threadData);
+                    subscribeToThread(data.id);
+                }
                 selectThread(data.id);
             })
             .finally(() => {
