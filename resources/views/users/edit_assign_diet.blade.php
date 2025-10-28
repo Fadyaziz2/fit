@@ -88,6 +88,38 @@
         $collectUnits($normalizedCustomPlan ?? [])
     ))));
 @endphp
+<style>
+    .meal-ingredient-editor .meal-ingredient-entry .meal-ingredient-quantity-input,
+    .meal-ingredient-editor .meal-ingredient-entry .meal-ingredient-unit-input {
+        flex: 0 0 auto;
+    }
+
+    .meal-ingredient-editor .meal-ingredient-entry .meal-ingredient-quantity-input {
+        min-width: 110px;
+    }
+
+    .meal-ingredient-editor .meal-ingredient-entry .meal-ingredient-unit-input {
+        min-width: 130px;
+    }
+
+    @media (max-width: 575.98px) {
+        .meal-ingredient-editor .meal-ingredient-entry {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .meal-ingredient-editor .meal-ingredient-entry .meal-ingredient-quantity-input,
+        .meal-ingredient-editor .meal-ingredient-entry .meal-ingredient-unit-input,
+        .meal-ingredient-editor .meal-ingredient-entry .form-select {
+            flex: 1 1 100%;
+            min-width: 0;
+        }
+
+        .meal-ingredient-editor .meal-ingredient-entry .btn {
+            flex: 0 0 auto;
+        }
+    }
+</style>
 <!-- Modal -->
 {{ html()->form('POST', route('update.assigndiet.meals'))->attribute('data-toggle', 'validator')->open() }}
     {{ html()->hidden('user_id', $assignment->user_id) }}
@@ -267,14 +299,14 @@
                                                                     @endforeach
                                                                 </select>
                                                                 <input type="number"
-                                                                    class="form-control form-control-sm"
+                                                                    class="form-control form-control-sm meal-ingredient-quantity-input"
                                                                     name="plan[{{ $dayIndex }}][{{ $mealIndex }}][{{ $entryIndex }}][quantity]"
                                                                     value="{{ $entry['quantity'] }}"
                                                                     min="0"
                                                                     step="0.01"
                                                                     placeholder="{{ __('message.quantity') }}">
                                                                 <input type="text"
-                                                                    class="form-control form-control-sm"
+                                                                    class="form-control form-control-sm meal-ingredient-unit-input"
                                                                     name="plan[{{ $dayIndex }}][{{ $mealIndex }}][{{ $entryIndex }}][unit]"
                                                                     value="{{ $entry['unit'] }}"
                                                                     placeholder="{{ __('message.unit') }}"
@@ -437,7 +469,7 @@
 
             const quantityInput = $('<input>', {
                 type: 'number',
-                class: 'form-control form-control-sm',
+                class: 'form-control form-control-sm meal-ingredient-quantity-input',
                 name: `plan[${day}][${meal}][${entryIndex}][quantity]`,
                 step: '0.01',
                 min: '0',
@@ -446,7 +478,7 @@
 
             const unitInput = $('<input>', {
                 type: 'text',
-                class: 'form-control form-control-sm',
+                class: 'form-control form-control-sm meal-ingredient-unit-input',
                 name: `plan[${day}][${meal}][${entryIndex}][unit]`,
                 placeholder: unitLabel,
                 list: unitDatalistId,
