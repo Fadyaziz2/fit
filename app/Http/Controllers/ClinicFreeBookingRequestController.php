@@ -7,6 +7,7 @@ use App\Models\FreeBookingRequest;
 use App\Models\Specialist;
 use App\Models\SpecialistAppointment;
 use App\Models\SpecialistSchedule;
+use App\Services\SmsService;
 use App\Traits\CreatesManualUsers;
 use App\Traits\HandlesBranchAccess;
 use Carbon\Carbon;
@@ -17,6 +18,10 @@ use Illuminate\Validation\Rule;
 class ClinicFreeBookingRequestController extends Controller
 {
     use HandlesBranchAccess, CreatesManualUsers;
+
+    public function __construct(protected SmsService $smsService)
+    {
+    }
 
     protected function authorizeAccess()
     {
@@ -161,14 +166,15 @@ class ClinicFreeBookingRequestController extends Controller
             $specialist = Specialist::with('branches')->findOrFail($request->specialist_id);
             $this->ensureSpecialistAccessible($specialist, $branchIds);
             $date = Carbon::createFromFormat('Y-m-d', $request->appointment_date);
-            $time = Carbon::createFromFormat('H:i', $request->appointment_time)->format('H:i:s');
+            $time = Carbon::createFromFormat('H:i', $request->appointment_time);
+            $timeString = $time->format('H:i:s');
 
             $scheduleDay = ($date->dayOfWeek + 6) % 7;
 
             $scheduleExists = SpecialistSchedule::where('specialist_id', $request->specialist_id)
                 ->where('day_of_week', $scheduleDay)
-                ->where('start_time', '<=', $time)
-                ->where('end_time', '>', $time)
+                ->where('start_time', '<=', $timeString)
+                ->where('end_time', '>', $timeString)
                 ->exists();
 
             if (! $scheduleExists) {
@@ -181,7 +187,7 @@ class ClinicFreeBookingRequestController extends Controller
 
             $alreadyBookedQuery = SpecialistAppointment::where('specialist_id', $request->specialist_id)
                 ->where('appointment_date', $date->toDateString())
-                ->where('appointment_time', $time)
+                ->where('appointment_time', $timeString)
                 ->whereIn('status', SpecialistAppointment::BLOCKING_STATUSES);
 
             if ($freeRequest->appointment_id) {
@@ -199,7 +205,7 @@ class ClinicFreeBookingRequestController extends Controller
                 'specialist_id' => $request->specialist_id,
                 'branch_id' => $freeRequest->branch_id,
                 'appointment_date' => $date->toDateString(),
-                'appointment_time' => $time,
+                'appointment_time' => $timeString,
                 'status' => $freeRequest->appointment?->status ?? 'pending',
                 'type' => 'free',
                 'notes' => $request->admin_notes,
@@ -221,6 +227,9 @@ class ClinicFreeBookingRequestController extends Controller
                 $userProfile->specialist_id = $request->specialist_id;
                 $userProfile->save();
             }
+
+            $phoneNumber = optional($freeRequest->user)->phone_number ?: $freeRequest->phone;
+            $this->sendAppointmentConfirmationSms($phoneNumber, $date, $time);
         } else {
             if ($freeRequest->appointment) {
                 $freeRequest->appointment->delete();
@@ -240,6 +249,41 @@ class ClinicFreeBookingRequestController extends Controller
         $freeRequest->save();
 
         return redirect()->route('clinic.free_requests.index')->withSuccess(__('message.update_form', ['form' => __('message.free_booking_request')]));
+    }
+
+    protected function sendAppointmentConfirmationSms(?string $phoneNumber, Carbon $date, Carbon $time): void
+    {
+        if (! $phoneNumber) {
+            return;
+        }
+
+        $dayName = $date->copy()->locale('ar')->translatedFormat('l');
+        $formattedDate = $this->convertToArabicNumerals($date->format('j-n-Y'));
+
+        $message = sprintf(
+            "تم تأكيد موعدك في مركز مايكرو\n📅 التاريخ: %s الموافق %s\n🕒 الساعة: %s\n\nيرجى الحضور قبل الموعد بـ10 دقائق.\n📞 للاستفسارات: 0780922854",
+            $dayName,
+            $formattedDate,
+            $time->format('H:i')
+        );
+
+        $this->smsService->send($message, $phoneNumber);
+    }
+
+    protected function convertToArabicNumerals(string $value): string
+    {
+        return strtr($value, [
+            '0' => '٠',
+            '1' => '١',
+            '2' => '٢',
+            '3' => '٣',
+            '4' => '٤',
+            '5' => '٥',
+            '6' => '٦',
+            '7' => '٧',
+            '8' => '٨',
+            '9' => '٩',
+        ]);
     }
 
     public function availableSlots(Request $request)
