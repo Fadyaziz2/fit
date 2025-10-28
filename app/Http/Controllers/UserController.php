@@ -1028,7 +1028,10 @@ class UserController extends Controller
             'plan' => ['nullable', 'array'],
             'plan.*' => ['nullable', 'array'],
             'plan.*.*' => ['nullable', 'array'],
-            'plan.*.*.*' => ['nullable', 'integer'],
+            'plan.*.*.*' => ['nullable', 'array:id,quantity,unit'],
+            'plan.*.*.*.id' => ['nullable', 'integer'],
+            'plan.*.*.*.quantity' => ['nullable', 'numeric'],
+            'plan.*.*.*.unit' => ['nullable', 'string', 'max:255'],
         ]);
 
         $assignment = AssignDiet::where('user_id', $validated['user_id'])
@@ -1047,9 +1050,20 @@ class UserController extends Controller
         $selectedPlan = $this->normalizePlanInput($validated['plan'] ?? []);
 
         $selectedIds = collect($selectedPlan)
-            ->flatten()
-            ->filter(fn ($value) => is_numeric($value))
-            ->map(fn ($value) => (int) $value);
+            ->flatMap(function ($dayMeals) {
+                return collect($dayMeals)->flatMap(function ($mealEntries) {
+                    return collect($mealEntries)
+                        ->map(function ($entry) {
+                            if (is_array($entry) && isset($entry['id']) && is_numeric($entry['id'])) {
+                                return (int) $entry['id'];
+                            }
+
+                            return null;
+                        })
+                        ->filter();
+                });
+            })
+            ->unique();
 
         if ($selectedIds->isNotEmpty()) {
             $validIngredientIds = Ingredient::pluck('id')->map(fn ($id) => (int) $id);
