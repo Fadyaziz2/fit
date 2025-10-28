@@ -13,7 +13,6 @@
             quantityLabel: @json(__('message.quantity')),
             noIngredients: @json(__('message.no_ingredients_selected')),
             noMeals: @json(__('message.no_meal_selected')),
-            printedOnLabel: @json(__('message.printed_on_label')),
             empty: @json(__('message.no_diet_assigned')),
             startDateLabel: @json(__('message.diet_start_date_heading')),
         };
@@ -311,13 +310,25 @@
 
         function openDietPrintWindow(filterDietId = null) {
             const tableRows = buildDietPrintRows(filterDietId);
-            const printWindow = window.open('', '', 'width=900,height=650');
+            const printFrame = document.createElement('iframe');
 
-            if (!printWindow) {
+            printFrame.setAttribute('aria-hidden', 'true');
+            printFrame.style.position = 'fixed';
+            printFrame.style.right = '0';
+            printFrame.style.bottom = '0';
+            printFrame.style.width = '0';
+            printFrame.style.height = '0';
+            printFrame.style.border = '0';
+
+            document.body.appendChild(printFrame);
+
+            const frameWindow = printFrame.contentWindow;
+            const frameDocument = frameWindow ? frameWindow.document : printFrame.contentDocument;
+
+            if (!frameDocument) {
+                document.body.removeChild(printFrame);
                 return;
             }
-
-            const printedOn = new Date().toLocaleString();
 
             const documentContent = `
                 <!DOCTYPE html>
@@ -358,12 +369,6 @@
                             .print-title {
                                 font-size: 24px;
                                 font-weight: 700;
-                                margin: 0;
-                            }
-
-                            .print-subtitle {
-                                font-size: 14px;
-                                color: #6c757d;
                                 margin: 0;
                             }
 
@@ -551,6 +556,13 @@
                                     margin: 12mm;
                                 }
 
+                                @page {
+                                    @top-left { content: none !important; }
+                                    @top-right { content: none !important; }
+                                    @bottom-left { content: none !important; }
+                                    @bottom-right { content: none !important; }
+                                }
+
                                 body {
                                     padding: 0;
                                     background-color: #ffffff;
@@ -597,7 +609,6 @@
                         <div class="print-container">
                             <div class="print-header">
                                 <h1 class="print-title">${escapeHtml(dietPrintStrings.heading)}</h1>
-                                <p class="print-subtitle">${escapeHtml(dietPrintStrings.printedOnLabel)} ${escapeHtml(printedOn)}</p>
                             </div>
                             <table class="print-table">
                                 <thead>
@@ -617,14 +628,21 @@
                 </html>
             `;
 
-            printWindow.document.write(documentContent);
-            printWindow.document.close();
+            frameDocument.open();
+            frameDocument.write(documentContent);
+            frameDocument.close();
+            frameDocument.title = dietPrintStrings.heading ? String(dietPrintStrings.heading) : '';
 
-            printWindow.focus();
+            if (frameWindow && frameWindow.history && typeof frameWindow.history.replaceState === 'function') {
+                frameWindow.history.replaceState(null, '', window.location.href);
+            }
+
+            const focusTarget = frameWindow || window;
+            focusTarget.focus();
 
             setTimeout(function () {
-                printWindow.print();
-                printWindow.close();
+                focusTarget.print();
+                document.body.removeChild(printFrame);
             }, 300);
         }
 
