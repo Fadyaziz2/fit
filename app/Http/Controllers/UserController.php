@@ -911,6 +911,7 @@ class UserController extends Controller
                             'id' => $ingredientId,
                             'title' => $ingredient->title ?? '',
                             'quantity' => $this->formatPrintQuantity($entry['quantity'] ?? null),
+                            'unit' => $this->formatPrintUnit($entry['unit'] ?? null),
                         ];
                     }
                 }
@@ -956,6 +957,21 @@ class UserController extends Controller
         }
 
         return rtrim(rtrim(number_format($number, 2, '.', ''), '0'), '.');
+    }
+
+    protected function formatPrintUnit($value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        if (is_array($value) || is_object($value) || is_bool($value)) {
+            return '';
+        }
+
+        $unit = trim((string) $value);
+
+        return $unit;
     }
 
     public function editAssignDietMeals($userId, $dietId)
