@@ -199,9 +199,10 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
         Route::resource('specialists', ClinicSpecialistController::class)->except(['show']);
         Route::resource('schedules', ClinicSpecialistScheduleController::class)->except(['show']);
         Route::resource('free-requests', ClinicFreeBookingRequestController::class)
-            ->only(['index', 'edit', 'update'])
+            ->only(['index', 'store', 'edit', 'update'])
             ->names([
                 'index' => 'free_requests.index',
+                'store' => 'free_requests.store',
                 'edit' => 'free_requests.edit',
                 'update' => 'free_requests.update',
             ]);
