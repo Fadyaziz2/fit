@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\FreeBookingRequest;
 use App\Models\Specialist;
 use App\Models\SpecialistAppointment;
 use App\Models\SpecialistSchedule;
+use App\Traits\CreatesManualUsers;
 use App\Traits\HandlesBranchAccess;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ClinicFreeBookingRequestController extends Controller
 {
-    use HandlesBranchAccess;
+    use HandlesBranchAccess, CreatesManualUsers;
 
     protected function authorizeAccess()
     {
@@ -36,7 +39,61 @@ class ClinicFreeBookingRequestController extends Controller
             ->orderByDesc('created_at')
             ->paginate(20);
 
-        return view('clinic.free_requests.index', compact('pageTitle', 'requests'));
+        $branches = Branch::query()
+            ->orderBy('name')
+            ->when($branchIds !== null, function ($query) use ($branchIds) {
+                $query->whereIn('id', $branchIds);
+            })
+            ->get();
+
+        $defaultBranchId = null;
+        if ($branchIds !== null && count($branchIds) === 1) {
+            $defaultBranchId = $branchIds[0];
+        }
+
+        return view('clinic.free_requests.index', compact('pageTitle', 'requests', 'branches', 'defaultBranchId'));
+    }
+
+    public function store(Request $request)
+    {
+        $user = $this->authorizeAccess();
+        $branchIds = $this->getAccessibleBranchIds($user);
+
+        $rules = [
+            'full_name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:20'],
+        ];
+
+        if ($branchIds === null) {
+            $rules['branch_id'] = ['required', 'exists:branches,id'];
+        } else {
+            $rules['branch_id'] = [Rule::requiredIf(count($branchIds) > 1), 'nullable', 'exists:branches,id'];
+        }
+
+        $data = $request->validate($rules);
+
+        $branchId = isset($data['branch_id']) ? (int) $data['branch_id'] : null;
+
+        if ($branchIds !== null) {
+            if (! $branchId && count($branchIds) === 1) {
+                $branchId = $branchIds[0];
+            }
+
+            $this->assertBranchAccessible($branchId, $branchIds);
+        }
+
+        $manualUser = $this->createManualUser($data['full_name'], $data['phone']);
+
+        FreeBookingRequest::create([
+            'user_id' => $manualUser->id,
+            'branch_id' => $branchId,
+            'phone' => $data['phone'],
+            'status' => 'pending',
+        ]);
+
+        return redirect()
+            ->route('clinic.free_requests.index')
+            ->withSuccess(__('message.save_form', ['form' => __('message.free_booking_request')]));
     }
 
     public function edit(FreeBookingRequest $freeRequest)

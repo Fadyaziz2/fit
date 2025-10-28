@@ -10,17 +10,16 @@ use App\Models\SpecialistSchedule;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Services\SmsService;
+use App\Traits\CreatesManualUsers;
 use App\Traits\HandlesBranchAccess;
 use App\Traits\SubscriptionTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class ClinicAppointmentController extends Controller
 {
-    use SubscriptionTrait, HandlesBranchAccess;
+    use SubscriptionTrait, HandlesBranchAccess, CreatesManualUsers;
 
     public function __construct(protected SmsService $smsService)
     {
@@ -433,31 +432,6 @@ class ClinicAppointmentController extends Controller
         });
 
         return redirect()->route('clinic.appointments.index')->withSuccess(__('message.manual_free_converted'));
-    }
-
-    protected function createManualUser(?string $name, ?string $phone): User
-    {
-        $safeName = $name ?: __('message.manual_free_guest');
-        $username = Str::slug(mb_substr($safeName, 0, 20), '.') ?: 'manual-user';
-        $username .= '.' . Str::lower(Str::random(6));
-
-        $email = $username . '@manual.local';
-
-        $user = User::create([
-            'username' => $username,
-            'first_name' => $safeName,
-            'last_name' => null,
-            'display_name' => $safeName,
-            'email' => $email,
-            'password' => Hash::make(Str::random(16)),
-            'user_type' => 'user',
-            'status' => 'pending',
-            'phone_number' => $phone,
-        ]);
-
-        $user->assignRole('user');
-
-        return $user;
     }
 
     protected function sendAppointmentConfirmationSms(?string $phoneNumber, Carbon $date, Carbon $time): void
