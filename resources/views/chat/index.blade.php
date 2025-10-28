@@ -222,6 +222,6 @@
             <script src="https://js.pusher.com/8.4/pusher.min.js" defer></script>
             <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.0/dist/echo.iife.min.js" defer></script>
         @endif
-        <script src="{{ mix('js/chat-dashboard.js') }}" defer></script>
+        <script src="{{ asset(mix('js/chat-dashboard.js')) }}" defer></script>
     @endpush
 </x-app-layout>
