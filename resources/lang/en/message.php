@@ -413,6 +413,7 @@ return [
     'about_user' => 'About User',
     'data' => 'Data',
     'notes' => 'Notes',
+    'cancel_reason' => 'Cancellation reason',
     'disliked_ingredients_title' => 'Disliked foods',
     'disliked_ingredients_hint' => 'Choose the ingredients the user prefers to avoid.',
     'health_conditions_title' => 'Health conditions',
