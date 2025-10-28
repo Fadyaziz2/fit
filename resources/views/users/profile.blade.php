@@ -2,19 +2,16 @@
 {{ $dataTable->scripts() }}
     <script>
         const dietPrintStrings = {
-            heading: @json(__('message.diet_plan_for', ['name' => $data->name ?? __('message.user')])),
-            number: @json(__('message.srno')),
-            title: @json(__('message.title')),
-            mealTimes: @json(__('message.meal_times')),
-            ingredients: @json(__('message.ingredients')),
-            dayColumn: @json(__('message.day')),
-            dayLabel: @json(__('message.day_number_label')),
-            mealLabel: @json(__('message.meal_number_label')),
-            quantityLabel: @json(__('message.quantity')),
-            noIngredients: @json(__('message.no_ingredients_selected')),
-            noMeals: @json(__('message.no_meal_selected')),
-            empty: @json(__('message.no_diet_assigned')),
-            startDateLabel: @json(__('message.diet_start_date_heading')),
+            heading: @json(__('message.diet_plan_for', ['name' => $data->name ?? __('message.user')]), JSON_UNESCAPED_UNICODE),
+            number: @json(__('message.srno'), JSON_UNESCAPED_UNICODE),
+            mealPlan: @json(__('message.meal_plan'), JSON_UNESCAPED_UNICODE),
+            dayColumn: @json(__('message.day'), JSON_UNESCAPED_UNICODE),
+            dayLabel: @json(__('message.day_number_label'), JSON_UNESCAPED_UNICODE),
+            mealLabel: @json(__('message.meal_number_label'), JSON_UNESCAPED_UNICODE),
+            noIngredients: @json(__('message.no_ingredients_selected'), JSON_UNESCAPED_UNICODE),
+            noMeals: @json(__('message.no_meal_selected'), JSON_UNESCAPED_UNICODE),
+            empty: @json(__('message.no_diet_assigned'), JSON_UNESCAPED_UNICODE),
+            startDateLabel: @json(__('message.diet_start_date_heading'), JSON_UNESCAPED_UNICODE),
         };
 
         function escapeHtml(value) {
@@ -97,7 +94,6 @@
 
             const dayTemplate = dietPrintStrings.dayLabel || '';
             const mealTemplate = dietPrintStrings.mealLabel || '';
-            const quantityLabel = dietPrintStrings.quantityLabel || '';
             const dayHeading = dietPrintStrings.dayColumn || '';
             const emptyMealHtml = `<span class="print-empty-value">${escapeHtml(dietPrintStrings.noMeals)}</span>`;
 
@@ -151,8 +147,25 @@
                     ? matchingMeal.meal_number
                     : fallbackNumber;
 
-                return buildLabel(mealTemplate, mealNumber);
+                const label = buildLabel(mealTemplate, mealNumber);
+                const timeValue = matchingMeal && matchingMeal.time ? String(matchingMeal.time) : '';
+
+                return {
+                    label,
+                    time: timeValue,
+                };
             });
+
+            const headerHtml = columnHeaders.map((header) => {
+                const labelHtml = header.label
+                    ? `<div class="print-plan-meal-label">${escapeHtml(header.label)}</div>`
+                    : '';
+                const timeHtml = header.time
+                    ? `<div class="print-plan-meal-time">${escapeHtml(header.time)}</div>`
+                    : '';
+
+                return `<th class="print-plan-header-cell print-plan-meal-header">${labelHtml}${timeHtml}</th>`;
+            }).join('');
 
             const rowsHtml = normalizedDays.map((day) => {
                 const mealCells = Array.from({ length: columnCount }, (_, index) => {
@@ -162,10 +175,6 @@
                         return `<td class="print-plan-meal-cell">${emptyMealHtml}</td>`;
                     }
 
-                    const mealTimeValue = meal && meal.time ? String(meal.time) : '';
-                    const mealTime = mealTimeValue
-                        ? `<div class="print-plan-meal-time">${escapeHtml(mealTimeValue)}</div>`
-                        : '';
                     const mealIngredients = normalizeCollection(meal && meal.ingredients);
 
                     const ingredientsHtml = mealIngredients.length
@@ -186,7 +195,6 @@
                     return `
                         <td class="print-plan-meal-cell">
                             <div class="print-plan-meal-content">
-                                ${mealTime}
                                 ${ingredientsHtml}
                             </div>
                         </td>
@@ -201,14 +209,12 @@
                 `;
             }).join('');
 
-            const headerHtml = columnHeaders.map((label) => `<th class="print-plan-header-cell">${escapeHtml(label)}</th>`).join('');
-
             return `
                 <div class="print-plan-wrapper">
                     <table class="print-plan-table">
                         <thead>
                             <tr>
-                                <th class="print-plan-header-cell">${escapeHtml(dayHeading || dietPrintStrings.dayLabel || '')}</th>
+                                <th class="print-plan-header-cell print-plan-day-heading">${escapeHtml(dayHeading || dietPrintStrings.dayLabel || '')}</th>
                                 ${headerHtml}
                             </tr>
                         </thead>
@@ -243,7 +249,7 @@
                     if (emptyText && !filterId) {
                         rows.push(`
                             <tr>
-                                <td colspan="4" class="print-empty">${escapeHtml(emptyText)}</td>
+                                <td colspan="2" class="print-empty">${escapeHtml(emptyText)}</td>
                             </tr>
                         `);
                     }
@@ -254,9 +260,7 @@
                 rowIndex += 1;
 
                 const $titleCell = $cells.eq(1);
-                const title = $titleCell.find('span').first().text().trim() || '-';
                 const customBadge = $titleCell.find('.badge').text().trim();
-                const imageSrc = $cells.eq(0).find('img').attr('src') || '';
                 const planDetails = parsePlanData($row.attr('data-plan'));
                 const planHtml = buildPlanHtml(planDetails);
                 const startDateDisplay = $row.data('start-date-display') || '';
@@ -266,33 +270,29 @@
                     ? `<div class="print-diet-start-date">${escapeHtml(startDateLabel)} ${escapeHtml(startDateText)}</div>`
                     : '';
 
-                const mealTimes = [];
-                $cells.eq(2).find('span').each(function () {
-                    const text = $(this).text().trim();
-                    if (text) {
-                        mealTimes.push(text);
-                    }
-                });
+                const metadataItems = [];
 
-                const mealTimesHtml = mealTimes.length
-                    ? `<ul class="print-meal-times">${mealTimes.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
-                    : `<span>-</span>`;
+                if (startDateHtml) {
+                    metadataItems.push(startDateHtml);
+                }
+
+                if (customBadge) {
+                    metadataItems.push(`<div class="print-diet-badge">${escapeHtml(customBadge)}</div>`);
+                }
+
+                const metadataHtml = metadataItems.length
+                    ? `<div class="print-diet-metadata">${metadataItems.join('')}</div>`
+                    : '';
 
                 rows.push(`
                     <tr>
                         <td class="print-index">${rowIndex}</td>
                         <td>
-                            <div class="print-diet-info">
-                                ${imageSrc ? `<img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(title)}" class="print-diet-image">` : ''}
-                                <div class="print-diet-text">
-                                    <div class="print-diet-title">${escapeHtml(title)}</div>
-                                    ${startDateHtml}
-                                    ${customBadge ? `<div class="print-diet-badge">${escapeHtml(customBadge)}</div>` : ''}
-                                </div>
+                            <div class="print-diet-content">
+                                ${metadataHtml}
+                                ${planHtml}
                             </div>
                         </td>
-                        <td>${mealTimesHtml}</td>
-                        <td>${planHtml}</td>
                     </tr>
                 `);
             });
@@ -300,7 +300,7 @@
             if (!rowIndex && !rows.length) {
                 rows.push(`
                     <tr>
-                        <td colspan="4" class="print-empty">${escapeHtml(dietPrintStrings.empty)}</td>
+                        <td colspan="2" class="print-empty">${escapeHtml(dietPrintStrings.empty)}</td>
                     </tr>
                 `);
             }
@@ -406,30 +406,22 @@
                                 width: 60px;
                             }
 
-                            .print-diet-info {
+                            .print-diet-content {
                                 display: flex;
-                                align-items: center;
+                                flex-direction: column;
                                 gap: 16px;
                             }
 
-                            .print-diet-image {
-                                width: 60px;
-                                height: 60px;
-                                border-radius: 12px;
-                                object-fit: cover;
-                                border: 2px solid rgba(249, 115, 22, 0.35);
-                            }
-
-                            .print-diet-title {
-                                font-weight: 600;
-                                font-size: 16px;
-                                margin-bottom: 4px;
+                            .print-diet-metadata {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 6px;
                             }
 
                             .print-diet-start-date {
                                 font-size: 12px;
                                 color: #6b7280;
-                                margin-bottom: 6px;
+                                margin: 0;
                             }
 
                             .print-diet-badge {
@@ -440,22 +432,6 @@
                                 color: #c2410c;
                                 font-size: 12px;
                                 font-weight: 600;
-                            }
-
-                            .print-meal-times {
-                                list-style: none;
-                                padding: 0;
-                                margin: 0;
-                                display: flex;
-                                flex-direction: column;
-                                gap: 6px;
-                            }
-
-                            .print-meal-times li {
-                                background-color: rgba(248, 250, 252, 0.9);
-                                border-left: 4px solid #fb923c;
-                                padding: 8px 12px;
-                                border-radius: 8px;
                             }
 
                             .print-plan-wrapper {
@@ -486,8 +462,22 @@
                                 word-break: break-word;
                             }
 
-                            .print-plan-header-cell:first-child {
+                            .print-plan-header-cell.print-plan-day-heading {
                                 text-align: left;
+                            }
+
+                            .print-plan-meal-header {
+                                display: flex;
+                                flex-direction: column;
+                                align-items: center;
+                                gap: 4px;
+                                text-align: center;
+                            }
+
+                            .print-plan-meal-label {
+                                font-weight: 600;
+                                font-size: 14px;
+                                color: #b45309;
                             }
 
                             .print-plan-day-cell {
@@ -512,10 +502,9 @@
                             }
 
                             .print-plan-meal-time {
-                                font-weight: 600;
-                                color: #b45309;
-                                font-size: 13px;
-                                display: block;
+                                font-weight: 500;
+                                color: #6b7280;
+                                font-size: 12px;
                             }
 
                             .print-ingredients {
@@ -614,9 +603,7 @@
                                 <thead>
                                     <tr>
                                         <th style="width: 60px;">${escapeHtml(dietPrintStrings.number)}</th>
-                                        <th>${escapeHtml(dietPrintStrings.title)}</th>
-                                        <th>${escapeHtml(dietPrintStrings.mealTimes)}</th>
-                                        <th>${escapeHtml(dietPrintStrings.ingredients)}</th>
+                                        <th>${escapeHtml(dietPrintStrings.mealPlan)}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
