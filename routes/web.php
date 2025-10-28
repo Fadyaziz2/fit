@@ -134,6 +134,8 @@ Route::group(['middleware' => [ 'auth', 'useractive' ]], function () {
     Route::resource('subadmin', SubAdminController::class);
 
     Route::get('chat-center', [ChatThreadController::class, 'index'])->name('chat.index')->middleware('permission:chat-center-list');
+    Route::get('chat-center/users', [ChatThreadController::class, 'searchUsers'])->name('chat.users.search')->middleware('permission:chat-center-reply');
+    Route::post('chat-center/threads', [ChatThreadController::class, 'store'])->name('chat.threads.store')->middleware('permission:chat-center-reply');
     Route::get('chat-center/threads', [ChatThreadController::class, 'threads'])->name('chat.threads.index')->middleware('permission:chat-center-list');
     Route::get('chat-center/threads/{thread}', [ChatThreadController::class, 'show'])->name('chat.threads.show')->middleware('permission:chat-center-list');
     Route::post('chat-center/threads/{thread}/messages', [ChatThreadController::class, 'send'])->name('chat.threads.messages.store')->middleware('permission:chat-center-reply');

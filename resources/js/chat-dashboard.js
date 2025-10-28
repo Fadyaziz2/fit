@@ -59,12 +59,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const threadsEndpoint = root.dataset.threadsEndpoint;
     const threadEndpointTemplate = root.dataset.threadEndpoint;
     const messageEndpointTemplate = root.dataset.messageEndpoint;
+    const threadCreateEndpoint = root.dataset.threadCreateEndpoint;
+    const userSearchEndpoint = root.dataset.userSearchEndpoint;
 
     const state = {
         threads: [],
         subscriptions: new Map(),
         activeThreadId: null,
     };
+
+    window.__chatDashboardStartEnhanced = true;
 
     const listEl = document.getElementById('chat-thread-list');
     const headerEl = document.getElementById('chat-thread-header');
@@ -73,6 +77,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const textareaEl = document.getElementById('chat-reply-input');
     const sendBtn = formEl.querySelector('button[type="submit"]');
     const refreshBtn = root.querySelector('[data-action="refresh-threads"]');
+    const startWrapper = document.getElementById('chat-start-form-wrapper');
+    const startForm = document.getElementById('chat-start-form');
+    const startInput = document.getElementById('chat-start-user-input');
+    const startHiddenInput = document.getElementById('chat-start-user-id');
+    const startSuggestions = document.getElementById('chat-start-suggestions');
+    const startToggleBtn = root.querySelector('[data-action="toggle-start-thread"]');
+    const startCancelBtn = root.querySelector('[data-action="cancel-start-thread"]');
+    const startSubmitBtn = startForm?.querySelector('button[type="submit"]');
+    let startSearchTimeout = null;
 
     const renderThreads = () => {
         listEl.innerHTML = '';
@@ -219,6 +232,79 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const hideStartForm = () => {
+        if (!startWrapper) {
+            return;
+        }
+
+        startWrapper.classList.add('d-none');
+        startForm?.reset();
+        startForm?.setAttribute('data-selected-user', '');
+        if (startHiddenInput) {
+            startHiddenInput.value = '';
+        }
+        if (startSuggestions) {
+            startSuggestions.innerHTML = '';
+        }
+        if (startToggleBtn) {
+            startToggleBtn.disabled = false;
+        }
+    };
+
+    const renderUserSuggestions = (users) => {
+        if (!startSuggestions) {
+            return;
+        }
+
+        startSuggestions.innerHTML = '';
+
+        if (!users.length) {
+            const empty = document.createElement('div');
+            empty.className = 'list-group-item text-muted small';
+            empty.textContent = 'No users found.';
+            startSuggestions.appendChild(empty);
+            return;
+        }
+
+        users.forEach((user) => {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'list-group-item list-group-item-action';
+            item.textContent = user.email ? `${user.name} (${user.email})` : user.name;
+            item.dataset.userId = user.id;
+            item.addEventListener('click', () => {
+                if (startHiddenInput) {
+                    startHiddenInput.value = user.id;
+                }
+                if (startForm) {
+                    startForm.setAttribute('data-selected-user', user.id);
+                }
+                if (startInput) {
+                    startInput.value = user.email ? `${user.name} (${user.email})` : user.name;
+                }
+                startSuggestions.innerHTML = '';
+            });
+            startSuggestions.appendChild(item);
+        });
+    };
+
+    const requestUserSuggestions = (term) => {
+        if (!userSearchEndpoint || !startSuggestions) {
+            return;
+        }
+
+        if (term.length < 2) {
+            startSuggestions.innerHTML = '';
+            return;
+        }
+
+        axios.get(userSearchEndpoint, { params: { search: term } })
+            .then((response) => {
+                const data = response.data?.data || [];
+                renderUserSuggestions(data);
+            });
+    };
+
     const selectThread = (threadId) => {
         if (!threadId) {
             return;
@@ -278,6 +364,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
     refreshBtn?.addEventListener('click', () => {
         fetchThreads();
+    });
+
+    if (startToggleBtn && startWrapper && threadCreateEndpoint) {
+        startToggleBtn.addEventListener('click', () => {
+            startWrapper.classList.toggle('d-none');
+            if (!startWrapper.classList.contains('d-none')) {
+                startInput?.focus();
+            }
+        });
+    } else if (startToggleBtn && !threadCreateEndpoint) {
+        startToggleBtn.remove();
+    }
+
+    startCancelBtn?.addEventListener('click', () => {
+        hideStartForm();
+    });
+
+    startInput?.addEventListener('input', (event) => {
+        if (startForm) {
+            startForm.setAttribute('data-selected-user', '');
+        }
+        if (startHiddenInput) {
+            startHiddenInput.value = '';
+        }
+
+        const term = event.target.value.trim();
+
+        if (startSearchTimeout) {
+            clearTimeout(startSearchTimeout);
+        }
+
+        startSearchTimeout = setTimeout(() => {
+            requestUserSuggestions(term);
+        }, 250);
+    });
+
+    startForm?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        if (!threadCreateEndpoint) {
+            return;
+        }
+
+        const userId = startHiddenInput?.value || startForm.getAttribute('data-selected-user');
+
+        if (!userId) {
+            startInput?.focus();
+            return;
+        }
+
+        if (startSubmitBtn) {
+            startSubmitBtn.disabled = true;
+        }
+
+        axios.post(threadCreateEndpoint, { user_id: userId })
+            .then((response) => {
+                const data = response.data?.data || response.data;
+                if (!data) {
+                    return;
+                }
+                updateThreadInState(data);
+                renderThreads();
+                hideStartForm();
+                selectThread(data.id);
+            })
+            .finally(() => {
+                if (startSubmitBtn) {
+                    startSubmitBtn.disabled = false;
+                }
+            });
     });
 
     fetchThreads();
