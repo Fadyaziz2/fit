@@ -28,7 +28,7 @@ class ChatService
             ->withCount(['messages as unread_count' => function ($query) {
                 $query->whereNull('read_at')->where('sender_type', 'user');
             }])
-            ->orderByDesc('last_message_at')
+            ->orderByRaw('COALESCE(last_message_at, updated_at, created_at) DESC')
             ->paginate($perPage);
     }
 
