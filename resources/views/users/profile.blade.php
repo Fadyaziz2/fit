@@ -3,9 +3,6 @@
     <script>
         const dietPrintStrings = {
             heading: @json(__('message.diet_plan_for', ['name' => $data->name ?? __('message.user')])),
-            number: @json(__('message.srno')),
-            title: @json(__('message.title')),
-            mealTimes: @json(__('message.meal_times')),
             ingredients: @json(__('message.ingredients')),
             dayColumn: @json(__('message.day')),
             dayLabel: @json(__('message.day_number_label')),
@@ -14,7 +11,6 @@
             noIngredients: @json(__('message.no_ingredients_selected')),
             noMeals: @json(__('message.no_meal_selected')),
             empty: @json(__('message.no_diet_assigned')),
-            startDateLabel: @json(__('message.diet_start_date_heading')),
         };
 
         function escapeHtml(value) {
@@ -226,8 +222,6 @@
             const filterId = filterDietId !== null && filterDietId !== undefined && filterDietId !== ''
                 ? String(filterDietId)
                 : null;
-            const startDateLabel = dietPrintStrings.startDateLabel || '';
-
             $('#diet-data tr').each(function () {
                 const $row = $(this);
                 const dietId = String($row.data('diet-id') || '');
@@ -243,7 +237,7 @@
                     if (emptyText && !filterId) {
                         rows.push(`
                             <tr>
-                                <td colspan="4" class="print-empty">${escapeHtml(emptyText)}</td>
+                                <td colspan="1" class="print-empty">${escapeHtml(emptyText)}</td>
                             </tr>
                         `);
                     }
@@ -253,45 +247,11 @@
 
                 rowIndex += 1;
 
-                const $titleCell = $cells.eq(1);
-                const title = $titleCell.find('span').first().text().trim() || '-';
-                const customBadge = $titleCell.find('.badge').text().trim();
-                const imageSrc = $cells.eq(0).find('img').attr('src') || '';
                 const planDetails = parsePlanData($row.attr('data-plan'));
                 const planHtml = buildPlanHtml(planDetails);
-                const startDateDisplay = $row.data('start-date-display') || '';
-                const startDateValue = $row.data('start-date') || '';
-                const startDateText = startDateDisplay || startDateValue;
-                const startDateHtml = startDateText
-                    ? `<div class="print-diet-start-date">${escapeHtml(startDateLabel)} ${escapeHtml(startDateText)}</div>`
-                    : '';
-
-                const mealTimes = [];
-                $cells.eq(2).find('span').each(function () {
-                    const text = $(this).text().trim();
-                    if (text) {
-                        mealTimes.push(text);
-                    }
-                });
-
-                const mealTimesHtml = mealTimes.length
-                    ? `<ul class="print-meal-times">${mealTimes.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
-                    : `<span>-</span>`;
 
                 rows.push(`
                     <tr>
-                        <td class="print-index">${rowIndex}</td>
-                        <td>
-                            <div class="print-diet-info">
-                                ${imageSrc ? `<img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(title)}" class="print-diet-image">` : ''}
-                                <div class="print-diet-text">
-                                    <div class="print-diet-title">${escapeHtml(title)}</div>
-                                    ${startDateHtml}
-                                    ${customBadge ? `<div class="print-diet-badge">${escapeHtml(customBadge)}</div>` : ''}
-                                </div>
-                            </div>
-                        </td>
-                        <td>${mealTimesHtml}</td>
                         <td>${planHtml}</td>
                     </tr>
                 `);
@@ -300,7 +260,7 @@
             if (!rowIndex && !rows.length) {
                 rows.push(`
                     <tr>
-                        <td colspan="4" class="print-empty">${escapeHtml(dietPrintStrings.empty)}</td>
+                        <td colspan="1" class="print-empty">${escapeHtml(dietPrintStrings.empty)}</td>
                     </tr>
                 `);
             }
@@ -613,9 +573,6 @@
                             <table class="print-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 60px;">${escapeHtml(dietPrintStrings.number)}</th>
-                                        <th>${escapeHtml(dietPrintStrings.title)}</th>
-                                        <th>${escapeHtml(dietPrintStrings.mealTimes)}</th>
                                         <th>${escapeHtml(dietPrintStrings.ingredients)}</th>
                                     </tr>
                                 </thead>
