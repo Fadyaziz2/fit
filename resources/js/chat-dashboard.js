@@ -455,13 +455,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateThreadInState(normalized);
                 renderThreads();
                 hideStartForm();
-                const justCreated = response.status === 201;
-                const hasMessages = normalized.messages && normalized.messages.length > 0;
-                if (justCreated || !hasMessages) {
-                    renderActiveThread(normalized);
-                    subscribeToThread(normalized.id);
+                if (!data.last_message_at) {
+                    const threadData = {
+                        ...data,
+                        messages: Array.isArray(data.messages) ? data.messages : [],
+                    };
+                    renderActiveThread(threadData);
+                    subscribeToThread(data.id);
                 }
-                selectThread(normalized.id);
+                selectThread(data.id);
             })
             .finally(() => {
                 if (startSubmitBtn) {
