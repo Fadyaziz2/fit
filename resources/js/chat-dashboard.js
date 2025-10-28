@@ -92,6 +92,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Date(candidate);
     };
 
+    const normalizeThread = (thread) => {
+        if (!thread || typeof thread !== 'object') {
+            return thread;
+        }
+
+        const normalized = { ...thread };
+        const rawMessages = normalized.messages;
+
+        if (Array.isArray(rawMessages)) {
+            normalized.messages = rawMessages;
+        } else if (rawMessages && Array.isArray(rawMessages.data)) {
+            normalized.messages = rawMessages.data;
+        } else {
+            normalized.messages = [];
+        }
+
+        return normalized;
+    };
+
     const renderThreads = () => {
         listEl.innerHTML = '';
 
@@ -146,26 +165,28 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderActiveThread = (thread) => {
-        state.activeThreadId = thread.id;
+        const normalizedThread = normalizeThread(thread);
+
+        state.activeThreadId = normalizedThread.id;
 
         headerEl.innerHTML = '';
         const title = document.createElement('div');
-        title.innerHTML = `<h4 class="mb-0">${escapeHtml(thread.user?.name || `#${thread.id}`)}</h4>`;
+        title.innerHTML = `<h4 class="mb-0">${escapeHtml(normalizedThread.user?.name || `#${normalizedThread.id}`)}</h4>`;
         headerEl.appendChild(title);
 
         messagesEl.innerHTML = '';
 
-        if (!thread.messages || !thread.messages.length) {
+        if (!normalizedThread.messages || !normalizedThread.messages.length) {
             const empty = document.createElement('p');
             empty.className = 'text-muted text-center m-0';
             empty.textContent = 'No messages yet.';
             messagesEl.appendChild(empty);
         } else {
-            thread.messages.forEach((message) => appendMessageToView(message));
+            normalizedThread.messages.forEach((message) => appendMessageToView(message));
             messagesEl.scrollTop = messagesEl.scrollHeight;
         }
 
-        formEl.dataset.threadId = thread.id;
+        formEl.dataset.threadId = normalizedThread.id;
         textareaEl.disabled = false;
         sendBtn.disabled = false;
         textareaEl.focus();
@@ -199,11 +220,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateThreadInState = (thread) => {
-        const index = state.threads.findIndex((item) => item.id === thread.id);
+        const normalizedThread = normalizeThread(thread);
+        const index = state.threads.findIndex((item) => item.id === normalizedThread.id);
         if (index > -1) {
-            state.threads[index] = { ...state.threads[index], ...thread };
+            state.threads[index] = { ...state.threads[index], ...normalizedThread };
         } else {
-            state.threads.unshift(thread);
+            state.threads.unshift(normalizedThread);
         }
         state.threads.sort((a, b) => resolveThreadSortDate(b) - resolveThreadSortDate(a));
     };
@@ -318,8 +340,9 @@ document.addEventListener('DOMContentLoaded', () => {
         axios.get(threadEndpointTemplate.replace('__THREAD__', threadId))
             .then((response) => {
                 const data = response.data?.data || response.data;
-                updateThreadInState(data);
-                renderActiveThread(data);
+                const normalized = normalizeThread(data);
+                updateThreadInState(normalized);
+                renderActiveThread(normalized);
                 subscribeToThread(threadId);
             });
     };
@@ -428,7 +451,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data) {
                     return;
                 }
-                updateThreadInState(data);
+                const normalized = normalizeThread(data);
+                updateThreadInState(normalized);
                 renderThreads();
                 hideStartForm();
                 if (!data.last_message_at) {
