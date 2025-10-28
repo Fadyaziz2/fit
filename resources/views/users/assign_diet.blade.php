@@ -12,6 +12,12 @@
                 ->attribute('required', 'required') }}
         </div>
     </div>
+    <div class="row">
+        <div class="form-group col-md-6">
+            <label class="form-control-label">{!! __('message.diet_start_date_label_form') !!}</label>
+            <input type="date" name="start_date" class="form-control" value="{{ old('start_date', now()->toDateString()) }}" required>
+        </div>
+    </div>
     <div class="row g-3 d-none" id="serve-times-container"></div>
     <div class="modal-footer">
         <button type="button" class="btn btn-md btn-secondary" data-bs-dismiss="modal">{{ __('message.close') }}</button>

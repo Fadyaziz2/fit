@@ -451,6 +451,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
             'diet_id' => ['required', 'exists:diets,id'],
+            'start_date' => ['required', 'date'],
         ]);
 
         $diet = Diet::find($validated['diet_id']);
@@ -504,9 +505,14 @@ class UserController extends Controller
             $serveTimes = array_values($serveTimesInput['serve_times']);
         }
 
+        $startDate = Carbon::parse($validated['start_date'])->toDateString();
+
         AssignDiet::updateOrCreate(
             ['user_id' => $validated['user_id'], 'diet_id' => $validated['diet_id']],
-            ['serve_times' => $serveTimes]
+            [
+                'serve_times' => $serveTimes,
+                'start_date' => $startDate,
+            ]
         );
 
         $message = __('message.assigndiet');
