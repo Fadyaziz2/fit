@@ -15,10 +15,52 @@
             noMeals: @json(__('message.no_meal_selected')),
             printedOnLabel: @json(__('message.printed_on_label')),
             empty: @json(__('message.no_diet_assigned')),
+            startDateLabel: @json(__('message.diet_start_date_heading')),
         };
 
         function escapeHtml(value) {
             return $('<div>').text(value || '').html();
+        }
+
+        function normalizeCollection(value) {
+            if (Array.isArray(value)) {
+                return value;
+            }
+
+            if (value && typeof value === 'object') {
+                return Object.keys(value)
+                    .sort((firstKey, secondKey) => {
+                        const firstNumber = Number(firstKey);
+                        const secondNumber = Number(secondKey);
+
+                        if (!Number.isNaN(firstNumber) && !Number.isNaN(secondNumber)) {
+                            return firstNumber - secondNumber;
+                        }
+
+                        return String(firstKey).localeCompare(String(secondKey));
+                    })
+                    .map((key) => value[key]);
+            }
+
+            return [];
+        }
+
+        function normalizePlanStructure(plan) {
+            return normalizeCollection(plan).map((day) => {
+                const meals = normalizeCollection(day && day.meals).map((meal) => {
+                    const ingredients = normalizeCollection(meal && meal.ingredients);
+
+                    return {
+                        ...meal,
+                        ingredients,
+                    };
+                });
+
+                return {
+                    ...day,
+                    meals,
+                };
+            });
         }
 
         function parsePlanData(value) {
@@ -26,9 +68,7 @@
                 return [];
             }
 
-            if (Array.isArray(value)) {
-                return value;
-            }
+            let parsed = value;
 
             if (typeof value === 'string') {
                 const trimmed = value.trim();
@@ -38,15 +78,14 @@
                 }
 
                 try {
-                    const parsed = JSON.parse(trimmed);
-                    return Array.isArray(parsed) ? parsed : [];
+                    parsed = JSON.parse(trimmed);
                 } catch (error) {
                     return [];
                 }
             }
 
-            if (typeof value === 'object') {
-                return Array.isArray(value) ? value : [];
+            if (Array.isArray(parsed) || (parsed && typeof parsed === 'object')) {
+                return normalizePlanStructure(parsed);
             }
 
             return [];
@@ -78,7 +117,7 @@
             };
 
             const normalizedDays = planDetails.map((day) => {
-                const meals = day && Array.isArray(day.meals) ? day.meals.slice() : [];
+                const meals = normalizeCollection(day && day.meals).slice();
 
                 meals.sort((first, second) => {
                     const firstNumber = first && Object.prototype.hasOwnProperty.call(first, 'meal_number') ? Number(first.meal_number) : NaN;
@@ -128,7 +167,7 @@
                     const mealTime = mealTimeValue
                         ? `<div class="print-plan-meal-time">${escapeHtml(mealTimeValue)}</div>`
                         : '';
-                    const mealIngredients = meal && Array.isArray(meal.ingredients) ? meal.ingredients : [];
+                    const mealIngredients = normalizeCollection(meal && meal.ingredients);
 
                     const ingredientsHtml = mealIngredients.length
                         ? `<ul class="print-ingredients">${mealIngredients.map((ingredient) => {
@@ -179,17 +218,27 @@
             `;
         }
 
-        function buildDietPrintRows() {
+        function buildDietPrintRows(filterDietId = null) {
             const rows = [];
             let rowIndex = 0;
+            const filterId = filterDietId !== null && filterDietId !== undefined && filterDietId !== ''
+                ? String(filterDietId)
+                : null;
+            const startDateLabel = dietPrintStrings.startDateLabel || '';
 
             $('#diet-data tr').each(function () {
                 const $row = $(this);
+                const dietId = String($row.data('diet-id') || '');
+
+                if (filterId && dietId !== filterId) {
+                    return;
+                }
+
                 const $cells = $row.find('td');
 
                 if ($cells.length <= 1) {
                     const emptyText = $(this).text().trim();
-                    if (emptyText) {
+                    if (emptyText && !filterId) {
                         rows.push(`
                             <tr>
                                 <td colspan="4" class="print-empty">${escapeHtml(emptyText)}</td>
@@ -208,6 +257,12 @@
                 const imageSrc = $cells.eq(0).find('img').attr('src') || '';
                 const planDetails = parsePlanData($row.attr('data-plan'));
                 const planHtml = buildPlanHtml(planDetails);
+                const startDateDisplay = $row.data('start-date-display') || '';
+                const startDateValue = $row.data('start-date') || '';
+                const startDateText = startDateDisplay || startDateValue;
+                const startDateHtml = startDateText
+                    ? `<div class="print-diet-start-date">${escapeHtml(startDateLabel)} ${escapeHtml(startDateText)}</div>`
+                    : '';
 
                 const mealTimes = [];
                 $cells.eq(2).find('span').each(function () {
@@ -229,6 +284,7 @@
                                 ${imageSrc ? `<img src="${escapeHtml(imageSrc)}" alt="${escapeHtml(title)}" class="print-diet-image">` : ''}
                                 <div class="print-diet-text">
                                     <div class="print-diet-title">${escapeHtml(title)}</div>
+                                    ${startDateHtml}
                                     ${customBadge ? `<div class="print-diet-badge">${escapeHtml(customBadge)}</div>` : ''}
                                 </div>
                             </div>
@@ -250,8 +306,8 @@
             return rows.join('');
         }
 
-        function openDietPrintWindow() {
-            const tableRows = buildDietPrintRows();
+        function openDietPrintWindow(filterDietId = null) {
+            const tableRows = buildDietPrintRows(filterDietId);
             const printWindow = window.open('', '', 'width=900,height=650');
 
             if (!printWindow) {
@@ -360,6 +416,12 @@
                                 font-weight: 600;
                                 font-size: 16px;
                                 margin-bottom: 4px;
+                            }
+
+                            .print-diet-start-date {
+                                font-size: 12px;
+                                color: #6b7280;
+                                margin-bottom: 6px;
                             }
 
                             .print-diet-badge {
@@ -611,6 +673,11 @@
 
             $(document).on('click', '#print-diet-plan', function () {
                 openDietPrintWindow();
+            });
+
+            $(document).on('click', '[data-print-diet-id]', function () {
+                const dietId = $(this).data('print-diet-id');
+                openDietPrintWindow(dietId);
             });
 
             let weight_chart_options = generateChartOptions( "{{__('message.weight')}}" , [], []);
