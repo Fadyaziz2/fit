@@ -409,6 +409,7 @@ return [
     'about_user' => 'حول المستخدم',
     'data' => 'بيانات',
     'notes' => 'ملحوظات',
+    'cancel_reason' => 'سبب الإلغاء',
     'disliked_ingredients_title' => 'الأكلات غير المفضلة',
     'disliked_ingredients_hint' => 'اختر المكونات التي لا يفضلها المستخدم.',
     'health_conditions_title' => 'الأمراض والحالات الصحية',

@@ -67,7 +67,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">{{ __('message.status') }}</label>
-                                    <select name="status" class="form-select" required>
+                                    <select name="status" class="form-select" id="free-request-status" required>
                                         <option value="pending" {{ old('status', $freeRequest->status) === 'pending' ? 'selected' : '' }}>Pending</option>
                                         <option value="converted" {{ old('status', $freeRequest->status) === 'converted' ? 'selected' : '' }}>Converted</option>
                                         <option value="cancelled" {{ old('status', $freeRequest->status) === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
@@ -114,9 +114,9 @@
                                     @enderror
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label">{{ __('message.notes') }}</label>
-                                <textarea name="admin_notes" class="form-control" rows="3">{{ old('admin_notes', $freeRequest->admin_notes) }}</textarea>
+                            <div class="mb-3 {{ old('status', $freeRequest->status) === 'cancelled' ? '' : 'd-none' }}" id="cancel-notes-wrapper">
+                                <label class="form-label">{{ __('message.cancel_reason') }}</label>
+                                <textarea name="admin_notes" class="form-control" rows="3" {{ old('status', $freeRequest->status) === 'cancelled' ? 'required' : '' }}>{{ old('admin_notes', $freeRequest->admin_notes) }}</textarea>
                                 @error('admin_notes')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
@@ -139,12 +139,33 @@
             const selectedTimeInput = document.getElementById('appointment_time_input');
             const selectedTimeLabel = document.getElementById('selected-slot-label');
             const fetchUrl = "{{ route('clinic.free_requests.available_slots') }}";
+            const statusSelect = document.getElementById('free-request-status');
+            const cancelNotesWrapper = document.getElementById('cancel-notes-wrapper');
+            const cancelNotesField = cancelNotesWrapper ? cancelNotesWrapper.querySelector('textarea[name="admin_notes"]') : null;
 
             const texts = {
                 selectSpecialistAndDate: "{{ __('Select a specialist and date to view available slots.') }}",
                 noSlots: "{{ __('No slots available for the selected date.') }}",
                 loading: "{{ __('Loading available slots...') }}",
             };
+
+            const toggleCancelNotes = () => {
+                if (!statusSelect || !cancelNotesWrapper || !cancelNotesField) {
+                    return;
+                }
+
+                if (statusSelect.value === 'cancelled') {
+                    cancelNotesWrapper.classList.remove('d-none');
+                    cancelNotesField.setAttribute('required', 'required');
+                } else {
+                    cancelNotesWrapper.classList.add('d-none');
+                    cancelNotesField.removeAttribute('required');
+                }
+            };
+
+            toggleCancelNotes();
+
+            statusSelect?.addEventListener('change', toggleCancelNotes);
 
             const setSelectedTime = (value) => {
                 selectedTimeInput.value = value || '';
