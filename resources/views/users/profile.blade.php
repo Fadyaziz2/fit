@@ -1,8 +1,40 @@
+@php
+    $dietPrintName = $data->display_name ?? null;
+
+    if (! $dietPrintName) {
+        $nameParts = [];
+
+        if (! empty($data->first_name)) {
+            $nameParts[] = $data->first_name;
+        }
+
+        if (! empty($data->last_name)) {
+            $nameParts[] = $data->last_name;
+        }
+
+        if ($nameParts) {
+            $dietPrintName = implode(' ', $nameParts);
+        }
+    }
+
+    if (! $dietPrintName) {
+        if (! empty($data->username)) {
+            $dietPrintName = $data->username;
+        } elseif (! empty($data->email)) {
+            $dietPrintName = $data->email;
+        }
+    }
+
+    if (! $dietPrintName) {
+        $dietPrintName = __('message.user');
+    }
+@endphp
+
 @push('scripts')
 {{ $dataTable->scripts() }}
     <script>
         const dietPrintStrings = {
-            heading: @json(__('message.diet_plan_for', ['name' => $data->name ?? __('message.user')])),
+            heading: @json(__('message.diet_plan_for', ['name' => $dietPrintName])),
             ingredients: @json(__('message.ingredients')),
             dayColumn: @json(__('message.day')),
             dayLabel: @json(__('message.day_number_label')),
