@@ -28,13 +28,20 @@
     if (! $dietPrintName) {
         $dietPrintName = __('message.user');
     }
+
+    $dietPrintSpecialistName = optional($data->userProfile?->specialist)->name;
+    $dietPrintHeading = __('message.diet_plan_for', ['name' => $dietPrintName]);
+
+    if ($dietPrintSpecialistName) {
+        $dietPrintHeading .= __('message.diet_plan_by_specialist', ['name' => $dietPrintSpecialistName]);
+    }
 @endphp
 
 @push('scripts')
 {{ $dataTable->scripts() }}
     <script>
         const dietPrintStrings = {
-            heading: @json(__('message.diet_plan_for', ['name' => $dietPrintName])),
+            heading: @json($dietPrintHeading),
             ingredients: @json(__('message.ingredients')),
             dayColumn: @json(__('message.day')),
             dayLabel: @json(__('message.day_number_label')),
@@ -300,9 +307,12 @@
             return rows.join('');
         }
 
-        function openDietPrintWindow(filterDietId = null) {
+        function openDietPrintWindow(filterDietId = null, orientation = 'portrait') {
             const tableRows = buildDietPrintRows(filterDietId);
             const printFrame = document.createElement('iframe');
+
+            const orientationValue = orientation === 'landscape' ? 'landscape' : 'portrait';
+            const pageOrientationCss = `@page { size: A4 ${orientationValue}; margin: 12mm; }`;
 
             printFrame.setAttribute('aria-hidden', 'true');
             printFrame.style.position = 'fixed';
@@ -329,6 +339,7 @@
                         <meta charset="utf-8">
                         <title>${escapeHtml(dietPrintStrings.heading)}</title>
                         <style>
+                            ${pageOrientationCss}
                             :root {
                                 color-scheme: light;
                             }
@@ -543,18 +554,6 @@
                             }
 
                             @media print {
-                                @page {
-                                    size: A4 portrait;
-                                    margin: 12mm;
-                                }
-
-                                @page {
-                                    @top-left { content: none !important; }
-                                    @top-right { content: none !important; }
-                                    @bottom-left { content: none !important; }
-                                    @bottom-right { content: none !important; }
-                                }
-
                                 body {
                                     padding: 0;
                                     background-color: #ffffff;
@@ -710,12 +709,16 @@
             getAssignList('product');
 
             $(document).on('click', '#print-diet-plan', function () {
-                openDietPrintWindow();
+                const orientationSelect = $('#diet-print-orientation');
+                const orientation = orientationSelect.length ? orientationSelect.val() : 'portrait';
+                openDietPrintWindow(null, orientation);
             });
 
             $(document).on('click', '[data-print-diet-id]', function () {
                 const dietId = $(this).data('print-diet-id');
-                openDietPrintWindow(dietId);
+                const orientationSelect = $('#diet-print-orientation');
+                const orientation = orientationSelect.length ? orientationSelect.val() : 'portrait';
+                openDietPrintWindow(dietId, orientation);
             });
 
             let weight_chart_options = generateChartOptions( "{{__('message.weight')}}" , [], []);
@@ -996,6 +999,13 @@
                         <h4 class="card-title">{{__('message.assigndiet')}}</h4>
                     </div>
                     <div class="d-flex align-items-center gap-2 text-center ms-3 ms-lg-0 ms-md-0">
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="diet-print-orientation" class="form-label mb-0 small text-muted">{{ __('message.print_orientation') }}</label>
+                            <select id="diet-print-orientation" class="form-select form-select-sm w-auto">
+                                <option value="portrait">{{ __('message.orientation_portrait') }}</option>
+                                <option value="landscape">{{ __('message.orientation_landscape') }}</option>
+                            </select>
+                        </div>
                         <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" id="print-diet-plan">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M17 8V4H7V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
