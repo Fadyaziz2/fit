@@ -210,12 +210,8 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         $appointmentUserIds = SpecialistAppointment::whereIn('specialist_id', $specialistIds)
             ->pluck('user_id');
 
-        $freeRequestUserIds = FreeBookingRequest::whereIn('specialist_id', $specialistIds)
-            ->pluck('user_id');
-
         return $this->managedUserIdsCache = $userIds
             ->merge($appointmentUserIds)
-            ->merge($freeRequestUserIds)
             ->filter()
             ->map(fn ($id) => (int) $id)
             ->unique()

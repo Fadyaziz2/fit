@@ -4,7 +4,6 @@ namespace Tests\Unit;
 
 use App\DataTables\UsersDataTable;
 use App\Models\Branch;
-use App\Models\FreeBookingRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\RolePermissionScope;
@@ -137,35 +136,6 @@ class UserManagedIdsTest extends TestCase
             'type' => 'regular',
             'status' => 'pending',
             'notes' => null,
-        ]);
-
-        $this->actingAs($this->superUser);
-
-        $ids = (new UsersDataTable())->query()->pluck('id');
-
-        $this->assertSame([$client->id], $ids->all());
-    }
-
-    /** @test */
-    public function it_includes_users_with_free_booking_requests(): void
-    {
-        $client = User::create([
-            'username' => 'freerequestuser',
-            'first_name' => 'Free',
-            'last_name' => 'Request',
-            'display_name' => 'Free Request',
-            'email' => 'free@example.com',
-            'password' => Hash::make('password'),
-            'user_type' => 'user',
-            'status' => 'active',
-        ]);
-
-        FreeBookingRequest::create([
-            'user_id' => $client->id,
-            'specialist_id' => $this->specialist->id,
-            'branch_id' => $this->branch->id,
-            'phone' => '123456789',
-            'status' => 'pending',
         ]);
 
         $this->actingAs($this->superUser);
