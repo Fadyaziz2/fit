@@ -11,18 +11,23 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Permission\Traits\HasRoles;
 
+use App\Models\RolePermissionScope;
+use App\Support\PermissionScope as PermissionScopeHelper;
+
 use App\Models\Branch;
+use App\Models\CartItem;
+use App\Models\FreeBookingRequest;
 use App\Models\Ingredient;
 use App\Models\Product;
-use App\Models\UserDisease;
-use App\Models\UserProductRecommendation;
-use App\Models\UserFavouriteProduct;
-use App\Models\UserFavouriteDiet;
-use App\Models\UserFavouriteWorkout;
-use App\Models\CartItem;
+use App\Models\Specialist;
 use App\Models\SpecialistAppointment;
-use App\Models\FreeBookingRequest;
 use App\Models\UserBodyComposition;
+use App\Models\UserDisease;
+use App\Models\UserFavouriteDiet;
+use App\Models\UserFavouriteProduct;
+use App\Models\UserFavouriteWorkout;
+use App\Models\UserProductRecommendation;
+use App\Models\UserProfile;
 
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
@@ -55,6 +60,10 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         'is_subscribe'  => 'integer',
         'can_access_all_branches' => 'boolean',
     ];
+
+    protected array $permissionScopeCache = [];
+
+    protected ?array $managedUserIdsCache = null;
 
     public function userProfile() {
         return $this->hasOne(UserProfile::class, 'user_id', 'id');
@@ -136,6 +145,71 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     public function branches()
     {
         return $this->belongsToMany(Branch::class)->withTimestamps();
+    }
+
+    public function managedSpecialists()
+    {
+        return $this->hasMany(Specialist::class, 'super_user_id');
+    }
+
+    public function permissionScope(string $permissionName): string
+    {
+        $normalized = PermissionScopeHelper::normalize($permissionName);
+
+        if (! $normalized) {
+            return RolePermissionScope::SCOPE_ALL;
+        }
+
+        if (! array_key_exists($normalized, $this->permissionScopeCache)) {
+            $this->permissionScopeCache[$normalized] = $this->resolvePermissionScope($normalized);
+        }
+
+        return $this->permissionScopeCache[$normalized];
+    }
+
+    protected function resolvePermissionScope(string $permissionName): string
+    {
+        if ($this->user_type === 'admin') {
+            return RolePermissionScope::SCOPE_ALL;
+        }
+
+        $this->loadMissing('roles.permissionScopes');
+
+        $scopes = collect();
+
+        foreach ($this->roles as $role) {
+            foreach ($role->permissionScopes->where('permission_name', $permissionName) as $scope) {
+                if ($scope->scope === RolePermissionScope::SCOPE_ALL) {
+                    return RolePermissionScope::SCOPE_ALL;
+                }
+
+                $scopes->push($scope->scope);
+            }
+        }
+
+        return $scopes->contains(RolePermissionScope::SCOPE_PRIVATE)
+            ? RolePermissionScope::SCOPE_PRIVATE
+            : RolePermissionScope::SCOPE_ALL;
+    }
+
+    public function managedUserIds(): array
+    {
+        if ($this->managedUserIdsCache !== null) {
+            return $this->managedUserIdsCache;
+        }
+
+        $specialistIds = $this->managedSpecialists()->pluck('id');
+
+        if ($specialistIds->isEmpty()) {
+            return $this->managedUserIdsCache = [];
+        }
+
+        return $this->managedUserIdsCache = UserProfile::whereIn('specialist_id', $specialistIds)
+            ->pluck('user_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     public function hasAccessToAllBranches(): bool

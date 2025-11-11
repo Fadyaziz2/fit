@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use InvalidArgumentException;
+use App\Models\RolePermissionScope;
 use App\Models\UserProductRecommendation;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Models\Specialist;
@@ -128,6 +129,8 @@ class UserController extends Controller
         ])->findOrFail($id);
         $data->load('media');
 
+        $this->ensureUserScopeAccess($data);
+
         $subscriptions = Subscription::where('user_id', $id)->get();
 
         $activeSubscription = Subscription::with(['package', 'activeFreeze', 'scheduledFreezes'])
@@ -226,6 +229,8 @@ class UserController extends Controller
         }
 
         $data = User::with('userProfile')->findOrFail($id);
+
+        $this->ensureUserScopeAccess($data);
         $assets = ['phone'];
 
         $pageTitle = __('message.update_form_title',[ 'form' => __('message.user')]);
@@ -250,7 +255,9 @@ class UserController extends Controller
             return redirect()->back()->withErrors($message);
         }
 
-        $user = User::with('userProfile')->findOrFail($id);      
+        $user = User::with('userProfile')->findOrFail($id);
+
+        $this->ensureUserScopeAccess($user);
         $request['display_name'] = $request['first_name']." ".$request['last_name'];
         $user->removeRole($user->user_type);
         
@@ -288,6 +295,8 @@ class UserController extends Controller
         }
 
         $user = User::findOrFail($id);
+
+        $this->ensureUserScopeAccess($user);
         $status = 'errors';
         $message = __('message.not_found_entry', ['name' => __('message.user')]);
 
@@ -312,6 +321,8 @@ class UserController extends Controller
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
+
+        $this->ensureUserScopeAccess($user);
 
         $request->validate([
             'attachments' => ['required', 'array'],
@@ -1404,5 +1415,21 @@ class UserController extends Controller
             'data' => $data,
             'category' => $category
         ]);
+    }
+    protected function ensureUserScopeAccess(User $user): void
+    {
+        $current = auth()->user();
+
+        if (! $current) {
+            abort(403, __('message.permission_denied_for_account'));
+        }
+
+        if ($current->permissionScope('user-list') !== RolePermissionScope::SCOPE_PRIVATE) {
+            return;
+        }
+
+        if (! in_array($user->id, $current->managedUserIds(), true)) {
+            abort(403, __('message.permission_denied_for_account'));
+        }
     }
 }

@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Models\RolePermissionScope;
 use Illuminate\Support\Facades\Validator;
 use App\Helpers\AuthHelper;
 use Illuminate\Support\Facades\Artisan;
+use App\Support\PermissionScope as PermissionScopeHelper;
 
 class PermissionController extends Controller
 {
@@ -29,7 +31,31 @@ class PermissionController extends Controller
         }
         $roles = $roles->get();
 
-        return view('permission.index',compact(['roles','permissions','pageTitle','auth_user']));
+        $scopedPermissions = PermissionScopeHelper::SCOPED_PERMISSIONS;
+
+        $roleScopes = RolePermissionScope::query()
+            ->whereIn('role_id', $roles->pluck('id'))
+            ->whereIn('permission_name', $scopedPermissions)
+            ->get()
+            ->groupBy('role_id')
+            ->map(function ($items) {
+                return $items->mapWithKeys(fn ($scope) => [$scope->permission_name => $scope->scope])->all();
+            })->all();
+
+        $scopeOptions = [
+            RolePermissionScope::SCOPE_ALL => __('message.scope_all'),
+            RolePermissionScope::SCOPE_PRIVATE => __('message.scope_private'),
+        ];
+
+        return view('permission.index', compact(
+            'roles',
+            'permissions',
+            'pageTitle',
+            'auth_user',
+            'roleScopes',
+            'scopeOptions',
+            'scopedPermissions'
+        ));
     }
 
     /**
@@ -54,6 +80,7 @@ class PermissionController extends Controller
     {
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
         $data = isset($request->permission) ? $request->permission : [];
+        $scopeData = $request->input('permission_scope', []);
         $permission_list = Permission::orderBy('name','ASC')->get()->unique('name');
         $roles=Role::whereNotIn('name',['admin'])->get()->map(function($role) use($permission_list){
             $role->revokePermissionTo($permission_list);
@@ -67,6 +94,34 @@ class PermissionController extends Controller
                 }
             }
         }
+
+        $allRoles = Role::all()->keyBy('name');
+
+        foreach (PermissionScopeHelper::SCOPED_PERMISSIONS as $permissionName) {
+            foreach ($allRoles as $roleName => $role) {
+                $assigned = in_array($roleName, $data[$permissionName] ?? [], true);
+
+                if (! $assigned) {
+                    RolePermissionScope::query()
+                        ->where('role_id', $role->id)
+                        ->where('permission_name', $permissionName)
+                        ->delete();
+                    continue;
+                }
+
+                $scopeValue = $scopeData[$permissionName][$roleName] ?? RolePermissionScope::SCOPE_ALL;
+
+                if (! in_array($scopeValue, array_keys(RolePermissionScope::options()), true)) {
+                    $scopeValue = RolePermissionScope::SCOPE_ALL;
+                }
+
+                RolePermissionScope::updateOrCreate(
+                    ['role_id' => $role->id, 'permission_name' => $permissionName],
+                    ['scope' => $scopeValue]
+                );
+            }
+        }
+
         return redirect()->route('permission.index')->withSuccess(__('message.save_form',['form' => __('message.permission')]));
     }
 

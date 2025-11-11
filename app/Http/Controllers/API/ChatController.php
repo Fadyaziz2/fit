@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ChatMessageResource;
 use App\Http\Resources\ChatThreadResource;
 use App\Models\ChatThread;
+use App\Models\RolePermissionScope;
 use App\Services\ChatService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -31,7 +32,7 @@ class ChatController extends Controller
             return new ChatThreadResource($thread->setRelation('messages', $messages));
         }
 
-        $threads = $this->chat->listThreadsForAdmin($request->integer('per_page', 15));
+        $threads = $this->chat->listThreadsForAdmin($authUser, $request->integer('per_page', 15));
 
         return ChatThreadResource::collection($threads);
     }
@@ -45,6 +46,8 @@ class ChatController extends Controller
         }
 
         $thread->loadMissing(['user:id,first_name,last_name,display_name,email', 'assignedTo:id,first_name,last_name,display_name']);
+
+        $this->ensureThreadAccessible($authUser, $thread);
 
         $messages = $this->chat->fetchThreadMessages(
             $thread,
@@ -70,10 +73,27 @@ class ChatController extends Controller
 
     public function sendToThread(Request $request, ChatThread $thread)
     {
+        $this->ensureThreadAccessible($request->user(), $thread);
+
         $message = $this->chat->sendMessage($request->user(), $thread, $request->validate([
             'message' => ['required', 'string'],
         ])['message']);
 
         return new ChatMessageResource($message);
+    }
+
+    protected function ensureThreadAccessible($authUser, ChatThread $thread): void
+    {
+        if ($authUser->user_type === 'user') {
+            return;
+        }
+
+        if ($authUser->permissionScope('chat-center-list') !== RolePermissionScope::SCOPE_PRIVATE) {
+            return;
+        }
+
+        if (! in_array($thread->user_id, $authUser->managedUserIds(), true)) {
+            abort(403);
+        }
     }
 }
