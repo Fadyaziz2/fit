@@ -240,7 +240,7 @@
                         </g>
                     </svg></i>')
             ->nickname('diet')
-            ->data('permission', 'diet-list')
+            ->data('permission', ['diet', 'diet-list', 'ingredient', 'ingredient-list', 'categorydiet', 'categorydiet-list'])
             ->link->attr(['class' => 'nav-link' ])
             ->href('#diet');
 
