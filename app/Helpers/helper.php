@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\AppSetting;
 use App\Models\LanguageVersionDetail;
 use App\Models\Setting;
+use App\Models\Permission as PermissionModel;
 use App\Models\Screen;
 use App\Models\DefaultKeyword;
 use App\Models\LanguageList;
@@ -75,20 +76,71 @@ function checkMenuRoleAndPermission($menu)
         }
 
         if($menu->data('permission') != null) {
-            if( is_array($menu->data('permission')) ) {
-                foreach($menu->data('permission') as $permission) {
-                    if(auth()->user()->can($permission) ) {
-                        return true;
-                    }
-                }
-            } else {
-                if(auth()->user()->can($menu->data('permission')) ) {
+            $permissions = is_array($menu->data('permission'))
+                ? $menu->data('permission')
+                : [$menu->data('permission')];
+
+            foreach ($permissions as $permission) {
+                if (userHasPermissionIncludingParents($permission)) {
                     return true;
                 }
             }
         }
     }
     return false;
+}
+
+function userHasPermissionIncludingParents(string $permissionName): bool
+{
+    $user = auth()->user();
+
+    if (! $user) {
+        return false;
+    }
+
+    static $resolvedPermissions = [];
+
+    if (! array_key_exists($permissionName, $resolvedPermissions)) {
+        $resolvedPermissions[$permissionName] = resolvePermissionHierarchy($permissionName);
+    }
+
+    foreach ($resolvedPermissions[$permissionName] as $candidate) {
+        if ($user->can($candidate)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function resolvePermissionHierarchy(string $permissionName): array
+{
+    static $cache = [];
+
+    if (isset($cache[$permissionName])) {
+        return $cache[$permissionName];
+    }
+
+    $names = [$permissionName];
+
+    $permission = PermissionModel::query()
+        ->select('name', 'parent_id')
+        ->where('name', $permissionName)
+        ->first();
+
+    while ($permission && $permission->parent_id) {
+        $permission = PermissionModel::query()
+            ->select('name', 'parent_id')
+            ->find($permission->parent_id);
+
+        if (! $permission) {
+            break;
+        }
+
+        $names[] = $permission->name;
+    }
+
+    return $cache[$permissionName] = $names;
 }
 
 function checkRecordExist($table_list,$column_name,$id){
