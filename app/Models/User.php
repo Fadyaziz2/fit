@@ -204,8 +204,19 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
             return $this->managedUserIdsCache = [];
         }
 
-        return $this->managedUserIdsCache = UserProfile::whereIn('specialist_id', $specialistIds)
-            ->pluck('user_id')
+        $userIds = UserProfile::whereIn('specialist_id', $specialistIds)
+            ->pluck('user_id');
+
+        $appointmentUserIds = SpecialistAppointment::whereIn('specialist_id', $specialistIds)
+            ->pluck('user_id');
+
+        $freeRequestUserIds = FreeBookingRequest::whereIn('specialist_id', $specialistIds)
+            ->pluck('user_id');
+
+        return $this->managedUserIdsCache = $userIds
+            ->merge($appointmentUserIds)
+            ->merge($freeRequestUserIds)
+            ->filter()
             ->map(fn ($id) => (int) $id)
             ->unique()
             ->values()
