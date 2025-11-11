@@ -28,9 +28,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Models\Specialist;
 use App\Support\MealPlan;
 use Illuminate\Support\Collection;
+use App\Traits\HandlesBranchAccess;
 
 class UserController extends Controller
 {
+    use HandlesBranchAccess;
+
     /**
      * Display a listing of the resource.
      *
@@ -162,7 +165,28 @@ class UserController extends Controller
 
         $cartItems = $data->cartItems;
 
-        $specialists = Specialist::with(['branch', 'branches'])->orderBy('name')->get();
+        $branchScopedUser = auth()->user();
+        $accessibleBranchIds = null;
+
+        if ($branchScopedUser instanceof User) {
+            $accessibleBranchIds = $this->getAccessibleBranchIds($branchScopedUser);
+        }
+
+        $specialists = Specialist::with(['branch', 'branches'])
+            ->when($accessibleBranchIds !== null, function ($query) use ($accessibleBranchIds) {
+                $query->where(function ($innerQuery) use ($accessibleBranchIds) {
+                    $innerQuery->whereIn('branch_id', $accessibleBranchIds)
+                        ->orWhereHas('branches', function ($branchQuery) use ($accessibleBranchIds) {
+                            $branchQuery->whereIn('branches.id', $accessibleBranchIds);
+                        })
+                        ->orWhere(function ($unassignedQuery) {
+                            $unassignedQuery->whereNull('branch_id')
+                                ->whereDoesntHave('branches');
+                        });
+                });
+            })
+            ->orderBy('name')
+            ->get();
 
         $weightEntries = $data->userGraph()
             ->where('type', 'weight')
