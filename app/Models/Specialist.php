@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Specialist extends Model
@@ -12,6 +13,7 @@ class Specialist extends Model
 
     protected $fillable = [
         'branch_id',
+        'super_user_id',
         'name',
         'phone',
         'email',
@@ -22,6 +24,7 @@ class Specialist extends Model
 
     protected $casts = [
         'branch_id' => 'integer',
+        'super_user_id' => 'integer',
         'is_active' => 'boolean',
     ];
 
@@ -53,5 +56,10 @@ class Specialist extends Model
     public function users()
     {
         return $this->hasMany(UserProfile::class);
+    }
+
+    public function superUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'super_user_id');
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\BulkEmail;
+use App\Models\RolePermissionScope;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -19,9 +20,13 @@ class EmailController extends Controller
     {
         $pageTitle = __('message.email_center');
         $assets = ['select2'];
-        $users = User::where('user_type', 'user')
+        $query = User::where('user_type', 'user')
             ->whereNotNull('email')
-            ->where('email', '!=', '')
+            ->where('email', '!=', '');
+
+        $this->applyUserScope(auth()->user(), $query, 'email-center-list');
+
+        $users = $query
             ->orderBy('display_name')
             ->get()
             ->pluck('display_name', 'id');
@@ -43,6 +48,8 @@ class EmailController extends Controller
             ->where('user_type', 'user')
             ->whereNotNull('email')
             ->where('email', '!=', '');
+
+        $this->applyUserScope($request->user(), $query, 'email-center-send');
 
         if ($data['target'] === 'selected') {
             $selectedUsers = $data['users'] ?? [];
@@ -92,5 +99,19 @@ class EmailController extends Controller
         return redirect()->route('emails.index')->withSuccess(
             __('message.email_send_success', ['count' => $sent])
         );
+    }
+    protected function applyUserScope($admin, $query, string $permissionName): void
+    {
+        if (! $admin || $admin->permissionScope($permissionName) !== RolePermissionScope::SCOPE_PRIVATE) {
+            return;
+        }
+
+        $userIds = $admin->managedUserIds();
+
+        if (empty($userIds)) {
+            $query->whereRaw('1 = 0');
+        } else {
+            $query->whereIn('id', $userIds);
+        }
     }
 }

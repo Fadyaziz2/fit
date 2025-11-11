@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\RolePermissionScope;
 use App\Models\User;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
@@ -18,9 +19,13 @@ class SmsController extends Controller
     {
         $pageTitle = __('message.sms_center');
         $assets = ['select2'];
-        $users = User::where('user_type', 'user')
+        $query = User::where('user_type', 'user')
             ->whereNotNull('phone_number')
-            ->where('phone_number', '!=', '')
+            ->where('phone_number', '!=', '');
+
+        $this->applyUserScope(auth()->user(), $query, 'sms-center-list');
+
+        $users = $query
             ->orderBy('display_name')
             ->get()
             ->pluck('display_name', 'id');
@@ -41,6 +46,8 @@ class SmsController extends Controller
             ->where('user_type', 'user')
             ->whereNotNull('phone_number')
             ->where('phone_number', '!=', '');
+
+        $this->applyUserScope($request->user(), $query, 'sms-center-send');
 
         if ($data['target'] === 'selected') {
             $selectedUsers = $data['users'] ?? [];
@@ -88,5 +95,19 @@ class SmsController extends Controller
         return redirect()->route('sms.index')->withSuccess(
             __('message.sms_send_success', ['count' => $sent])
         );
+    }
+    protected function applyUserScope($admin, $query, string $permissionName): void
+    {
+        if (! $admin || $admin->permissionScope($permissionName) !== RolePermissionScope::SCOPE_PRIVATE) {
+            return;
+        }
+
+        $userIds = $admin->managedUserIds();
+
+        if (empty($userIds)) {
+            $query->whereRaw('1 = 0');
+        } else {
+            $query->whereIn('id', $userIds);
+        }
     }
 }

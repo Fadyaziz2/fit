@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Branch;
 use App\Models\Specialist;
+use App\Models\User;
 use App\Traits\HandlesBranchAccess;
 use Illuminate\Http\Request;
 
@@ -49,7 +50,12 @@ class ClinicSpecialistController extends Controller
             })
             ->pluck('name', 'id');
 
-        return view('clinic.specialists.form', compact('pageTitle', 'branches'));
+        $superUsers = User::query()
+            ->where('user_type', '!=', 'user')
+            ->orderBy('display_name')
+            ->pluck('display_name', 'id');
+
+        return view('clinic.specialists.form', compact('pageTitle', 'branches', 'superUsers'));
     }
 
     public function store(Request $request)
@@ -64,6 +70,7 @@ class ClinicSpecialistController extends Controller
             'specialty' => 'nullable|string|max:191',
             'branch_ids' => 'required|array|min:1',
             'branch_ids.*' => 'exists:branches,id',
+            'super_user_id' => 'nullable|exists:users,id',
             'is_active' => 'nullable|boolean',
             'notes' => 'nullable|string',
         ]);
@@ -108,7 +115,12 @@ class ClinicSpecialistController extends Controller
 
         $specialist->load('branches');
 
-        return view('clinic.specialists.form', compact('pageTitle', 'branches', 'specialist'));
+        $superUsers = User::query()
+            ->where('user_type', '!=', 'user')
+            ->orderBy('display_name')
+            ->pluck('display_name', 'id');
+
+        return view('clinic.specialists.form', compact('pageTitle', 'branches', 'specialist', 'superUsers'));
     }
 
     public function update(Request $request, Specialist $specialist)
@@ -124,6 +136,7 @@ class ClinicSpecialistController extends Controller
             'specialty' => 'nullable|string|max:191',
             'branch_ids' => 'required|array|min:1',
             'branch_ids.*' => 'exists:branches,id',
+            'super_user_id' => 'nullable|exists:users,id',
             'is_active' => 'nullable|boolean',
             'notes' => 'nullable|string',
         ]);

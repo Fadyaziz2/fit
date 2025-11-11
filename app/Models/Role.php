@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Permission\Contracts\Role as RoleContract;
 use Spatie\Permission\Exceptions\GuardDoesNotMatch;
 use Spatie\Permission\Exceptions\PermissionDoesNotExist;
@@ -72,6 +73,11 @@ class Role extends Model implements RoleContract
             app(PermissionRegistrar::class)->pivotRole,
             app(PermissionRegistrar::class)->pivotPermission
         );
+    }
+
+    public function permissionScopes(): HasMany
+    {
+        return $this->hasMany(RolePermissionScope::class);
     }
 
     /**

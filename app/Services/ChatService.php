@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Events\ChatMessageSent;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
+use App\Models\RolePermissionScope;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,15 +22,26 @@ class ChatService
         );
     }
 
-    public function listThreadsForAdmin(int $perPage = 15): LengthAwarePaginator
+    public function listThreadsForAdmin(User $admin, int $perPage = 15): LengthAwarePaginator
     {
-        return ChatThread::query()
+        $query = ChatThread::query()
             ->with(['user:id,first_name,last_name,display_name,email', 'assignedTo:id,first_name,last_name,display_name'])
             ->withCount(['messages as unread_count' => function ($query) {
                 $query->whereNull('read_at')->where('sender_type', 'user');
             }])
-            ->orderByRaw('COALESCE(last_message_at, updated_at, created_at) DESC')
-            ->paginate($perPage);
+            ->orderByRaw('COALESCE(last_message_at, updated_at, created_at) DESC');
+
+        if ($admin->permissionScope('chat-center-list') === RolePermissionScope::SCOPE_PRIVATE) {
+            $userIds = $admin->managedUserIds();
+
+            if (empty($userIds)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereIn('user_id', $userIds);
+            }
+        }
+
+        return $query->paginate($perPage);
     }
 
     public function fetchThreadMessages(ChatThread $thread, ?string $before, int $limit = 50): Collection

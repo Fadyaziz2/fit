@@ -1,4 +1,23 @@
 @push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.permission_check').forEach(function (checkbox) {
+            checkbox.addEventListener('change', function () {
+                var container = this.closest('td');
+
+                if (!container) {
+                    return;
+                }
+
+                var select = container.querySelector('.scope-select');
+
+                if (select) {
+                    select.disabled = !this.checked;
+                }
+            });
+        });
+    });
+</script>
 @endpush
 <x-app-layout :assets="$assets ?? []">
     <div>
@@ -42,14 +61,28 @@
                                                         <tr>
                                                             <td>{{ ucwords(str_replace('_',' ',$role->name)) }}</td>
                                                             @foreach($parentpermission->subpermission as $p)
+                                                                @php
+                                                                    $isScopedPermission = in_array($p->name, $scopedPermissions ?? [], true);
+                                                                    $isChecked = AuthHelper::checkRolePermission($role, $p->name);
+                                                                    $currentScope = $roleScopes[$role->id][$p->name] ?? \App\Models\RolePermissionScope::SCOPE_ALL;
+                                                                @endphp
                                                                 <td>
-                                                                    <input class="form-check-input checkbox no-wh permission_check" 
-                                                                        id="permission-{{$role->id}}-{{$p->id}}" 
-                                                                        type="checkbox" 
-                                                                        name="permission[{{$p->name}}][]" 
-                                                                        value='{{$role->name}}' 
-                                                                        {{ (AuthHelper::checkRolePermission($role,$p->name)) ? 'checked' : '' }} 
-                                                                        @if($role->is_hidden) disabled @endif >
+                                                                    <div class="d-flex flex-column align-items-center gap-2">
+                                                                        <input class="form-check-input checkbox no-wh permission_check"
+                                                                            id="permission-{{$role->id}}-{{$p->id}}"
+                                                                            type="checkbox"
+                                                                            name="permission[{{$p->name}}][]"
+                                                                            value='{{$role->name}}'
+                                                                            {{ $isChecked ? 'checked' : '' }}
+                                                                            @if($role->is_hidden) disabled @endif >
+                                                                        @if($isScopedPermission)
+                                                                            <select class="form-select form-select-sm scope-select" name="permission_scope[{{$p->name}}][{{$role->name}}]" @if(!$isChecked) disabled @endif>
+                                                                                @foreach($scopeOptions ?? [] as $value => $label)
+                                                                                    <option value="{{ $value }}" @selected($currentScope === $value)>{{ $label }}</option>
+                                                                                @endforeach
+                                                                            </select>
+                                                                        @endif
+                                                                    </div>
                                                                 </td>
                                                             @endforeach
                                                         </tr>

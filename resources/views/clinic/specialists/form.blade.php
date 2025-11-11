@@ -46,6 +46,22 @@
                                     @enderror
                                 </div>
                                 <div class="col-md-6">
+                                    <label class="form-label">{{ __('message.super_user') }}</label>
+                                    @php
+                                        $selectedSuperUser = old('super_user_id', $specialist->super_user_id ?? '');
+                                    @endphp
+                                    <select name="super_user_id" class="form-select" data-placeholder="{{ __('message.select_name', ['select' => __('message.super_user')]) }}">
+                                        <option value="">{{ __('message.not_assigned') }}</option>
+                                        @foreach(($superUsers ?? []) as $id => $name)
+                                            <option value="{{ $id }}" @selected((string) $selectedSuperUser === (string) $id)>{{ $name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">{{ __('message.super_user_hint') }}</small>
+                                    @error('super_user_id')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6">
                                     <label class="form-label">{{ __('message.contact_number') }}</label>
                                     <input type="text" name="phone" class="form-control" value="{{ old('phone', $specialist->phone ?? '') }}">
                                     @error('phone')

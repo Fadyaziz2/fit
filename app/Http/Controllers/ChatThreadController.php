@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\ChatMessageResource;
 use App\Http\Resources\ChatThreadResource;
 use App\Models\ChatThread;
+use App\Models\RolePermissionScope;
 use App\Models\User;
 use App\Services\ChatService;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class ChatThreadController extends Controller
     public function threads(Request $request)
     {
         abort_if($request->user()->user_type === 'user', 403);
-        $threads = $this->chat->listThreadsForAdmin($request->integer('per_page', 25));
+        $threads = $this->chat->listThreadsForAdmin($request->user(), $request->integer('per_page', 25));
 
         return ChatThreadResource::collection($threads);
     }
@@ -54,6 +55,8 @@ class ChatThreadController extends Controller
 
         /** @var User $user */
         $user = User::findOrFail($data['user_id']);
+
+        $this->ensureChatUserAccessible($request->user(), $user->id);
 
         $thread = $this->chat->getOrCreateThreadForUser($user);
         $wasRecentlyCreated = $thread->wasRecentlyCreated;
@@ -83,6 +86,8 @@ class ChatThreadController extends Controller
 
         $search = trim((string) $request->input('search'));
 
+        $admin = $request->user();
+
         $query = User::query()
             ->where('user_type', 'user');
 
@@ -93,6 +98,16 @@ class ChatThreadController extends Controller
                     ->orWhere('display_name', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
             });
+        }
+
+        if ($admin->permissionScope('chat-center-list') === RolePermissionScope::SCOPE_PRIVATE) {
+            $userIds = $admin->managedUserIds();
+
+            if (empty($userIds)) {
+                return response()->json(['data' => []]);
+            }
+
+            $query->whereIn('id', $userIds);
         }
 
         $users = $query
@@ -117,6 +132,8 @@ class ChatThreadController extends Controller
         abort_if($request->user()->user_type === 'user', 403);
         $thread->load(['user:id,first_name,last_name,display_name,email', 'assignedTo:id,first_name,last_name,display_name']);
 
+        $this->ensureThreadAccessible($request->user(), $thread);
+
         $messages = $this->chat->fetchThreadMessages(
             $thread,
             $request->input('before'),
@@ -131,6 +148,8 @@ class ChatThreadController extends Controller
     public function send(Request $request, ChatThread $thread)
     {
         abort_if($request->user()->user_type === 'user', 403);
+        $this->ensureThreadAccessible($request->user(), $thread);
+
         $message = $this->chat->sendMessage(
             $request->user(),
             $thread,
@@ -138,5 +157,27 @@ class ChatThreadController extends Controller
         );
 
         return new ChatMessageResource($message);
+    }
+
+    protected function ensureChatUserAccessible(User $admin, int $userId): void
+    {
+        if ($admin->permissionScope('chat-center-reply') !== RolePermissionScope::SCOPE_PRIVATE) {
+            return;
+        }
+
+        if (! in_array($userId, $admin->managedUserIds(), true)) {
+            abort(403);
+        }
+    }
+
+    protected function ensureThreadAccessible(User $admin, ChatThread $thread): void
+    {
+        if ($admin->permissionScope('chat-center-list') !== RolePermissionScope::SCOPE_PRIVATE) {
+            return;
+        }
+
+        if (! in_array($thread->user_id, $admin->managedUserIds(), true)) {
+            abort(403);
+        }
     }
 }
