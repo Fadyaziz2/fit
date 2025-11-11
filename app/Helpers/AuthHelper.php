@@ -37,8 +37,14 @@ class AuthHelper {
             }
 
             if($menu->data('permission') != null) {
-                if(auth()->user()->can($menu->data('permission')) ) {
-                    return true;
+                $permissions = is_array($menu->data('permission'))
+                    ? $menu->data('permission')
+                    : [$menu->data('permission')];
+
+                foreach ($permissions as $permission) {
+                    if (\userHasPermissionIncludingParents($permission)) {
+                        return true;
+                    }
                 }
             }
         }
