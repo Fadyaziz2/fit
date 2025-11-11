@@ -63,10 +63,13 @@ class ClinicAppointmentController extends Controller
 
                 $query->where(function ($branchQuery) use ($branchId) {
                     $branchQuery->where('branch_id', $branchId)
-                        ->orWhereHas('specialist', function ($specialistQuery) use ($branchId) {
-                            $specialistQuery->where('branch_id', $branchId)
-                                ->orWhereHas('branches', function ($relationQuery) use ($branchId) {
-                                    $relationQuery->where('branches.id', $branchId);
+                        ->orWhere(function ($nullBranchQuery) use ($branchId) {
+                            $nullBranchQuery->whereNull('branch_id')
+                                ->whereHas('specialist', function ($specialistQuery) use ($branchId) {
+                                    $specialistQuery->where('branch_id', $branchId)
+                                        ->orWhereHas('branches', function ($relationQuery) use ($branchId) {
+                                            $relationQuery->where('branches.id', $branchId);
+                                        });
                                 });
                         });
                 });
@@ -106,6 +109,24 @@ class ClinicAppointmentController extends Controller
                     $innerQuery->whereIn('branch_id', $branchIds)
                         ->orWhereHas('branches', function ($branchQuery) use ($branchIds) {
                             $branchQuery->whereIn('branches.id', $branchIds);
+                        })
+                        ->orWhere(function ($unassignedQuery) {
+                            $unassignedQuery->whereNull('branch_id')
+                                ->whereDoesntHave('branches');
+                        });
+                });
+            })
+            ->when($request->filled('branch_id'), function ($query) use ($request) {
+                $branchId = (int) $request->input('branch_id');
+
+                $query->where(function ($innerQuery) use ($branchId) {
+                    $innerQuery->where('branch_id', $branchId)
+                        ->orWhereHas('branches', function ($branchQuery) use ($branchId) {
+                            $branchQuery->where('branches.id', $branchId);
+                        })
+                        ->orWhere(function ($unassignedQuery) {
+                            $unassignedQuery->whereNull('branch_id')
+                                ->whereDoesntHave('branches');
                         });
                 });
             })
