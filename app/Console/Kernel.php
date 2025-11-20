@@ -5,6 +5,7 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Console\Commands\CheckSubscription;
+use App\Console\Commands\SendAppointmentReminders;
 use App\Console\Commands\SendQuotes;
 
 class Kernel extends ConsoleKernel
@@ -13,9 +14,10 @@ class Kernel extends ConsoleKernel
      * The Artisan commands provided by your application.
      *
      * @var array
-     */
+    */
     protected $commands = [
         CheckSubscription::class,
+        SendAppointmentReminders::class,
         SendQuotes::class,
     ];
 
@@ -30,6 +32,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('check:subscription')->daily();
         $time = SettingData ('QUOTE', 'QUOTE_TIME') ?? '05:00';
         $schedule->command('send:quotes')->daily()->at($time);
+        $schedule->command('appointments:send-reminders')
+            ->dailyAt('18:00')
+            ->timezone('Asia/Amman');
     }
 
     /**

@@ -90,3 +90,15 @@ For open source projects, say how it is licensed.
 
 ## Project status
 If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+
+## إعداد كرون لوظيفة تذكير المواعيد
+لضمان إرسال رسائل الـSMS التذكيرية بمواعيد الغد يوميًا في الساعة 6:00 مساءً بتوقيت عمّان، تأكد من تفعيل مجدول لارافيل على الخادم:
+
+1. افتح جدول الـcron للمستخدم الذي يشغّل التطبيق عبر `crontab -e`.
+2. أضف السطر التالي (عدّل المسار إلى مجلد المشروع إذا لزم الأمر):
+
+   ```cron
+   * * * * * cd /path/to/your/project && php artisan schedule:run >> /dev/null 2>&1
+   ```
+
+يعمل `schedule:run` مرة كل دقيقة ويتولى Laravel تشغيل أمر `appointments:send-reminders` تلقائيًا في الوقت المحدد (الساعة 18:00 بتوقيت Asia/Amman).
