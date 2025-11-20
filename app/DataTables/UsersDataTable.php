@@ -83,27 +83,13 @@ class UsersDataTable extends DataTable
 
         $authUser = auth()->user();
 
-        if ($authUser) {
-            $permissionScope = $authUser->permissionScope('user-list');
+        if ($authUser && $authUser->permissionScope('user-list') === RolePermissionScope::SCOPE_PRIVATE) {
+            $userIds = $authUser->managedUserIds();
 
-            if ($permissionScope === RolePermissionScope::SCOPE_PRIVATE) {
-                $userIds = $authUser->managedUserIds();
-
-                if (empty($userIds)) {
-                    $model->whereRaw('1 = 0');
-                } else {
-                    $model->whereIn('id', $userIds);
-                }
-            } elseif (! $authUser->hasAccessToAllBranches()) {
-                $branchIds = $authUser->accessibleBranchIds();
-
-                if (empty($branchIds)) {
-                    $model->whereRaw('1 = 0');
-                } else {
-                    $model->whereHas('branches', function ($query) use ($branchIds) {
-                        $query->whereIn('branches.id', $branchIds);
-                    });
-                }
+            if (empty($userIds)) {
+                $model->whereRaw('1 = 0');
+            } else {
+                $model->whereIn('id', $userIds);
             }
         }
 
