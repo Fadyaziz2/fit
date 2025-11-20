@@ -94,6 +94,16 @@ class UsersDataTable extends DataTable
                 } else {
                     $model->whereIn('id', $userIds);
                 }
+            } elseif (! $authUser->hasAccessToAllBranches()) {
+                $branchIds = $authUser->accessibleBranchIds();
+
+                if (empty($branchIds)) {
+                    $model->whereRaw('1 = 0');
+                } else {
+                    $model->whereHas('branches', function ($query) use ($branchIds) {
+                        $query->whereIn('branches.id', $branchIds);
+                    });
+                }
             }
         }
 
