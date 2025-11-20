@@ -198,23 +198,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
             return $this->managedUserIdsCache;
         }
 
-        $specialistQuery = Specialist::query()
-            ->where('super_user_id', $this->id);
-
-        if (! $this->hasAccessToAllBranches()) {
-            $branchIds = $this->accessibleBranchIds();
-
-            if (! empty($branchIds)) {
-                $specialistQuery->orWhere(function ($query) use ($branchIds) {
-                    $query->whereIn('branch_id', $branchIds)
-                        ->orWhereHas('branches', function ($branchQuery) use ($branchIds) {
-                            $branchQuery->whereIn('branches.id', $branchIds);
-                        });
-                });
-            }
-        }
-
-        $specialistIds = $specialistQuery->pluck('id');
+        $specialistIds = $this->managedSpecialists()->pluck('id');
 
         if ($specialistIds->isEmpty()) {
             return $this->managedUserIdsCache = [];
