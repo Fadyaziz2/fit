@@ -179,13 +179,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
 
         foreach ($this->roles as $role) {
             foreach ($role->permissionScopes->where('permission_name', $permissionName) as $scope) {
-                $normalizedScope = RolePermissionScope::normalizeScope($scope->scope);
-
-                if ($normalizedScope === RolePermissionScope::SCOPE_ALL) {
+                if ($scope->scope === RolePermissionScope::SCOPE_ALL) {
                     return RolePermissionScope::SCOPE_ALL;
                 }
 
-                $scopes->push($normalizedScope);
+                $scopes->push($scope->scope);
             }
         }
 
