@@ -44,7 +44,9 @@ class UserController extends Controller
     {
         $pageTitle = __('message.list_form_title',[ 'form' => __('message.user') ] );
         $auth_user = AuthHelper::authSession();
-        if( !$auth_user->can('user-list') ) {
+        $isStaffAccount = $auth_user->user_type !== 'user';
+
+        if( ! $isStaffAccount && !$auth_user->can('user-list') ) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
