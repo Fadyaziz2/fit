@@ -202,30 +202,8 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
             return $this->managedUserIdsCache;
         }
 
-        if ($this->permissionScope('user-list') !== RolePermissionScope::SCOPE_PRIVATE) {
-            return $this->managedUserIdsCache = self::where('user_type', 'user')
-                ->pluck('id')
-                ->map(fn ($id) => (int) $id)
-                ->unique()
-                ->values()
-                ->all();
-        }
-
-        $specialistIds = $this->managedSpecialists()->pluck('id');
-
-        if ($specialistIds->isEmpty()) {
-            return $this->managedUserIdsCache = [];
-        }
-
-        $userIds = UserProfile::whereIn('specialist_id', $specialistIds)
-            ->pluck('user_id');
-
-        $appointmentUserIds = SpecialistAppointment::whereIn('specialist_id', $specialistIds)
-            ->pluck('user_id');
-
-        return $this->managedUserIdsCache = $userIds
-            ->merge($appointmentUserIds)
-            ->filter()
+        return $this->managedUserIdsCache = self::where('user_type', 'user')
+            ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->unique()
             ->values()
