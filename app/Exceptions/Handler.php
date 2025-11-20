@@ -56,12 +56,22 @@ class Handler extends ExceptionHandler
         return redirect()->guest(route('login'));
     }
 
-    public function render($request, Throwable $exception)
+    public function render($request, Throwable $e)
     {
-        if ($exception instanceof NotFoundHttpException) {
+        if ($e instanceof NotFoundHttpException) {
             return response()->view('errors.route404', [], 404);
         }
+    if ($request->expectsJson() || $request->ajax()) {
+        return response()->json([
+            'message' => $e->getMessage(),
+            'file'    => $e->getFile(),
+            'line'    => $e->getLine(),
+            // خلي التريس يظهر بس لو APP_DEBUG=true
+            'trace'   => config('app.debug') ? collect($e->getTrace())->take(5) : [],
+        ], 500);
+    }
 
-        return parent::render($request, $exception);
+    return parent::render($request, $e);
+
     }
 }
