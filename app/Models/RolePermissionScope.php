@@ -12,6 +12,20 @@ class RolePermissionScope extends Model
     public const SCOPE_ALL = 'all';
     public const SCOPE_PRIVATE = 'private';
 
+    public static function normalizeScope(string $scope): string
+    {
+        $normalized = strtolower(trim($scope));
+        $normalized = str_replace([' ', '-'], '_', $normalized);
+
+        return match ($normalized) {
+            'all', 'all_user', 'all_users' => self::SCOPE_ALL,
+            'private', 'private_user', 'private_users' => self::SCOPE_PRIVATE,
+            default => in_array($scope, array_keys(self::options()), true)
+                ? $scope
+                : self::SCOPE_ALL,
+        };
+    }
+
     protected $fillable = [
         'role_id',
         'permission_name',
