@@ -40,12 +40,17 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(UsersDataTable $dataTable)
+    public function index(Request $request, UsersDataTable $dataTable)
     {
         $pageTitle = __('message.list_form_title',[ 'form' => __('message.user') ] );
         $auth_user = AuthHelper::authSession();
         if( !$auth_user->can('user-list') ) {
             $message = __('message.permission_denied_for_account');
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 403);
+            }
+
             return redirect()->back()->withErrors($message);
         }
 
