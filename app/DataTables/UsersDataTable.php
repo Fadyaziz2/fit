@@ -23,7 +23,7 @@ class UsersDataTable extends DataTable
         return datatables()
             ->eloquent($query)
             ->editColumn('userProfile.age', function($query) {
-                return $query->userProfile->age ?? '-';
+                return optional($query->userProfile)->age ?? '-';
             })
             
             ->editColumn('status', function($query) {
