@@ -2,7 +2,6 @@
 
 namespace App\DataTables;
 
-use App\Models\RolePermissionScope;
 use App\Models\User;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
@@ -80,18 +79,6 @@ class UsersDataTable extends DataTable
     public function query()
     {
         $model = User::where('user_type', 'user')->with('userProfile');
-
-        $authUser = auth()->user();
-
-        if ($authUser && $authUser->permissionScope('user-list') === RolePermissionScope::SCOPE_PRIVATE) {
-            $userIds = $authUser->managedUserIds();
-
-            if (empty($userIds)) {
-                $model->whereRaw('1 = 0');
-            } else {
-                $model->whereIn('id', $userIds);
-            }
-        }
 
         return $this->applyScopes($model);
     }
