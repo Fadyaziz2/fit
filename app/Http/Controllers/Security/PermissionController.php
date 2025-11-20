@@ -110,7 +110,10 @@ class PermissionController extends Controller
                 }
 
                 $scopeValue = $scopeData[$permissionName][$roleName] ?? RolePermissionScope::SCOPE_ALL;
-                $scopeValue = RolePermissionScope::normalizeScope($scopeValue);
+
+                if (! in_array($scopeValue, array_keys(RolePermissionScope::options()), true)) {
+                    $scopeValue = RolePermissionScope::SCOPE_ALL;
+                }
 
                 RolePermissionScope::updateOrCreate(
                     ['role_id' => $role->id, 'permission_name' => $permissionName],
