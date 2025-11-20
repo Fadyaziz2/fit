@@ -58,6 +58,12 @@ class UserController extends Controller
         return $dataTable->render('global.datatable', compact('pageTitle', 'auth_user', 'assets', 'headerAction'));
     }
 
+    protected function isSubAdmin(User $user): bool
+    {
+        return in_array($user->user_type, ['subadmin', 'sub_admin'], true)
+            || $user->hasRole('subadmin');
+    }
+
     /**
      * Show the form for creating a new resource.
      *
