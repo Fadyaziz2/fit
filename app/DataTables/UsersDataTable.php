@@ -79,17 +79,33 @@ class UsersDataTable extends DataTable
      */
     public function query()
     {
-        $model = User::where('user_type', 'user')->with('userProfile');
+        $model = User::where('user_type', 'user')->with('userProfile.specialist');
 
         $authUser = auth()->user();
 
-        if ($authUser && $authUser->permissionScope('user-list') === RolePermissionScope::SCOPE_PRIVATE) {
-            $userIds = $authUser->managedUserIds();
+        if ($authUser) {
+            $userScope = $authUser->permissionScope('user-list');
 
-            if (empty($userIds)) {
-                $model->whereRaw('1 = 0');
-            } else {
-                $model->whereIn('id', $userIds);
+            if ($userScope === RolePermissionScope::SCOPE_PRIVATE) {
+                $userIds = $authUser->managedUserIds();
+
+                if (empty($userIds)) {
+                    $model->whereRaw('1 = 0');
+                } else {
+                    $model->whereIn('id', $userIds);
+                }
+            } elseif (! $authUser->hasAccessToAllBranches()) {
+                $branchIds = $authUser->accessibleBranchIds();
+
+                if (! empty($branchIds)) {
+                    $model->whereHas('userProfile.specialist', function ($query) use ($branchIds) {
+                        $query
+                            ->whereIn('branch_id', $branchIds)
+                            ->orWhereHas('branches', function ($branchQuery) use ($branchIds) {
+                                $branchQuery->whereIn('branches.id', $branchIds);
+                            });
+                    });
+                }
             }
         }
 
