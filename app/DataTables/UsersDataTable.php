@@ -2,7 +2,6 @@
 
 namespace App\DataTables;
 
-use App\Models\RolePermissionScope;
 use App\Models\User;
 use Yajra\DataTables\Html\Button;
 use Yajra\DataTables\Html\Column;
