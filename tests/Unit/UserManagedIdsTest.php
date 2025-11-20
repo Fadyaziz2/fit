@@ -25,6 +25,7 @@ class UserManagedIdsTest extends TestCase
     protected User $superUser;
     protected Branch $branch;
     protected Specialist $specialist;
+    protected User $branchManager;
 
     protected function setUp(): void
     {
@@ -85,6 +86,20 @@ class UserManagedIdsTest extends TestCase
             'is_active' => true,
             'notes' => null,
         ]);
+
+        $this->branchManager = User::create([
+            'username' => 'branchmanager',
+            'first_name' => 'Branch',
+            'last_name' => 'Manager',
+            'display_name' => 'Branch Manager',
+            'email' => 'branchmanager@example.com',
+            'password' => Hash::make('password'),
+            'user_type' => 'manager',
+            'status' => 'active',
+        ]);
+
+        $this->branchManager->assignRole($this->role);
+        $this->branchManager->branches()->sync([$this->branch->id]);
     }
 
     /** @test */
@@ -107,6 +122,32 @@ class UserManagedIdsTest extends TestCase
         ]);
 
         $this->actingAs($this->superUser);
+
+        $ids = (new UsersDataTable())->query()->pluck('id');
+
+        $this->assertSame([$client->id], $ids->all());
+    }
+
+    /** @test */
+    public function branch_managers_can_see_users_linked_to_accessible_specialist_branches(): void
+    {
+        $client = User::create([
+            'username' => 'branchuser',
+            'first_name' => 'Branch',
+            'last_name' => 'User',
+            'display_name' => 'Branch User',
+            'email' => 'branchuser@example.com',
+            'password' => Hash::make('password'),
+            'user_type' => 'user',
+            'status' => 'active',
+        ]);
+
+        UserProfile::create([
+            'user_id' => $client->id,
+            'specialist_id' => $this->specialist->id,
+        ]);
+
+        $this->actingAs($this->branchManager);
 
         $ids = (new UsersDataTable())->query()->pluck('id');
 
