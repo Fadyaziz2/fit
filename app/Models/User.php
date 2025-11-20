@@ -160,10 +160,6 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
             return RolePermissionScope::SCOPE_ALL;
         }
 
-        if ($normalized === 'user-list') {
-            return RolePermissionScope::SCOPE_ALL;
-        }
-
         if (! array_key_exists($normalized, $this->permissionScopeCache)) {
             $this->permissionScopeCache[$normalized] = $this->resolvePermissionScope($normalized);
         }
