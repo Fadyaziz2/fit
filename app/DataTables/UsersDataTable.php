@@ -97,20 +97,11 @@ class UsersDataTable extends DataTable
             } elseif (! $authUser->hasAccessToAllBranches()) {
                 $branchIds = $authUser->accessibleBranchIds();
 
-                if (! empty($branchIds)) {
-                    $model->where(function ($query) use ($branchIds) {
-                        $query->whereHas('branches', function ($branchQuery) use ($branchIds) {
-                            $branchQuery->whereIn('branches.id', $branchIds);
-                        })
-                        ->orWhereHas('userProfile.specialist', function ($specialistQuery) use ($branchIds) {
-                            $specialistQuery->whereIn('branch_id', $branchIds)
-                                ->orWhereHas('branches', function ($branchQuery) use ($branchIds) {
-                                    $branchQuery->whereIn('branches.id', $branchIds);
-                                });
-                        })
-                        ->orWhereHas('specialistAppointments', function ($appointmentQuery) use ($branchIds) {
-                            $appointmentQuery->whereIn('branch_id', $branchIds);
-                        });
+                if (empty($branchIds)) {
+                    $model->whereRaw('1 = 0');
+                } else {
+                    $model->whereHas('branches', function ($query) use ($branchIds) {
+                        $query->whereIn('branches.id', $branchIds);
                     });
                 }
             }
