@@ -44,7 +44,7 @@ class UserController extends Controller
     {
         $pageTitle = __('message.list_form_title',[ 'form' => __('message.user') ] );
         $auth_user = AuthHelper::authSession();
-        if( !$auth_user->can('user-list') ) {
+        if( !$auth_user->can('user-list') && ! $this->isSubAdmin($auth_user) ) {
             $message = __('message.permission_denied_for_account');
             return redirect()->back()->withErrors($message);
         }
@@ -54,6 +54,12 @@ class UserController extends Controller
         $headerAction = $auth_user->can('user-add') ? '<a href="'.route('users.create').'" class="btn btn-sm btn-primary" role="button">'.__('message.add_form_title', [ 'form' => __('message.user')]).'</a>' : '';
 
         return $dataTable->render('global.datatable', compact('pageTitle', 'auth_user', 'assets', 'headerAction'));
+    }
+
+    protected function isSubAdmin(User $user): bool
+    {
+        return in_array($user->user_type, ['subadmin', 'sub_admin'], true)
+            || $user->hasRole('subadmin');
     }
 
     /**
